@@ -1,2 +1,5 @@
-# stacks-azure-platform-landing-zone
-Stacks Azure Platform Landing Zone Starter Templates
+# Stacks Azure Platform Landing Zone
+
+## Introduction
+
+This repository provides the starter modules for the Stacks Azure Platform Landing Zone.
