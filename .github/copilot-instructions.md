@@ -2,10 +2,11 @@
 
 ## Project Overview
 
-This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are two primary templates:
+This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are three primary templates:
 
 - **Management Landing Zone** (`templates/management_landing_zone/`) - Deploys management groups, policies, and management resources
 - **Connectivity Landing Zone Hub-Spoke** (`templates/connectivity_landing_zone_hub_spoke/`) - Deploys hub-and-spoke network topology
+- **Connectivity Landing Zone Virtual WAN** (`templates/connectivity_landing_zone_virtual_wan/`) - Deploys Virtual WAN network topology
 
 These modules are imported into landing zone repositories created by the bootstrap module. CI/CD pipelines are managed by the bootstrap, not in this repo.
 
@@ -18,6 +19,7 @@ Different deployment scenarios require different subscriptions:
 | Management (resources only) | `management` |
 | Management (full ALZ with management groups) | `connectivity`, `identity`, `management` |
 | Connectivity Hub-Spoke | `connectivity`, `management` |
+| Connectivity Virtual WAN | `connectivity`, `management` |
 
 Subscription IDs are passed via `subscription_ids` map in `terraform.tfvars`. See `deploy/terraform/examples/` in each template for configuration examples.
 
@@ -43,13 +45,22 @@ config_templating → resource_groups → hub_and_spoke_vnet
 2. **resource_groups** - Deploys resource groups using `for_each` from config (wraps [Azure/avm-res-resources-resourcegroup](https://registry.terraform.io/modules/Azure/avm-res-resources-resourcegroup/azurerm/latest))
 3. **hub_and_spoke_vnet** - Deploys hub virtual networks, firewalls, bastion, DNS, and gateways (wraps [Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest))
 
+### Connectivity Landing Zone Virtual WAN Module Chain
+
+```
+config_templating → resource_groups → virtual_wan
+```
+
+1. **config_templating** - Processes configuration templates and generates location short codes
+2. **resource_groups** - Deploys resource groups using `for_each` from config (wraps [Azure/avm-res-resources-resourcegroup](https://registry.terraform.io/modules/Azure/avm-res-resources-resourcegroup/azurerm/latest))
+3. **virtual_wan** - Deploys Virtual WAN, virtual hubs, firewalls, bastion, DNS, and gateways (wraps [Azure/avm-ptn-alz-connectivity-virtual-wan](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm/latest))
+
 ### Key Design Patterns
 
 - **Conditional modules via `count`** (management_landing_zone): Root modules use `count = var.*_enabled ? 1 : 0`. Access outputs with `module.name[0].output` and wrap in `try(..., null)` for safety
-- **Always-on modules** (connectivity_landing_zone_hub_spoke): The hub-and-spoke module always deploys; individual features (firewall, bastion, etc.) are toggled via tfvars settings
+- **Always-on modules** (connectivity modules): The connectivity modules always deploy; individual features (firewall, bastion, etc.) are toggled via tfvars settings
 - **Template string replacements**: Use `$${variable_name}` syntax in tfvars for dynamic values (e.g., `$${starter_location_01}`, `$${subscription_id_connectivity}`)
-- **Naming conventions**: Supports `caf_azure` (default) or `stacks_foundation_azure` via `var.naming_convention`
-- **Multi-region support**: Connectivity module supports multiple hubs via `starter_locations` list and per-region settings in tfvars
+- **Multi-region support**: Connectivity modules support multiple hubs via `starter_locations` list and per-region settings in tfvars
 
 ## Developer Workflows
 
