@@ -2,7 +2,10 @@
 
 ## Project Overview
 
-This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. The primary implementation is the Management Landing Zone template at `templates/management_landing_zone/`.
+This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are two primary templates:
+
+- **Management Landing Zone** (`templates/management_landing_zone/`) - Deploys management groups, policies, and management resources
+- **Connectivity Landing Zone Hub-Spoke** (`templates/connectivity_landing_zone_hub_spoke/`) - Deploys hub-and-spoke network topology
 
 These modules are imported into landing zone repositories created by the bootstrap module. CI/CD pipelines are managed by the bootstrap, not in this repo.
 
@@ -10,16 +13,17 @@ These modules are imported into landing zone repositories created by the bootstr
 
 Different deployment scenarios require different subscriptions:
 
-| Scenario | Required Subscriptions |
+| Template | Required Subscriptions |
 |----------|----------------------|
-| Management resources only | `management` |
-| Full ALZ with management groups | `connectivity`, `identity`, `management` |
+| Management (resources only) | `management` |
+| Management (full ALZ with management groups) | `connectivity`, `identity`, `management` |
+| Connectivity Hub-Spoke | `connectivity`, `management` |
 
-Subscription IDs are passed via `subscription_ids` map in `terraform.tfvars`. See `deploy/terraform/examples/` for configuration examples including the Ensono tricode naming convention.
+Subscription IDs are passed via `subscription_ids` map in `terraform.tfvars`. See `deploy/terraform/examples/` in each template for configuration examples.
 
 ## Architecture
 
-### Module Dependency Chain
+### Management Landing Zone Module Chain
 
 ```
 config_templating → management_resources → management_groups
@@ -29,17 +33,29 @@ config_templating → management_resources → management_groups
 2. **management_resources** - Deploys Log Analytics Workspace, Data Collection Rules, and managed identities (wraps [Azure/avm-ptn-alz-management](https://registry.terraform.io/modules/Azure/avm-ptn-alz-management/azurerm/latest))
 3. **management_groups** - Deploys management group hierarchy and policies (wraps [Azure/avm-ptn-alz](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm/latest))
 
+### Connectivity Landing Zone Hub-Spoke Module Chain
+
+```
+config_templating → resource_groups → hub_and_spoke_vnet
+```
+
+1. **config_templating** - Processes configuration templates and generates location short codes
+2. **resource_groups** - Deploys resource groups using `for_each` from config (wraps [Azure/avm-res-resources-resourcegroup](https://registry.terraform.io/modules/Azure/avm-res-resources-resourcegroup/azurerm/latest))
+3. **hub_and_spoke_vnet** - Deploys hub virtual networks, firewalls, bastion, DNS, and gateways (wraps [Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest))
+
 ### Key Design Patterns
 
-- **Conditional modules via `count`**: Root modules use `count = var.*_enabled ? 1 : 0`. Access outputs with `module.name[0].output` and wrap in `try(..., null)` for safety
-- **Template string replacements**: Use `$${variable_name}` syntax in tfvars for dynamic values (e.g., `$${starter_location_01}`, `$${subscription_id_management}`)
+- **Conditional modules via `count`** (management_landing_zone): Root modules use `count = var.*_enabled ? 1 : 0`. Access outputs with `module.name[0].output` and wrap in `try(..., null)` for safety
+- **Always-on modules** (connectivity_landing_zone_hub_spoke): The hub-and-spoke module always deploys; individual features (firewall, bastion, etc.) are toggled via tfvars settings
+- **Template string replacements**: Use `$${variable_name}` syntax in tfvars for dynamic values (e.g., `$${starter_location_01}`, `$${subscription_id_connectivity}`)
 - **Naming conventions**: Supports `caf_azure` (default) or `stacks_foundation_azure` via `var.naming_convention`
+- **Multi-region support**: Connectivity module supports multiple hubs via `starter_locations` list and per-region settings in tfvars
 
 ## Developer Workflows
 
 ### Task Runner (eirctl)
 
-Run from `templates/management_landing_zone/`:
+Run from the template directory (e.g., `templates/management_landing_zone/` or `templates/connectivity_landing_zone_hub_spoke/`):
 
 ```bash
 eirctl code:linting        # YAML lint → terraform fmt → validate → tflint
@@ -57,7 +73,7 @@ eirctl infrastructure:apply
 
 ## ALZ Library Structure
 
-Located at `deploy/terraform/lib/`:
+Located at `deploy/terraform/lib/` (management_landing_zone only):
 
 - `architecture_definitions/` - Management group hierarchy (e.g., `alz_custom.alz_architecture_definition.yaml`)
 - `archetype_definitions/` - Policy overrides per management group (e.g., `root_custom.alz_archetype_override.yaml`)

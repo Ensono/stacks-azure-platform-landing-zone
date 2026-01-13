@@ -1,15 +1,6 @@
-provider "alz" {
-  library_overwrite_enabled = true
-  library_references = [
-    {
-      custom_url = "${path.root}/lib"
-    }
-  ]
-}
-
 provider "azapi" {
   skip_provider_registration = true
-  subscription_id            = var.subscription_ids["management"]
+  subscription_id            = var.subscription_ids["connectivity"]
 }
 
 provider "azurerm" {
