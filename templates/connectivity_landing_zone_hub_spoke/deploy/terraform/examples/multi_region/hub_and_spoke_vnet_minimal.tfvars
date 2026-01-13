@@ -28,9 +28,6 @@ custom_replacements = {
   NOTE: You cannot refer to another custom name in this variable.
   */
   names = {
-    # Defender email security contact
-    defender_email_security_contact = "replace_me@replace_me.com"
-
     # Resource group names
     connectivity_hub_primary_resource_group_name   = "rg-hub-$${starter_location_01_short}"
     connectivity_hub_secondary_resource_group_name = "rg-hub-$${starter_location_02_short}"

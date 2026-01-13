@@ -28,9 +28,6 @@ custom_replacements = {
   NOTE: You cannot refer to another custom name in this variable.
   */
   names = {
-    # Defender email security contact
-    defender_email_security_contact = "replace_me@replace_me.com"
-
     # Resource group names
     connectivity_hub_primary_resource_group_name   = "rg-hub-$${starter_location_01_short}"
     connectivity_hub_secondary_resource_group_name = "rg-hub-$${starter_location_02_short}"
@@ -81,6 +78,7 @@ custom_replacements = {
     primary_private_dns_resolver_name                            = "pdr-hub-dns-$${starter_location_01_short}"
     primary_bastion_host_name                                    = "bas-hub-$${starter_location_01_short}"
     primary_bastion_host_public_ip_name                          = "pip-bastion-hub-$${starter_location_01_short}"
+
     # Resource names secondary connectivity
     secondary_virtual_network_name                                 = "vnet-hub-$${starter_location_02_short}"
     secondary_firewall_name                                        = "fw-hub-$${starter_location_02_short}"

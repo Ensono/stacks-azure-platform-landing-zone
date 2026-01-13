@@ -29,7 +29,7 @@ subscription_ids  = {
 
 ```powershell
 terraform init
-terraform apply -var-file ./examples/full_multi_region/hub_and_spoke_vnet_minimal.tfvars
+terraform apply -var-file ./examples/multi_region/hub_and_spoke_vnet_minimal.tfvars
 ```
 
 <!-- markdownlint-disable MD033 -->
