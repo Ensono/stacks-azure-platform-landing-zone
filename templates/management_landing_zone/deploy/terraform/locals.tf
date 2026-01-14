@@ -30,20 +30,16 @@ locals {
 
 # Naming module outputs
 locals {
-  naming_outputs = (
-    var.naming_convention == "caf_azure" ? {
-      # Resource group names
-      management_resource_group_name = module.naming_caf[0].resource_group.name
-
-      # Resource names
-      log_analytics_workspace_name = module.naming_caf[0].log_analytics_workspace.name
-    } :
-    var.naming_convention == "stacks_foundation_azure" ? {
-      # Resource group names
-      management_resource_group_name = module.naming_stacks_foundation[0].names[var.component_name].resource_group.name
-
-      # Resource names
-      log_analytics_workspace_name = module.naming_stacks_foundation[0].names[var.component_name].log_analytics_workspace.name
-    } : {}
-  )
+  naming_outputs = {
+    # Resource group names
+    management_resource_group_name = try(
+      module.naming_caf[0].resource_group.name,
+      module.naming_stacks_foundation[0].names[var.component_name].resource_group.name
+    )
+    # Resource names
+    log_analytics_workspace_name = try(
+      module.naming_caf[0].log_analytics_workspace.name,
+      module.naming_stacks_foundation[0].names[var.component_name].log_analytics_workspace.name
+    )
+  }
 }
