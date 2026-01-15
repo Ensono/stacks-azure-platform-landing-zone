@@ -1,6 +1,8 @@
 provider "azapi" {
+  enable_preflight = true
+
   skip_provider_registration = true
-  subscription_id            = var.subscription_ids["connectivity"]
+  subscription_id            = var.connectivity_subscription_id
 }
 
 provider "azurerm" {

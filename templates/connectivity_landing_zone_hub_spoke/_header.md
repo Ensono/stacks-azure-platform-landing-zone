@@ -1,31 +1,74 @@
-# Stacks Azure Platform Landing Zone Starter Module - Connectivity - Hub and Spoke
+# Stacks Azure Platform Landing Zone - Connectivity - Hub and Spoke
 
-This module is part of the Stacks Azure Platform Landing Zone solution. It is a complete implementation of a Connectivity Landing Zone with a Hub and Spoke network topology using Azure Verified Modules.
+Deploys hub virtual networks using Azure Verified Modules (AVM). Supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming by default.
 
 ## Features
 
-- Hub Networking with Hub and Spoke VNet
-- Private DNS Zones for Private Link
-- Optional DDOS Protection Plan
-- Azure Firewall
+**Enabled by default:**
 
->[!NOTE]
-> The module can be used independently if needed. Example `tfvars` files can be found in the [examples](./deploy/terraform/examples/) directory for that use case.
+- Hub virtual networks with mesh peering (multi-region)
+- Azure Firewall with firewall policies
+- Private DNS zones for Private Link
+- Private DNS Resolver
 
-### Running Directly
+**Optional (disabled by default):**
 
-#### Run the local examples
+- Azure Bastion hosts
+- VPN Gateway
+- ExpressRoute Gateway
+- DDoS Protection Plan
 
-Create a `terraform.tfvars` file in the root of the module directory with the following content, replacing the placeholders with the actual values:
+## Quick Start
 
 ```hcl
-starter_locations = ["uksouth", "ukwest"]
-subscription_ids  = {
-  "connectivity"  = "00000000-0000-0000-0000-000000000000"
+company_name                 = "ensono"
+connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+hubs = {
+  uksouth = {}
+  ukwest  = {}
 }
 ```
 
-```powershell
-terraform init
-terraform apply -var-file ./examples/multi_region/hub_and_spoke_vnet_minimal.tfvars
+## Adding Hubs
+
+Add regions to the `hubs` map. IP addresses are calculated automatically.
+
+```hcl
+hubs = {
+  uksouth     = {}
+  ukwest      = {}
+  northeurope = { features = { bastion = true } }
+}
 ```
+
+## Custom Features
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      firewall     = true   # default
+      bastion      = false  # default
+      vpn_gateway  = false  # default
+    }
+    address_space = "172.16.0.0/16"  # override auto-allocation
+  }
+}
+```
+
+## Availability Zones
+
+Enable availability zones for higher SLA (99.99%) at the cost of cross-zone data transfer charges (~£0.01/GB):
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      availability_zones = ["1", "2", "3"]
+    }
+  }
+}
+```
+
+**Note:** Zones are disabled by default for cost optimization.

@@ -1,64 +1,127 @@
-output "dns_server_ip_address" {
-  description = "The DNS server IP addresses for each hub. Populated when private DNS resolver is enabled."
-  value       = module.hub_and_spoke_vnet.dns_server_ip_addresses
+# =============================================================================
+# Module Outputs
+# =============================================================================
+#
+# These outputs expose key resource information from the hub-spoke deployment.
+# All outputs are keyed by region (e.g., "uksouth", "ukwest").
+#
+# USAGE:
+# ------
+# Access outputs in consuming modules:
+#   module.connectivity.virtual_network_resource_ids["uksouth"]
+#   module.connectivity.firewall_private_ip_addresses["uksouth"]
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Hub Configuration (for debugging/reference)
+# -----------------------------------------------------------------------------
+
+output "hub_regions" {
+  description = "List of regions where hubs are deployed."
+  value       = keys(local.enabled_hubs)
 }
 
+output "hub_address_spaces" {
+  description = "Address space allocated to each hub, keyed by region."
+  value       = { for region, addr in local.hub_addresses : region => addr.hub_address_space }
+}
+
+# -----------------------------------------------------------------------------
+# Virtual Networks
+# -----------------------------------------------------------------------------
+
 output "virtual_network_resource_ids" {
-  description = "The resource IDs of the hub virtual networks."
+  description = "Resource IDs of hub virtual networks, keyed by region."
   value       = module.hub_and_spoke_vnet.virtual_network_resource_ids
 }
 
 output "virtual_network_resource_names" {
-  description = "The names of the hub virtual networks."
+  description = "Names of hub virtual networks, keyed by region."
   value       = module.hub_and_spoke_vnet.virtual_network_resource_names
 }
 
-output "bastion_host_public_ip_address" {
-  description = "The public IP addresses of bastion hosts. Empty if bastion is disabled."
-  value       = module.hub_and_spoke_vnet.bastion_host_public_ip_address
+# -----------------------------------------------------------------------------
+# DNS
+# -----------------------------------------------------------------------------
+
+output "dns_server_ip_addresses" {
+  description = "Private DNS Resolver IP addresses, keyed by region. Use for custom DNS configuration."
+  value       = module.hub_and_spoke_vnet.dns_server_ip_addresses
 }
 
-output "bastion_host_resource_ids" {
-  description = "The resource IDs of bastion hosts. Empty if bastion is disabled."
-  value       = module.hub_and_spoke_vnet.bastion_host_resource_ids
-}
-
-output "bastion_host_dns_names" {
-  description = "The DNS names of bastion hosts. Empty if bastion is disabled."
-  value       = module.hub_and_spoke_vnet.bastion_host_dns_names
-}
+# -----------------------------------------------------------------------------
+# Azure Firewall
+# -----------------------------------------------------------------------------
 
 output "firewall_resource_ids" {
-  description = "The resource IDs of Azure Firewalls. Empty if firewall is disabled."
+  description = "Resource IDs of Azure Firewalls, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_resource_ids
 }
 
 output "firewall_resource_names" {
-  description = "The names of Azure Firewalls. Empty if firewall is disabled."
+  description = "Names of Azure Firewalls, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_resource_names
 }
 
 output "firewall_private_ip_addresses" {
-  description = "The private IP addresses of Azure Firewalls. Empty if firewall is disabled."
+  description = "Private IP addresses of Azure Firewalls, keyed by region. Use for UDR next-hop."
   value       = module.hub_and_spoke_vnet.firewall_private_ip_addresses
 }
 
 output "firewall_public_ip_addresses" {
-  description = "The public IP addresses of Azure Firewalls. Empty if firewall is disabled."
+  description = "Public IP addresses of Azure Firewalls, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_public_ip_addresses
 }
 
 output "firewall_policies" {
-  description = "The Azure Firewall policy resources. Empty if firewall is disabled."
+  description = "Azure Firewall Policy resources, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_policies
 }
 
+# -----------------------------------------------------------------------------
+# Route Tables
+# -----------------------------------------------------------------------------
+
 output "route_tables_firewall" {
-  description = "The route tables for firewall subnets. Empty if firewall is disabled."
+  description = "Route tables for firewall subnets, keyed by region."
   value       = module.hub_and_spoke_vnet.route_tables_firewall
 }
 
 output "route_tables_user_subnets" {
-  description = "The route tables for user subnets with routes to firewall."
+  description = "Route tables for user subnets (with default route to firewall), keyed by region."
   value       = module.hub_and_spoke_vnet.route_tables_user_subnets
+}
+
+# -----------------------------------------------------------------------------
+# Azure Bastion
+# -----------------------------------------------------------------------------
+
+output "bastion_host_resource_ids" {
+  description = "Resource IDs of Bastion hosts, keyed by region. Null if bastion disabled."
+  value       = module.hub_and_spoke_vnet.bastion_host_resource_ids
+}
+
+output "bastion_host_public_ip_addresses" {
+  description = "Public IP addresses of Bastion hosts, keyed by region."
+  value       = module.hub_and_spoke_vnet.bastion_host_public_ip_address
+}
+
+output "bastion_host_dns_names" {
+  description = "DNS names of Bastion hosts, keyed by region."
+  value       = module.hub_and_spoke_vnet.bastion_host_dns_names
+}
+
+# -----------------------------------------------------------------------------
+# Resource Groups
+# -----------------------------------------------------------------------------
+
+output "resource_group_ids" {
+  description = "Resource IDs of all resource groups created by this module."
+  value       = { for k, v in module.resource_groups : k => v.resource_id }
+}
+
+output "resource_group_names" {
+  description = "Names of all resource groups created by this module."
+  value       = { for k, v in module.resource_groups : k => v.name }
 }
