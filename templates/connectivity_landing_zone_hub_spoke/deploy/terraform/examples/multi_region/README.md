@@ -57,6 +57,7 @@ flowchart TB
     style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
+> [!NOTE]
 > ✓ Enabled by default | ○ Optional (disabled)
 
 ## Quick Start
