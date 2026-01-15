@@ -1,26 +1,32 @@
 # Single-Region Hub-Spoke Example
 
 > [!WARNING]
-> **Not Recommended for Production**: Single-region deployments lack disaster recovery and high availability capabilities. Consider the [multi-region example](../multi_region/) for production workloads.
+> **Not Recommended for Production**: Single-region deployments lack disaster recovery and high availability capabilities. Consider the [multi-region example](../multi_region/README.md) for production workloads.
 
 This example deploys a **minimal single-region hub-spoke network** suitable for development, testing, or proof-of-concept scenarios.
 
 ## Architecture
 
-```text
-                    ┌─────────────────┐
-                    │    Hub VNet     │
-                    │   10.0.0.0/16   │
-                    ├─────────────────┤
-                    │ ✓ Firewall      │
-                    │ ✓ DNS Zones     │
-                    │ ✓ DNS Resolver  │
-                    │ ○ Bastion       │
-                    │ ○ VPN Gateway   │
-                    └─────────────────┘
+```mermaid
+flowchart TB
+    subgraph hub["Hub VNet (10.0.0.0/16)"]
+        direction TB
+        fw["✓ Azure Firewall"]
+        dns["✓ Private DNS Zones"]
+        resolver["✓ DNS Resolver"]
+        bastion["○ Bastion"]
+        vpn["○ VPN Gateway"]
+    end
+
+    style hub fill:#0078D4,stroke:#005A9E,color:#fff
+    style fw fill:#107C10,stroke:#0B5C0B,color:#fff
+    style dns fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver fill:#107C10,stroke:#0B5C0B,color:#fff
+    style bastion fill:#605E5C,stroke:#3B3A39,color:#fff
+    style vpn fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
-✓ = Enabled by default | ○ = Optional
+> ✓ Enabled by default | ○ Optional (disabled)
 
 ## Quick Start
 

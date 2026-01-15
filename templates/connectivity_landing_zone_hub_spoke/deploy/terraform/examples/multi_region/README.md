@@ -4,26 +4,40 @@ This example deploys a **multi-region hub-spoke network topology** - the recomme
 
 ## Architecture
 
-```text
-                    ┌─────────────────────────────────────┐
-                    │         Mesh VNet Peering           │
-                    └─────────────────────────────────────┘
-                                     │
-           ┌─────────────────────────┼─────────────────────────┐
-           │                         │                         │
-           ▼                         ▼                         ▼
-    ┌─────────────┐           ┌─────────────┐           ┌─────────────┐
-    │  Hub South  │           │  Hub West   │           │  Hub N...   │
-    │  10.0.0.0/16│           │  10.1.0.0/16│           │  10.n.0.0/16│
-    ├─────────────┤           ├─────────────┤           ├─────────────┤
-    │ ✓ Firewall  │           │ ✓ Firewall  │           │ ✓ Firewall  │
-    │ ✓ DNS Zones │           │ ✓ DNS Zones │           │ ✓ DNS Zones │
-    │ ○ Bastion   │           │ ○ Bastion   │           │ ○ Bastion   │
-    │ ○ VPN GW    │           │ ○ VPN GW    │           │ ○ VPN GW    │
-    └─────────────┘           └─────────────┘           └─────────────┘
+```mermaid
+flowchart TB
+    subgraph mesh["Mesh VNet Peering"]
+        direction LR
+
+        subgraph hubSouth["Hub UK South (10.0.0.0/16)"]
+            direction TB
+            fw1["✓ Firewall"]
+            dns1["✓ DNS Zones"]
+            bas1["○ Bastion"]
+        end
+
+        subgraph hubWest["Hub UK West (10.1.0.0/16)"]
+            direction TB
+            fw2["✓ Firewall"]
+            dns2["✓ DNS Zones"]
+            bas2["○ Bastion"]
+        end
+
+        hubSouth <--> hubWest
+    end
+
+    style mesh fill:#f5f5f5,stroke:#d0d0d0
+    style hubSouth fill:#0078D4,stroke:#005A9E,color:#fff
+    style hubWest fill:#0078D4,stroke:#005A9E,color:#fff
+    style fw1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style fw2 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style dns1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style dns2 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style bas1 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style bas2 fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
-✓ = Enabled by default | ○ = Optional
+> ✓ Enabled by default | ○ Optional (disabled)
 
 ## Quick Start
 
