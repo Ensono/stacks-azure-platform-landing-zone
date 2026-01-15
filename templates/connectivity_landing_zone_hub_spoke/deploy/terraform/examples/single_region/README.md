@@ -14,16 +14,26 @@ flowchart TB
         fw["✓ Azure Firewall"]
         dns["✓ Private DNS Zones"]
         resolver["✓ DNS Resolver"]
+        autoreg["✓ Auto-Registration Zone"]
         bastion["○ Bastion"]
         vpn["○ VPN Gateway"]
+        er["○ ExpressRoute Gateway"]
+        zones["○ Availability Zones"]
     end
+
+    ddos["○ DDoS Protection Plan"]
+    ddos -.-> hub
 
     style hub fill:#0078D4,stroke:#005A9E,color:#fff
     style fw fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns fill:#107C10,stroke:#0B5C0B,color:#fff
     style resolver fill:#107C10,stroke:#0B5C0B,color:#fff
+    style autoreg fill:#107C10,stroke:#0B5C0B,color:#fff
     style bastion fill:#605E5C,stroke:#3B3A39,color:#fff
     style vpn fill:#605E5C,stroke:#3B3A39,color:#fff
+    style er fill:#605E5C,stroke:#3B3A39,color:#fff
+    style zones fill:#605E5C,stroke:#3B3A39,color:#fff
+    style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
 > ✓ Enabled by default | ○ Optional (disabled)

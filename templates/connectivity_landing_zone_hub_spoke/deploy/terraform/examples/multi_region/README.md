@@ -13,18 +13,29 @@ flowchart TB
             direction TB
             fw1["✓ Firewall"]
             dns1["✓ DNS Zones"]
+            resolver1["✓ DNS Resolver"]
+            autoreg1["✓ Auto-Reg Zone"]
             bas1["○ Bastion"]
+            vpn1["○ VPN Gateway"]
+            er1["○ ExpressRoute"]
         end
 
         subgraph hubWest["Hub UK West (10.1.0.0/16)"]
             direction TB
             fw2["✓ Firewall"]
             dns2["✓ DNS Zones"]
+            resolver2["✓ DNS Resolver"]
+            autoreg2["✓ Auto-Reg Zone"]
             bas2["○ Bastion"]
+            vpn2["○ VPN Gateway"]
+            er2["○ ExpressRoute"]
         end
 
         hubSouth <--> hubWest
     end
+
+    ddos["○ DDoS Protection Plan"]
+    ddos -.-> mesh
 
     style mesh fill:#f5f5f5,stroke:#d0d0d0
     style hubSouth fill:#0078D4,stroke:#005A9E,color:#fff
@@ -33,8 +44,17 @@ flowchart TB
     style fw2 fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns1 fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns2 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver2 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style autoreg1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style autoreg2 fill:#107C10,stroke:#0B5C0B,color:#fff
     style bas1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style bas2 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style vpn1 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style vpn2 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style er1 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style er2 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
 > ✓ Enabled by default | ○ Optional (disabled)
