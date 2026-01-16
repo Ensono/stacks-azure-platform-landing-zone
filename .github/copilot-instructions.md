@@ -76,6 +76,18 @@ eirctl infrastructure:plan # terraform init → plan
 eirctl infrastructure:apply
 ```
 
+### Unit Testing
+
+Unit tests validate configuration logic using mock providers (no Azure credentials required):
+
+```bash
+cd deploy/terraform
+terraform test              # Run all tests
+terraform test -filter=tests/naming_conventions.tftest.hcl  # Run specific test
+```
+
+Test files are located in `deploy/terraform/tests/` and use `.tftest.hcl` extension.
+
 ### Documentation Generation
 
 - Root README: Auto-generated from `_header.md` via terraform-docs

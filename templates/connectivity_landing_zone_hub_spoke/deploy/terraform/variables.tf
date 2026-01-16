@@ -1,19 +1,3 @@
-# =============================================================================
-# Core Variables
-# =============================================================================
-#
-# Essential settings required for all deployments. These variables have no
-# defaults and must be provided.
-#
-# VARIABLE FILES:
-# ---------------
-# variables.tf         - Core settings (this file)
-# variables.hubs.tf    - Hub network configuration (regions, features, IPs)
-# variables.tags.tf    - Resource tagging and Ensono CMDB integration
-# variables.regions.tf - Azure region filtering options
-#
-# =============================================================================
-
 variable "company_name" {
   type        = string
   description = "Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'Ensono' becomes 'ens')."

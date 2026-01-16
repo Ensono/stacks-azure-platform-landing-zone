@@ -15,6 +15,7 @@ flowchart TB
             dns1["✓ DNS Zones"]
             resolver1["✓ DNS Resolver"]
             autoreg1["✓ Auto-Reg Zone"]
+            pe1["✓ PE Subnet"]
             bas1["○ Bastion"]
             vpn1["○ VPN Gateway"]
             er1["○ ExpressRoute"]
@@ -26,6 +27,7 @@ flowchart TB
             dns2["✓ DNS Zones"]
             resolver2["✓ DNS Resolver"]
             autoreg2["✓ Auto-Reg Zone"]
+            pe2["✓ PE Subnet"]
             bas2["○ Bastion"]
             vpn2["○ VPN Gateway"]
             er2["○ ExpressRoute"]
@@ -34,7 +36,9 @@ flowchart TB
         hubSouth <--> hubWest
     end
 
+    ampls["○ Azure Monitor Private Link"]
     ddos["○ DDoS Protection Plan"]
+    ampls -.-> mesh
     ddos -.-> mesh
 
     style mesh fill:#f5f5f5,stroke:#d0d0d0
@@ -48,12 +52,15 @@ flowchart TB
     style resolver2 fill:#107C10,stroke:#0B5C0B,color:#fff
     style autoreg1 fill:#107C10,stroke:#0B5C0B,color:#fff
     style autoreg2 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style pe1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style pe2 fill:#107C10,stroke:#0B5C0B,color:#fff
     style bas1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style bas2 fill:#605E5C,stroke:#3B3A39,color:#fff
     style vpn1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style vpn2 fill:#605E5C,stroke:#3B3A39,color:#fff
     style er1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style er2 fill:#605E5C,stroke:#3B3A39,color:#fff
+    style ampls fill:#605E5C,stroke:#3B3A39,color:#fff
     style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
@@ -141,12 +148,14 @@ hubs = {
 - Azure Firewall with policy
 - Route tables for firewall routing
 - VNet peering to other hubs (mesh)
+- Private Endpoints subnet (`snet-private-endpoints`)
 - Optional: Bastion, VPN Gateway, ExpressRoute Gateway
 
 ### Shared Resources (primary region)
 
 - Private DNS zones for Azure Private Link services
 - Private DNS Resolver for hybrid DNS
+- Optional: Azure Monitor Private Link Scope (AMPLS) with endpoints in each hub
 - Optional: DDoS Protection Plan
 
 ## Estimated Costs
@@ -158,6 +167,7 @@ hubs = {
 | Azure Bastion (Basic) | ~£110/hub |
 | VPN Gateway (VpnGw1) | ~£110/hub |
 | ExpressRoute Gateway | ~£110/hub |
+| AMPLS Private Endpoint | ~£7/hub |
 | DDoS Protection Plan | ~£2,350 (global) |
 
 *Costs vary by region and configuration. Use the [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for accurate estimates.*
