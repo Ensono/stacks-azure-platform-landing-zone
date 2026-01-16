@@ -67,9 +67,11 @@ locals {
 # See: https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations
 locals {
   # CAF prefixes not supported or incorrect in the naming module
+  # Note: Naming module uses fw- for firewall (industry standard), CAF recommends afw-
   caf_prefixes = {
-    ampls   = "ampls" # not supported by naming module
-    bastion = "bas"   # naming module incorrectly uses "snap"
+    ampls   = "ampls" # Azure Monitor Private Link Scope - not supported by naming module
+    bastion = "bas"   # naming module incorrectly uses "snap" (snapshot prefix)
+    firewall = "afw"  # naming module uses "fw", CAF recommends "afw"
   }
 
   # Extend each naming instance with missing resource types
@@ -85,11 +87,18 @@ locals {
             "${local.caf_prefixes.ampls}-"
           )
         }
-        bastion_host_fixed = {
+        bastion_host = {
           name = replace(
             module.naming[key].resource_group.name,
             "/^rg-/",
             "${local.caf_prefixes.bastion}-"
+          )
+        }
+        firewall = {
+          name = replace(
+            module.naming[key].resource_group.name,
+            "/^rg-/",
+            "${local.caf_prefixes.firewall}-"
           )
         }
       }
@@ -113,7 +122,7 @@ locals {
 
       firewall = coalesce(
         hub.name_overrides.firewall,
-        module.naming["hub-${region}"].firewall.name
+        local.naming_extended["hub-${region}"].firewall.name
       )
 
       firewall_policy = coalesce(
@@ -127,7 +136,7 @@ locals {
 
       bastion = coalesce(
         hub.name_overrides.bastion,
-        local.naming_extended["hub-${region}"].bastion_host_fixed.name
+        local.naming_extended["hub-${region}"].bastion_host.name
       )
 
       bastion_pip = module.naming["hub-bas-${region}"].public_ip.name
@@ -344,6 +353,7 @@ locals {
 
       private_dns_resolver = hub.features.private_dns_resolver ? {
         name                  = local.hub_names[region].dns_resolver
+        resource_group_name   = module.naming["hub-dns"].resource_group.name
         subnet_address_prefix = local.hub_subnets[region].dns_resolver
       } : null
     }

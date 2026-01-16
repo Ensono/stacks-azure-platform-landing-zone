@@ -56,8 +56,8 @@ run "resource_names_follow_caf_conventions" {
   }
 
   assert {
-    condition     = startswith(local.hub_names["uksouth"].firewall, "fw-")
-    error_message = "Firewall name should start with 'fw-' prefix."
+    condition     = startswith(local.hub_names["uksouth"].firewall, "afw-")
+    error_message = "Firewall name should start with 'afw-' prefix (CAF recommendation)."
   }
 
   assert {
