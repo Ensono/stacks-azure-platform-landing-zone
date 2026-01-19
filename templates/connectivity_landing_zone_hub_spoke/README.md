@@ -62,7 +62,8 @@ hubs = {
 }
 ```
 
-> **Note:** Availability zones provide 99.99% SLA but incur cross-zone data transfer charges (~£0.01/GB).
+> [!NOTE]
+> Availability zones provide 99.99% SLA but incur cross-zone data transfer charges (~£0.01/GB).
 
 ### Custom IP Addressing
 
