@@ -12,7 +12,7 @@ Deploys hub virtual networks using Azure Verified Modules (AVM). Supports single
 | Azure Firewall | ✅ | With firewall policies and management IP |
 | Private DNS Zones | ✅ | For Azure Private Link services |
 | Private DNS Resolver | ✅ | For hybrid DNS resolution |
-| Azure Monitor Private Link | ❌ | Private connectivity to Log Analytics |
+| Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics |
 | Azure Bastion | ❌ | Secure VM access |
 | VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN |
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity |
@@ -133,14 +133,7 @@ hubs = {
 
 ### Azure Monitor Private Link
 
-Connect Log Analytics privately:
-
-```hcl
-azure_monitor_private_link = {
-  enabled                    = true
-  log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-management/providers/Microsoft.OperationalInsights/workspaces/log-analytics"
-}
-```
+AMPLS is **enabled by default** to provide private connectivity to Log Analytics.
 
 **Using remote state** (recommended):
 
@@ -149,9 +142,22 @@ management_remote_state = {
   enabled              = true
   storage_account_name = "<storage-account-name>"
 }
+# Workspace ID is fetched automatically from management module
+```
 
+**Or provide workspace ID directly:**
+
+```hcl
 azure_monitor_private_link = {
-  enabled = true  # Workspace ID fetched automatically from management module
+  log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-management/providers/Microsoft.OperationalInsights/workspaces/log-analytics"
+}
+```
+
+**To disable AMPLS:**
+
+```hcl
+azure_monitor_private_link = {
+  enabled = false
 }
 ```
 
@@ -325,7 +331,7 @@ Type:
 
 ```hcl
 object({
-    enabled                    = optional(bool, false)
+    enabled                    = optional(bool, true)
     log_analytics_workspace_id = optional(string)
     ingestion_access_mode      = optional(string, "PrivateOnly")
     query_access_mode          = optional(string, "PrivateOnly")

@@ -14,8 +14,11 @@ data "terraform_remote_state" "management" {
 locals {
   management_outputs = var.management_remote_state.enabled ? data.terraform_remote_state.management[0].outputs : {}
 
-  log_analytics_workspace_id = coalesce(
+  # Only compute log_analytics_workspace_id when AMPLS is enabled
+  # coalesce will fail if all values are null, so we handle this gracefully
+  log_analytics_workspace_id = var.azure_monitor_private_link.enabled ? coalesce(
     var.azure_monitor_private_link.log_analytics_workspace_id,
-    try(local.management_outputs.log_analytics_workspace_id, null)
-  )
+    try(local.management_outputs.log_analytics_workspace_id, null),
+    "" # Fallback to empty string to prevent coalesce error - will be caught by validation
+  ) : null
 }

@@ -1,6 +1,6 @@
 variable "azure_monitor_private_link" {
   type = object({
-    enabled                    = optional(bool, false)
+    enabled                    = optional(bool, true)
     log_analytics_workspace_id = optional(string)
     ingestion_access_mode      = optional(string, "PrivateOnly")
     query_access_mode          = optional(string, "PrivateOnly")

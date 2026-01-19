@@ -69,9 +69,9 @@ locals {
   # CAF prefixes not supported or incorrect in the naming module
   # Note: Naming module uses fw- for firewall (industry standard), CAF recommends afw-
   caf_prefixes = {
-    ampls   = "ampls" # Azure Monitor Private Link Scope - not supported by naming module
-    bastion = "bas"   # naming module incorrectly uses "snap" (snapshot prefix)
-    firewall = "afw"  # naming module uses "fw", CAF recommends "afw"
+    ampls    = "ampls" # Azure Monitor Private Link Scope - not supported by naming module
+    bastion  = "bas"   # naming module incorrectly uses "snap" (snapshot prefix)
+    firewall = "afw"   # naming module uses "fw", CAF recommends "afw"
   }
 
   # Extend each naming instance with missing resource types

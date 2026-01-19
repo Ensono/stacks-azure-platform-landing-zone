@@ -36,9 +36,9 @@ flowchart TB
         hubSouth <--> hubWest
     end
 
-    ampls["○ Azure Monitor Private Link"]
+    ampls["✓ Azure Monitor Private Link"]
     ddos["○ DDoS Protection Plan"]
-    ampls -.-> mesh
+    ampls --> mesh
     ddos -.-> mesh
 
     style mesh fill:#f5f5f5,stroke:#d0d0d0
@@ -60,7 +60,7 @@ flowchart TB
     style vpn2 fill:#605E5C,stroke:#3B3A39,color:#fff
     style er1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style er2 fill:#605E5C,stroke:#3B3A39,color:#fff
-    style ampls fill:#605E5C,stroke:#3B3A39,color:#fff
+    style ampls fill:#107C10,stroke:#0B5C0B,color:#fff
     style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
@@ -155,7 +155,7 @@ hubs = {
 
 - Private DNS zones for Azure Private Link services
 - Private DNS Resolver for hybrid DNS
-- Optional: Azure Monitor Private Link Scope (AMPLS) with endpoints in each hub
+- Azure Monitor Private Link Scope (AMPLS) with endpoints in each hub
 - Optional: DDoS Protection Plan
 
 ## Estimated Costs

@@ -9,9 +9,14 @@ hubs = {
   uksouth = {}
 }
 
-# Azure Monitor Private Link Scope
-# Enables private connectivity to Log Analytics workspace
+# Azure Monitor Private Link Scope (enabled by default)
+# Provide workspace ID directly, or use management_remote_state to fetch it
 # azure_monitor_private_link = {
-#   enabled                    = true
 #   log_analytics_workspace_id = "/subscriptions/<subscription-id>/resourceGroups/<rg-name>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>"
+# }
+
+# Or use remote state to fetch workspace ID from management module (recommended)
+# management_remote_state = {
+#   enabled              = true
+#   storage_account_name = "<storage-account-name>"
 # }

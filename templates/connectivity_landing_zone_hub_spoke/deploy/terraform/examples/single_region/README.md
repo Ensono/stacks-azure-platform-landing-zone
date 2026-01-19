@@ -22,9 +22,9 @@ flowchart TB
         zones["○ Availability Zones"]
     end
 
-    ampls["○ Azure Monitor Private Link"]
+    ampls["✓ Azure Monitor Private Link"]
     ddos["○ DDoS Protection Plan"]
-    ampls -.-> hub
+    ampls --> hub
     ddos -.-> hub
 
     style hub fill:#0078D4,stroke:#005A9E,color:#fff
@@ -37,7 +37,7 @@ flowchart TB
     style vpn fill:#605E5C,stroke:#3B3A39,color:#fff
     style er fill:#605E5C,stroke:#3B3A39,color:#fff
     style zones fill:#605E5C,stroke:#3B3A39,color:#fff
-    style ampls fill:#605E5C,stroke:#3B3A39,color:#fff
+    style ampls fill:#107C10,stroke:#0B5C0B,color:#fff
     style ddos fill:#605E5C,stroke:#3B3A39,color:#fff
 ```
 
@@ -103,7 +103,7 @@ hubs = {
 - Private DNS zones for Azure Private Link
 - Private DNS Resolver
 - Private Endpoints subnet (`snet-private-endpoints`)
-- Optional: Azure Monitor Private Link Scope (AMPLS)
+- Azure Monitor Private Link Scope (AMPLS) with private endpoint
 - Optional: Bastion, VPN Gateway, ExpressRoute Gateway
 
 ## Estimated Costs
