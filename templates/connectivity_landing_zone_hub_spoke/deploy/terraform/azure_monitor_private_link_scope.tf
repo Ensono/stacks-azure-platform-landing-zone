@@ -41,6 +41,4 @@ resource "azurerm_private_endpoint" "ampls" {
   }
 
   tags = merge(local.tags, each.value.tags)
-
-  depends_on = [module.hub_and_spoke_vnet]
 }

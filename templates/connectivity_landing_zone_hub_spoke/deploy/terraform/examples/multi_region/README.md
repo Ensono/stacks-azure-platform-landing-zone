@@ -74,11 +74,13 @@ flowchart TB
 cp hub_and_spoke_vnet.tfvars ../../terraform.tfvars
 
 # 2. Edit terraform.tfvars:
-#    - Set connectivity_subscription_id
 #    - Change hub regions (uksouth/ukwest) to your preferred locations
 #    - Adjust features as needed
 
-# 3. Initialize and deploy
+# 3. Set the subscription ID as an environment variable
+export TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
+
+# 4. Initialize and deploy
 eirctl infrastructure:plan
 eirctl infrastructure:apply
 ```
@@ -89,9 +91,14 @@ eirctl infrastructure:apply
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company_name` | Company identifier (first 3 chars used in names) | `"Ensono"` |
-| `connectivity_subscription_id` | Subscription for hub resources | `"12345678-..."` |
+| `company_name` | Company identifier (first 3 chars used in names) | `"ensono"` |
 | `hubs` | Map of hub configurations keyed by region | `{ uksouth = {}, ukwest = {} }` |
+
+### Required Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|--------|
+| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
 
 ### Hub Features
 
@@ -100,7 +107,8 @@ Each hub can enable/disable these components:
 | Feature | Default | Description |
 |---------|---------|-------------|
 | `firewall` | `true` | Azure Firewall for network security |
-| `firewall_management_ip` | `true` | Management IP for forced tunneling |
+| `firewall_sku` | `"Standard"` | Firewall SKU: Basic/Standard/Premium |
+| `firewall_management_ip` | `true` | Management IP for forced tunnelling |
 | `private_dns_zones` | `true` | Private Link DNS zones |
 | `private_dns_resolver` | `true` | DNS resolver for hybrid scenarios |
 | `auto_registration_zone` | `true` | VM DNS auto-registration |
@@ -108,6 +116,14 @@ Each hub can enable/disable these components:
 | `vpn_gateway` | `false` | VPN Gateway (S2S/P2S) |
 | `expressroute_gateway` | `false` | ExpressRoute Gateway |
 | `availability_zones` | `null` | Zones for 99.99% SLA |
+
+### Module-Level Features
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `network_watcher.enabled` | `true` | Network Watcher (free) |
+| `flow_logs.enabled` | `false` | VNet flow logs (storage costs apply) |
+| `ddos_protection_plan.enabled` | `false` | DDoS Protection (~£2,200/month) |
 
 ### Example: Enable Bastion in Primary Hub
 
@@ -145,9 +161,10 @@ hubs = {
 
 - Resource Group for hub resources
 - Virtual Network with required subnets
-- Azure Firewall with policy
+- Azure Firewall with policy (Standard SKU by default)
 - Route tables for firewall routing
 - VNet peering to other hubs (mesh)
+- Network Watcher (free network diagnostics)
 - Private Endpoints subnet (`snet-private-endpoints`)
 - Optional: Bastion, VPN Gateway, ExpressRoute Gateway
 
@@ -156,19 +173,21 @@ hubs = {
 - Private DNS zones for Azure Private Link services
 - Private DNS Resolver for hybrid DNS
 - Azure Monitor Private Link Scope (AMPLS) with endpoints in each hub
-- Optional: DDoS Protection Plan
+- Optional: DDoS Protection Plan, Flow Logs with Traffic Analytics
 
 ## Estimated Costs
 
 | Component | Monthly Cost (approx) |
 |-----------|----------------------|
-| Azure Firewall (Basic) | ~£720/hub |
-| Azure Firewall (Standard) | ~£800/hub |
+| Azure Firewall (Basic) | ~£180/hub |
+| Azure Firewall (Standard) | ~£720/hub |
+| Azure Firewall (Premium) | ~£800/hub |
 | Azure Bastion (Basic) | ~£110/hub |
 | VPN Gateway (VpnGw1) | ~£110/hub |
 | ExpressRoute Gateway | ~£110/hub |
 | AMPLS Private Endpoint | ~£7/hub |
-| DDoS Protection Plan | ~£2,350 (global) |
+| Flow Logs Storage | ~£15-50 (if enabled) |
+| DDoS Protection Plan | ~£2,200 (global) |
 
 *Costs vary by region and configuration. Use the [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for accurate estimates.*
 

@@ -5,6 +5,7 @@ variable "hubs" {
 
     features = optional(object({
       firewall               = optional(bool, true)
+      firewall_sku           = optional(string, "Standard")
       firewall_management_ip = optional(bool, true)
       bastion                = optional(bool, false)
       vpn_gateway            = optional(bool, false)
@@ -59,7 +60,7 @@ variable "hubs" {
     tags = optional(map(string), {})
   }))
 
-  description = "Hub virtual network configurations keyed by Azure region name. Each hub can be independently configured with features, IP ranges, and settings."
+  description = "Hub virtual network configurations keyed by Azure region name."
 
   validation {
     condition     = length(var.hubs) > 0
@@ -68,7 +69,7 @@ variable "hubs" {
 
   validation {
     condition     = length(var.hubs) <= 10
-    error_message = "Maximum of 10 hubs supported (IP address space limitation)."
+    error_message = "Maximum of 10 hubs supported."
   }
 
   validation {
@@ -76,7 +77,7 @@ variable "hubs" {
       for key in keys(var.hubs) :
       key == lower(key)
     ])
-    error_message = "Hub keys must be lowercase Azure region names (e.g., 'uksouth', not 'UKSouth')."
+    error_message = "Hub keys must be lowercase Azure region names."
   }
 
   validation {
@@ -84,7 +85,7 @@ variable "hubs" {
       for key in keys(var.hubs) :
       can(regex("^[a-z][a-z0-9]*$", key))
     ])
-    error_message = "Hub keys must be valid Azure region names (lowercase letters and numbers only, e.g., 'uksouth', 'northeurope')."
+    error_message = "Hub keys must be valid Azure region names."
   }
 
   validation {
@@ -92,7 +93,7 @@ variable "hubs" {
       for key, hub in var.hubs :
       hub.address_space == null || can(cidrhost(hub.address_space, 0))
     ])
-    error_message = "Hub address_space must be a valid CIDR block (e.g., '10.0.0.0/16')."
+    error_message = "Hub address_space must be a valid CIDR block."
   }
 
   validation {
@@ -131,12 +132,22 @@ variable "hubs" {
     ])
     error_message = "firewall_management_ip requires firewall to be enabled."
   }
+
+  validation {
+    condition = alltrue([
+      for key, hub in var.hubs :
+      hub.features == null ||
+      hub.features.firewall_sku == null ||
+      contains(["Basic", "Standard", "Premium"], hub.features.firewall_sku)
+    ])
+    error_message = "firewall_sku must be 'Basic', 'Standard', or 'Premium'."
+  }
 }
 
 variable "hub_network_address_prefix" {
   type        = string
   default     = "10.0.0.0/8"
-  description = "Base address space from which hub networks are allocated. Each hub receives a /16 (e.g., 10.0.0.0/16, 10.1.0.0/16)."
+  description = "Base address space for hub networks. Each hub receives a /16."
 
   validation {
     condition     = can(cidrhost(var.hub_network_address_prefix, 0))
@@ -145,7 +156,7 @@ variable "hub_network_address_prefix" {
 
   validation {
     condition     = tonumber(split("/", var.hub_network_address_prefix)[1]) <= 16
-    error_message = "Base address space must be /16 or larger to accommodate hub /16 allocations."
+    error_message = "Base address space must be /16 or larger."
   }
 
   validation {
@@ -160,5 +171,5 @@ variable "ddos_protection_plan" {
     name    = optional(string)
   })
   default     = {}
-  description = "Azure DDoS Protection Plan configuration. When enabled, protects all hub VNets."
+  description = "DDoS Protection Plan configuration."
 }

@@ -17,7 +17,7 @@ watchers:
     task: lint:terraform:format
 
 pipelines:
-  code:linting:
+  lint:
     - task: lint:yaml
     - task: lint:terraform:format
       depends_on: lint:yaml
@@ -26,15 +26,15 @@ pipelines:
     - task: lint:terraform:tflint
       depends_on: lint:terraform:validate
 
-  code:scanning:
+  scan:
     - task: scan:terraform:checkov
 
-  code:testing:
+  test:
     - task: terraform:init
     - task: terraform:tests
       depends_on: terraform:init
 
-  code:documentation:
+  documentation:
     - task: doc:terraform:generate
 
   infrastructure:plan:

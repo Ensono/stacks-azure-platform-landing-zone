@@ -51,10 +51,12 @@ flowchart TB
 cp hub_and_spoke_vnet.tfvars ../../terraform.tfvars
 
 # 2. Edit terraform.tfvars:
-#    - Set connectivity_subscription_id
 #    - Change hub region (uksouth) to your preferred location
 
-# 3. Initialize and deploy
+# 3. Set the subscription ID as an environment variable
+export TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
+
+# 4. Initialize and deploy
 eirctl infrastructure:plan
 eirctl infrastructure:apply
 ```
@@ -65,9 +67,14 @@ eirctl infrastructure:apply
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company_name` | Company identifier (first 3 chars used in names) | `"Ensono"` |
-| `connectivity_subscription_id` | Subscription for hub resources | `"12345678-..."` |
+| `company_name` | Company identifier (first 3 chars used in names) | `"ensono"` |
 | `hubs` | Single hub configuration | `{ uksouth = {} }` |
+
+### Required Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|--------|
+| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
 
 ### Change Region
 
@@ -87,8 +94,9 @@ hubs = { ukwest = {} }
 hubs = {
   uksouth = {
     features = {
-      bastion    = true  # Secure VM access
-      vpn_gateway = true  # On-premises connectivity
+      firewall_sku = "Basic"  # Cost saving: ~£180/month vs Standard ~£720/month
+      bastion      = true     # Secure VM access
+      vpn_gateway  = true     # On-premises connectivity
     }
   }
 }
@@ -98,23 +106,26 @@ hubs = {
 
 - Resource Group for hub resources
 - Virtual Network with required subnets
-- Azure Firewall with policy
+- Azure Firewall with policy (Standard SKU by default)
 - Route tables for firewall routing
+- Network Watcher (free network diagnostics)
 - Private DNS zones for Azure Private Link
 - Private DNS Resolver
 - Private Endpoints subnet (`snet-private-endpoints`)
 - Azure Monitor Private Link Scope (AMPLS) with private endpoint
-- Optional: Bastion, VPN Gateway, ExpressRoute Gateway
+- Optional: Bastion, VPN Gateway, ExpressRoute Gateway, Flow Logs
 
 ## Estimated Costs
 
 | Component | Monthly Cost (approx) |
 |-----------|----------------------|
-| Azure Firewall (Basic) | ~£720 |
+| Azure Firewall (Standard) | ~£720 |
+| Azure Firewall (Basic) | ~£180 |
 | Azure Bastion (Basic) | ~£110 |
 | VPN Gateway (VpnGw1) | ~£110 |
 | Private DNS Resolver | ~£145 |
 | AMPLS Private Endpoint | ~£7 |
+| Flow Logs Storage | ~£15-50 (if enabled) |
 
 *Costs vary by region. Use the [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for accurate estimates.*
 

@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.5"
     }
+    modtm = {
+      source  = "Azure/modtm"
+      version = "~> 0.3"
+    }
   }
 
   # backend "azurerm" {

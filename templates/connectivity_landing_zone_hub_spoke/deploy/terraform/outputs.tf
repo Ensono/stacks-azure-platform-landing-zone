@@ -1,116 +1,159 @@
 output "hub_regions" {
-  description = "List of regions where hubs are deployed."
+  description = "Regions where hubs are deployed."
   value       = keys(local.enabled_hubs)
 }
 
 output "hub_address_spaces" {
-  description = "Address space allocated to each hub, keyed by region."
+  description = "Address space per hub."
   value       = { for region, addr in local.hub_addresses : region => addr.hub_address_space }
 }
 
 output "virtual_network_resource_ids" {
-  description = "Resource IDs of hub virtual networks, keyed by region."
+  description = "Hub VNet resource IDs."
   value       = module.hub_and_spoke_vnet.virtual_network_resource_ids
 }
 
 output "virtual_network_resource_names" {
-  description = "Names of hub virtual networks, keyed by region."
+  description = "Hub VNet names, keyed by region."
   value       = module.hub_and_spoke_vnet.virtual_network_resource_names
 }
 
-output "dns_server_ip_addresses" {
-  description = "Private DNS Resolver IP addresses, keyed by region. Use for custom DNS configuration."
-  value       = module.hub_and_spoke_vnet.dns_server_ip_addresses
-}
-
 output "firewall_resource_ids" {
-  description = "Resource IDs of Azure Firewalls, keyed by region."
+  description = "Azure Firewall resource IDs, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_resource_ids
 }
 
 output "firewall_resource_names" {
-  description = "Names of Azure Firewalls, keyed by region."
+  description = "Azure Firewall names, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_resource_names
 }
 
 output "firewall_private_ip_addresses" {
-  description = "Private IP addresses of Azure Firewalls, keyed by region. Use for UDR next-hop."
+  description = "Firewall private IPs for UDR next-hop."
   value       = module.hub_and_spoke_vnet.firewall_private_ip_addresses
 }
 
 output "firewall_public_ip_addresses" {
-  description = "Public IP addresses of Azure Firewalls, keyed by region."
+  description = "Firewall public IPs, keyed by region."
   value       = module.hub_and_spoke_vnet.firewall_public_ip_addresses
 }
 
 output "firewall_policies" {
-  description = "Azure Firewall Policy resources, keyed by region."
+  description = "Firewall Policy resources."
   value       = module.hub_and_spoke_vnet.firewall_policies
 }
 
 output "firewall_diagnostic_setting_ids" {
-  description = "Diagnostic setting IDs for Azure Firewalls, keyed by region."
+  description = "Diagnostic setting IDs for firewall."
   value       = { for k, v in azurerm_monitor_diagnostic_setting.firewall : k => v.id }
 }
 
 output "route_tables_firewall" {
-  description = "Route tables for firewall subnets, keyed by region."
+  description = "Route tables for firewall subnets."
   value       = module.hub_and_spoke_vnet.route_tables_firewall
 }
 
 output "route_tables_user_subnets" {
-  description = "Route tables for user subnets (with default route to firewall), keyed by region."
+  description = "Route tables for spoke subnets."
   value       = module.hub_and_spoke_vnet.route_tables_user_subnets
 }
 
+output "dns_server_ip_addresses" {
+  description = "Private DNS Resolver IPs."
+  value       = module.hub_and_spoke_vnet.dns_server_ip_addresses
+}
+
 output "bastion_host_resource_ids" {
-  description = "Resource IDs of Bastion hosts, keyed by region. Null if bastion disabled."
+  description = "Bastion host resource IDs."
   value       = module.hub_and_spoke_vnet.bastion_host_resource_ids
 }
 
 output "bastion_host_public_ip_addresses" {
-  description = "Public IP addresses of Bastion hosts, keyed by region."
+  description = "Bastion public IPs, keyed by region."
   value       = module.hub_and_spoke_vnet.bastion_host_public_ip_address
 }
 
 output "bastion_host_dns_names" {
-  description = "DNS names of Bastion hosts, keyed by region."
+  description = "Bastion DNS names, keyed by region."
   value       = module.hub_and_spoke_vnet.bastion_host_dns_names
 }
 
 output "resource_group_ids" {
-  description = "Resource IDs of all resource groups created by this module."
+  description = "Resource group IDs."
   value       = { for k, v in module.resource_groups : k => v.resource_id }
 }
 
 output "resource_group_names" {
-  description = "Names of all resource groups created by this module."
+  description = "Resource group names."
   value       = { for k, v in module.resource_groups : k => v.name }
 }
 
 output "ampls_id" {
-  description = "Resource ID of the Azure Monitor Private Link Scope."
+  description = "AMPLS resource ID."
   value       = try(azurerm_monitor_private_link_scope.this[0].id, null)
 }
 
 output "ampls_name" {
-  description = "Name of the Azure Monitor Private Link Scope. Use to add scoped services from app landing zones."
+  description = "AMPLS name."
   value       = try(azurerm_monitor_private_link_scope.this[0].name, null)
 }
 
 output "ampls_resource_group_name" {
-  description = "Resource group containing the Azure Monitor Private Link Scope."
+  description = "Resource group containing AMPLS."
   value       = try(module.resource_groups["hub-${local.primary_hub_region}"].name, null)
 }
 
 output "ampls_private_endpoint_ids" {
-  description = "Resource IDs of AMPLS private endpoints, keyed by region."
+  description = "AMPLS private endpoint IDs, keyed by region."
   value       = { for k, v in azurerm_private_endpoint.ampls : k => v.id }
 }
 
 output "ampls_private_ip_addresses" {
-  description = "Private IP addresses of AMPLS endpoints, keyed by region."
+  description = "AMPLS private IPs, keyed by region."
   value = {
     for k, v in azurerm_private_endpoint.ampls : k => v.private_service_connection[0].private_ip_address
   }
+}
+
+output "network_watcher_ids" {
+  description = "Network Watcher resource IDs, keyed by region."
+  value       = { for k, v in azurerm_network_watcher.this : k => v.id }
+}
+
+output "flow_log_ids" {
+  description = "VNet Flow Log resource IDs, keyed by region."
+  value       = { for k, v in azurerm_network_watcher_flow_log.vnet : k => v.id }
+}
+
+# -----------------------------------------------------------------------------
+# Outputs for Spoke Integration
+# -----------------------------------------------------------------------------
+
+output "private_dns_zone_resource_ids" {
+  description = "Private DNS zone resource IDs for spoke VNet linking. Keyed by region, then zone key."
+  value       = module.hub_and_spoke_vnet.private_dns_zone_resource_ids
+}
+
+output "subnet_resource_ids" {
+  description = "Hub subnet resource IDs for UDR association. Keyed by region."
+  value = {
+    for region in keys(local.enabled_hubs) : region => {
+      private_endpoints = "${module.hub_and_spoke_vnet.virtual_network_resource_ids[region]}/subnets/snet-private-endpoints"
+    }
+  }
+}
+
+output "route_table_user_subnets_ids" {
+  description = "Route table IDs for spoke subnet association (routes traffic through firewall)."
+  value       = { for k, v in module.hub_and_spoke_vnet.route_tables_user_subnets : k => v.id }
+}
+
+output "private_endpoints_nsg_ids" {
+  description = "NSG resource IDs for private endpoints subnets, keyed by region."
+  value       = { for k, v in module.nsg_private_endpoints : k => v.resource_id }
+}
+
+output "private_endpoints_nsg_names" {
+  description = "NSG names for private endpoints subnets, keyed by region."
+  value       = { for k, v in module.nsg_private_endpoints : k => v.name }
 }
