@@ -63,7 +63,7 @@ flowchart TB
 | Network Watcher | ✅ | Free network diagnostics (Connection Monitor, Packet Capture) |
 | Private Endpoints NSG | ✅ | NSG for visibility and access control |
 | Private DNS Zones | ✅ | For Azure Private Link services |
-| Private DNS Resolver | ✅ | For hybrid DNS resolution |
+| Private DNS Resolver | ❌ | For hybrid DNS resolution |
 | Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics |
 | Flow Logs | ❌ | NSG/VNet flow logs (storage costs apply) |
 | Azure Bastion | ❌ | Secure VM access |
@@ -164,14 +164,13 @@ private_endpoints_nsg = {
 
 ### Production Configuration
 
-For production workloads, enable availability zones and flow logs:
+For production workloads, enable flow logs for network visibility:
 
 ```hcl
 hubs = {
   uksouth = {
     features = {
-      firewall_sku       = "Standard"
-      availability_zones = ["1", "2", "3"]
+      firewall_sku = "Standard"
     }
   }
 }
@@ -190,10 +189,32 @@ flow_logs = {
 ```
 
 > [!NOTE]
+> Availability zones are auto-detected. Regions that support zones (e.g., uksouth) automatically get zone-redundant resources with 99.99% SLA.
+
+> [!NOTE]
 > Flow logs require a storage account ID from the management module (via `management_remote_state`) or provided directly via `flow_logs.storage_account_id`. This design enables Azure Policy to deploy flow logs using a central storage account.
 
 > [!NOTE]
 > Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
+
+### Availability Zones
+
+Availability zones are **auto-detected** based on region support. Regions like `uksouth` that support zones will automatically deploy zone-redundant resources (99.99% SLA), while regions like `ukwest` without zone support will deploy without zones (99.95% SLA).
+
+To explicitly override (e.g., disable zones for cost savings in dev/test):
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      availability_zones = null  # Disable zones even in supported region
+    }
+  }
+}
+```
+
+> [!NOTE]
+> Zone-redundant deployments incur cross-zone data transfer charges (~£0.01/GB).
 
 ### Enable Optional Features
 
@@ -204,14 +225,10 @@ hubs = {
       bastion              = true
       vpn_gateway          = true
       expressroute_gateway = true
-      availability_zones   = ["1", "2", "3"]
     }
   }
 }
 ```
-
-> [!NOTE]
-> Availability Zones provide a 99.99% SLA, but incur cross-zone data transfer charges (~£0.01/GB).
 
 ### Custom IP Addressing
 
@@ -433,7 +450,6 @@ Unit tests validate configuration logic without deploying infrastructure. Tests 
 ### Run Tests
 
 ```bash
-cd deploy/terraform
 eirctl test
 ```
 

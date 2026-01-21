@@ -6,13 +6,13 @@ variable "hubs" {
     features = optional(object({
       firewall               = optional(bool, true)
       firewall_sku           = optional(string, "Standard")
-      firewall_management_ip = optional(bool, true)
+      firewall_management_ip = optional(bool, false)
       bastion                = optional(bool, false)
       vpn_gateway            = optional(bool, false)
       expressroute_gateway   = optional(bool, false)
       private_dns_zones      = optional(bool, true)
-      private_dns_resolver   = optional(bool, true)
-      auto_registration_zone = optional(bool, true)
+      private_dns_resolver   = optional(bool, false)
+      auto_registration_zone = optional(bool, false)
       availability_zones     = optional(list(string))
     }), {})
 

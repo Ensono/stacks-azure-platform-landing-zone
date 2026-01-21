@@ -14,6 +14,17 @@ locals {
     resource_groups = module.resource_groups
   }
 
+  # Auto-detect availability zones per hub region
+  # Uses explicit override if provided, otherwise detects from region support
+  hub_availability_zones = {
+    for region, hub in local.enabled_hubs : region =>
+    hub.features.availability_zones != null ? hub.features.availability_zones : (
+      module.azure_regions.regions_by_name[region].zones != null
+      ? [for z in module.azure_regions.regions_by_name[region].zones : tostring(z)]
+      : null
+    )
+  }
+
   # Resource group IDs for hub networks
   hub_resource_group_ids = {
     for region in keys(local.enabled_hubs) : region =>
@@ -62,19 +73,19 @@ locals {
         management_subnet_address_prefix = local.hub_subnets[region].firewall_management
         management_ip_enabled            = hub.features.firewall_management_ip
         sku_tier                         = hub.features.firewall_sku
-        zones                            = hub.features.availability_zones
+        zones                            = local.hub_availability_zones[region]
 
         default_ip_configuration = {
           public_ip_config = {
             name  = local.hub_names[region].firewall_pip
-            zones = hub.features.availability_zones
+            zones = local.hub_availability_zones[region]
           }
         }
 
         management_ip_configuration = hub.features.firewall_management_ip ? {
           public_ip_config = {
             name  = local.hub_names[region].firewall_mgmt_pip
-            zones = hub.features.availability_zones
+            zones = local.hub_availability_zones[region]
           }
         } : null
       } : null
@@ -86,10 +97,10 @@ locals {
       bastion = hub.features.bastion ? {
         name                  = local.hub_names[region].bastion
         subnet_address_prefix = local.hub_subnets[region].bastion
-        zones                 = hub.features.availability_zones
+        zones                 = local.hub_availability_zones[region]
         bastion_public_ip = {
           name  = local.hub_names[region].bastion_pip
-          zones = hub.features.availability_zones
+          zones = local.hub_availability_zones[region]
         }
       } : null
 

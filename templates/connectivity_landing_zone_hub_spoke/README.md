@@ -63,8 +63,9 @@ flowchart TB
 | Hub Virtual Networks | ✅ | With mesh peering for multi-region |
 | Azure Firewall | ✅ | Standard SKU (configurable: Basic/Standard/Premium) |
 | Network Watcher | ✅ | Free network diagnostics (Connection Monitor, Packet Capture) |
+| Private Endpoints NSG | ✅ | NSG for visibility and access control |
 | Private DNS Zones | ✅ | For Azure Private Link services |
-| Private DNS Resolver | ✅ | For hybrid DNS resolution |
+| Private DNS Resolver | ❌ | For hybrid DNS resolution |
 | Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics |
 | Flow Logs | ❌ | NSG/VNet flow logs (storage costs apply) |
 | Azure Bastion | ❌ | Secure VM access |
@@ -137,29 +138,85 @@ ddos_protection_plan = {
 > [!NOTE]
 > DDoS Protection Plan provides L3/L4 protection, telemetry, and rapid response support. Consider enabling for production workloads with public-facing endpoints.
 
+### Private Endpoints NSG
+
+A Network Security Group is deployed on the private endpoints subnet by default, as recommended by [Microsoft's hub-spoke architecture guidance](https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network).
+
+The NSG provides:
+- **Visibility** - NSG flow logs for auditing and compliance
+- **Access control** - Centralized place to control traffic to private endpoints
+- **Defense in depth** - Additional security layer alongside Azure Firewall
+
+Default rules:
+| Rule | Priority | Direction | Action | Source | Destination |
+|------|----------|-----------|--------|--------|-------------|
+| AllowVNetInbound | 100 | Inbound | Allow | VirtualNetwork | VirtualNetwork |
+| DenyInternetInbound | 4096 | Inbound | Deny | Internet | Any |
+
+To disable the NSG:
+
+```hcl
+private_endpoints_nsg = {
+  enabled = false
+}
+```
+
+> [!NOTE]
+> When using Azure Firewall, the NSG provides additional visibility and logging. Traffic is already controlled by the firewall, but the NSG enables NSG flow logs for the private endpoints subnet.
+
 ### Production Configuration
 
-For production workloads, enable availability zones and flow logs:
+For production workloads, enable flow logs for network visibility:
 
 ```hcl
 hubs = {
   uksouth = {
     features = {
-      firewall_sku       = "Standard"
-      availability_zones = ["1", "2", "3"]
+      firewall_sku = "Standard"
     }
   }
+}
+
+# Flow logs require storage account from management module
+management_remote_state = {
+  enabled              = true
+  storage_account_name = "<storage-account-name>"
 }
 
 flow_logs = {
   enabled                   = true
   retention_days            = 90
-  traffic_analytics_enabled = true  # Requires management_remote_state
+  traffic_analytics_enabled = true
 }
 ```
 
 > [!NOTE]
+> Availability zones are auto-detected. Regions that support zones (e.g., uksouth) automatically get zone-redundant resources with 99.99% SLA.
+
+> [!NOTE]
+> Flow logs require a storage account ID from the management module (via `management_remote_state`) or provided directly via `flow_logs.storage_account_id`. This design enables Azure Policy to deploy flow logs using a central storage account.
+
+> [!NOTE]
 > Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
+
+### Availability Zones
+
+Availability zones are **auto-detected** based on region support. Regions like `uksouth` that support zones will automatically deploy zone-redundant resources (99.99% SLA), while regions like `ukwest` without zone support will deploy without zones (99.95% SLA).
+
+To explicitly override (e.g., disable zones for cost savings in dev/test):
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      availability_zones = null  # Disable zones even in supported region
+    }
+  }
+}
+```
+
+> [!NOTE]
+> Zone-redundant deployments incur cross-zone data transfer charges (~£0.01/GB).
 
 ### Enable Optional Features
 
@@ -170,14 +227,10 @@ hubs = {
       bastion              = true
       vpn_gateway          = true
       expressroute_gateway = true
-      availability_zones   = ["1", "2", "3"]
     }
   }
 }
 ```
-
-> [!NOTE]
-> Availability Zones provide a 99.99% SLA, but incur cross-zone data transfer charges (~£0.01/GB).
 
 ### Custom IP Addressing
 
@@ -399,7 +452,6 @@ Unit tests validate configuration logic without deploying infrastructure. Tests 
 ### Run Tests
 
 ```bash
-cd deploy/terraform
 eirctl test
 ```
 
@@ -408,7 +460,7 @@ eirctl test
 | Test File | Description |
 |-----------|-------------|
 | `hub_networking.tftest.hcl` | Address space, subnets, multi-hub, mesh peering |
-| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall SKU, Network Watcher, flow logs |
+| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall SKU, Network Watcher, flow logs, private endpoints NSG |
 | `naming_and_tags.tftest.hcl` | CAF naming conventions, tags |
 
 <!-- markdownlint-disable MD033 -->
@@ -424,6 +476,8 @@ The following requirements are needed by this module:
 
 - <a name="requirement_local"></a> [local](#requirement\_local) (~> 2.5)
 
+- <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
+
 ## Resources
 
 The following resources are used by this module:
@@ -435,7 +489,9 @@ The following resources are used by this module:
 - [azurerm_network_watcher.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher) (resource)
 - [azurerm_network_watcher_flow_log.vnet](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher_flow_log) (resource)
 - [azurerm_private_endpoint.ampls](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) (resource)
+- [azurerm_subnet_network_security_group_association.private_endpoints](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association) (resource)
 - [terraform_data.validate_ampls_requirements](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
+- [terraform_data.validate_flow_logs_requirements](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
 - [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
 - [terraform_remote_state.management](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/data-sources/remote_state) (data source)
 
@@ -470,13 +526,13 @@ map(object({
     features = optional(object({
       firewall               = optional(bool, true)
       firewall_sku           = optional(string, "Standard")
-      firewall_management_ip = optional(bool, true)
+      firewall_management_ip = optional(bool, false)
       bastion                = optional(bool, false)
       vpn_gateway            = optional(bool, false)
       expressroute_gateway   = optional(bool, false)
       private_dns_zones      = optional(bool, true)
-      private_dns_resolver   = optional(bool, true)
-      auto_registration_zone = optional(bool, true)
+      private_dns_resolver   = optional(bool, false)
+      auto_registration_zone = optional(bool, false)
       availability_zones     = optional(list(string))
     }), {})
 
@@ -601,15 +657,20 @@ Default:
 
 ### <a name="input_flow_logs"></a> [flow\_logs](#input\_flow\_logs)
 
-Description: Flow logs configuration for network traffic analysis. Disabled by default due to storage costs.
+Description: Flow logs configuration for network traffic analysis. Disabled by default.
+
+Requirements:
+- Storage account ID must be provided (via storage\_account\_id or management\_remote\_state)
+- Storage account should be in the management module for Azure Policy compatibility
 
 When enabled, creates:
-- Storage account for flow log data (~£0.02/GB stored)
-- NSG flow logs for each hub subnet NSG
-- Optional Traffic Analytics (requires Log Analytics workspace)
+- VNet flow logs for each hub virtual network
+
+Optional:
+- Traffic Analytics (requires Log Analytics workspace via management\_remote\_state)
 
 Cost considerations:
-- Storage: ~£15-50/month depending on traffic volume
+- Storage: ~£0.02/GB stored (~£15-50/month depending on traffic volume)
 - Traffic Analytics: Additional Log Analytics ingestion costs
 
 Note: Retention defaults to 90 days to meet security compliance requirements (CKV\_AZURE\_12).
@@ -621,6 +682,7 @@ object({
     enabled                   = optional(bool, false)
     retention_days            = optional(number, 90)
     traffic_analytics_enabled = optional(bool, false)
+    storage_account_id        = optional(string, null)
   })
 ```
 
@@ -673,6 +735,40 @@ object({
 ```
 
 Default: `{}`
+
+### <a name="input_private_endpoints_nsg"></a> [private\_endpoints\_nsg](#input\_private\_endpoints\_nsg)
+
+Description: Configuration for the Network Security Group on the private endpoints subnet.
+
+NSG provides:
+- Centralized access control for private endpoints
+- Visibility through NSG flow logs
+- Compliance auditing capability
+
+Microsoft recommends using NSG on private endpoint subnets to control and log access.  
+See: https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network
+
+- `enabled` - (Optional) Deploy NSG on private endpoints subnet. Defaults to `true`.
+
+Note: When `enabled = true`, an NSG with default rules is created:
+- AllowVNetInbound (priority 100): Allow traffic from VirtualNetwork
+- DenyInternetInbound (priority 4096): Deny traffic from Internet
+
+Type:
+
+```hcl
+object({
+    enabled = optional(bool, true)
+  })
+```
+
+Default:
+
+```json
+{
+  "enabled": true
+}
+```
 
 ### <a name="input_region_geography"></a> [region\_geography](#input\_region\_geography)
 
@@ -770,9 +866,9 @@ Description: Azure Firewall resource IDs, keyed by region.
 
 Description: Azure Firewall names, keyed by region.
 
-### <a name="output_flow_logs_storage_account_id"></a> [flow\_logs\_storage\_account\_id](#output\_flow\_logs\_storage\_account\_id)
+### <a name="output_flow_log_ids"></a> [flow\_log\_ids](#output\_flow\_log\_ids)
 
-Description: Storage account ID for flow logs.
+Description: VNet Flow Log resource IDs, keyed by region.
 
 ### <a name="output_hub_address_spaces"></a> [hub\_address\_spaces](#output\_hub\_address\_spaces)
 
@@ -789,6 +885,14 @@ Description: Network Watcher resource IDs, keyed by region.
 ### <a name="output_private_dns_zone_resource_ids"></a> [private\_dns\_zone\_resource\_ids](#output\_private\_dns\_zone\_resource\_ids)
 
 Description: Private DNS zone resource IDs for spoke VNet linking. Keyed by region, then zone key.
+
+### <a name="output_private_endpoints_nsg_ids"></a> [private\_endpoints\_nsg\_ids](#output\_private\_endpoints\_nsg\_ids)
+
+Description: NSG resource IDs for private endpoints subnets, keyed by region.
+
+### <a name="output_private_endpoints_nsg_names"></a> [private\_endpoints\_nsg\_names](#output\_private\_endpoints\_nsg\_names)
+
+Description: NSG names for private endpoints subnets, keyed by region.
 
 ### <a name="output_resource_group_ids"></a> [resource\_group\_ids](#output\_resource\_group\_ids)
 
@@ -844,16 +948,16 @@ Source: Azure/naming/azurerm
 
 Version: 0.4.3
 
+### <a name="module_nsg_private_endpoints"></a> [nsg\_private\_endpoints](#module\_nsg\_private\_endpoints)
+
+Source: Azure/avm-res-network-networksecuritygroup/azurerm
+
+Version: 0.5.1
+
 ### <a name="module_resource_groups"></a> [resource\_groups](#module\_resource\_groups)
 
 Source: Azure/avm-res-resources-resourcegroup/azurerm
 
 Version: 0.2.1
-
-### <a name="module_storage_account_flow_logs"></a> [storage\_account\_flow\_logs](#module\_storage\_account\_flow\_logs)
-
-Source: Azure/avm-res-storage-storageaccount/azurerm
-
-Version: 0.6.7
 
 <!-- END_TF_DOCS -->

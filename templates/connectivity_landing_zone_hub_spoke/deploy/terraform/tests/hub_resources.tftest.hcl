@@ -52,10 +52,10 @@ run "hub_defaults" {
     error_message = "Gateways should be disabled by default."
   }
 
-  # Private DNS enabled by default
+  # Private DNS zones enabled, resolver disabled by default
   assert {
-    condition     = local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_zones == true && local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_resolver == true
-    error_message = "Private DNS should be enabled by default."
+    condition     = local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_zones == true && local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_resolver == false
+    error_message = "Private DNS zones should be enabled and resolver disabled by default."
   }
 
   # DDoS disabled by default
@@ -104,7 +104,7 @@ run "feature_toggles" {
           firewall             = true
           bastion              = false
           vpn_gateway          = true
-          private_dns_resolver = false
+          private_dns_resolver = true
           availability_zones   = ["1", "2", "3"]
         }
       }
@@ -113,7 +113,7 @@ run "feature_toggles" {
 
   # Feature flags propagate
   assert {
-    condition     = local.hub_virtual_networks["uksouth"].enabled_resources.firewall == true && local.hub_virtual_networks["uksouth"].enabled_resources.bastion == false && local.hub_virtual_networks["uksouth"].enabled_resources.virtual_network_gateway_vpn == true && local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_resolver == false
+    condition     = local.hub_virtual_networks["uksouth"].enabled_resources.firewall == true && local.hub_virtual_networks["uksouth"].enabled_resources.bastion == false && local.hub_virtual_networks["uksouth"].enabled_resources.virtual_network_gateway_vpn == true && local.hub_virtual_networks["uksouth"].enabled_resources.private_dns_resolver == true
     error_message = "Feature flags should propagate to hub config."
   }
 
@@ -123,10 +123,53 @@ run "feature_toggles" {
     error_message = "VPN gateway config should exist with CAF naming."
   }
 
-  # Availability zones propagate
+  # Explicit availability zones override propagate
   assert {
     condition     = local.hub_virtual_networks["uksouth"].firewall.zones == tolist(["1", "2", "3"])
-    error_message = "Availability zones should propagate to firewall."
+    error_message = "Explicit availability zones override should propagate to firewall."
+  }
+}
+
+# =============================================================================
+# Availability Zones Auto-Detection
+# =============================================================================
+
+run "availability_zones_auto_detect" {
+  command   = plan
+  state_key = "az_auto"
+
+  # Default config - zones should be auto-detected from region
+  # uksouth supports zones [1, 2, 3], ukwest does not (null)
+  assert {
+    condition     = local.hub_availability_zones["uksouth"] == tolist(["1", "2", "3"])
+    error_message = "Availability zones should be auto-detected for uksouth."
+  }
+
+  assert {
+    condition     = local.hub_virtual_networks["uksouth"].firewall.zones == tolist(["1", "2", "3"])
+    error_message = "Firewall should use auto-detected zones for uksouth."
+  }
+}
+
+run "availability_zones_non_az_region" {
+  command   = plan
+  state_key = "az_ukwest"
+
+  variables {
+    hubs = {
+      ukwest = { enabled = true }
+    }
+  }
+
+  # ukwest doesn't support zones
+  assert {
+    condition     = local.hub_availability_zones["ukwest"] == null
+    error_message = "Availability zones should be null for ukwest (no zone support)."
+  }
+
+  assert {
+    condition     = local.hub_virtual_networks["ukwest"].firewall.zones == null
+    error_message = "Firewall should have null zones for ukwest."
   }
 }
 
