@@ -1,67 +1,442 @@
-# Stacks Azure Platform Landing Zone Starter Module - Management
+# Stacks Azure Platform Landing Zone - Management
 
-This module is part of the Stacks Azure Platform Landing Zone solution. It is a complete implementation of a Management Landing Zone using Azure Verified Modules.
+This module deploys management resources using Azure Verified Modules (AVM). It provides centralized logging, monitoring, and an optional default management group hierarchy for Azure Landing Zones.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Management["Management Subscription"]
+        direction TB
+
+        subgraph Resources["Management Resource Group"]
+            LAW["Log Analytics Workspace"]
+            DCR["Data Collection Rules"]
+            UAI["User Assigned Identity (AMA)"]
+            SA["Storage Account"]
+            Blob["Flow Logs Container"]
+        end
+
+        subgraph Optional["Management Groups (Optional)"]
+            MG["Management Group Hierarchy"]
+            Policy["Azure Policies"]
+        end
+    end
+
+    subgraph Connectivity["Connectivity Subscription"]
+        PE["Private Endpoint"]
+        Hub["Hub VNet"]
+        FlowLogs["VNet Flow Logs"]
+    end
+
+    LAW --> DCR
+    DCR --> UAI
+    SA --> Blob
+    PE --> SA
+    Hub --> PE
+    FlowLogs --> SA
+    FlowLogs --> LAW
+```
 
 ## Features
 
-### Management Resources
+| Feature | Default | Description |
+| ------- | ------- | ----------- |
+| Log Analytics Workspace | ✅ | Central logging for all Azure resources |
+| Data Collection Rules | ✅ | Change Tracking, VM Insights |
+| Azure Monitor Agent Identity | ✅ | User-assigned managed identity for AMA |
+| Flow Logs Storage Account | ✅ | Storage for VNet flow logs (private access) |
+| Resource Group Locks | ✅ | CanNotDelete locks on resource groups |
+| Log Analytics Diagnostics | ✅ | Self-monitoring diagnostic settings |
+| Health Monitoring Alerts | ❌ | Ingestion latency, query failures, storage alerts |
+| Defender for SQL DCR | ❌ | SQL security monitoring |
+| Management Groups | ❌ | Management group hierarchy with policies |
 
-- Deployment of Log Analytics Workspace
-- Optional deployment of Azure Automation Account.
-- Deployment of Azure Resource Group.
-- Customizable Log Analytics Solutions.
-- Optional deployment of Data Collection Rules.
-- Optional deployment of User Assigned Managed Identity for Azure Monitor Agent.
-
-### Management Groups
-
-- Optional deployment of Management Groups according to the supplied architecture (default is [alz_custom](./lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml))
-- Optional deployment of Azure Policy assets (definitions, assignments, and initiatives) according to the supplied architecture and associated archetypes
-- Optional modification of policy assignments:
-  - Enforcement mode
-  - Identity
-  - Non-compliance messages
-  - Overrides
-  - Parameters
-  - Resource selectors
-- Optional creation of the required role assignments for Azure Policy, including support for the **assign permissions** metadata tag, just like the Azure Portal
-- Optional deployment of custom role definitions
-
->[!NOTE]
-> The module can be used independently if needed. Example `tfvars` files can be found in the [examples](./deploy/terraform/examples/) directory for that use case.
-
-### Running Directly
-
-#### Run the local examples
-
-##### Management Resources Only
-
-Create a `terraform.tfvars` file in the root of the module directory with the following content, replacing the placeholder with the actual values:
+## Quick Start
 
 ```hcl
-subscription_ids  = {
-  "management"    = "00000000-0000-0000-0000-000000000000",
+company_name = "ensono"
+location     = "uksouth"
+
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+```
+
+## Configuration Examples
+
+### Management Resources Only (Default)
+
+Deploys Log Analytics, Data Collection Rules, and VNet Flow Logs Storage with sensible defaults:
+
+```hcl
+company_name               = "ensono"
+location                   = "uksouth"
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+```
+
+### Customizing Management Resources
+
+Override specific settings while using defaults for the rest:
+
+```hcl
+company_name               = "ensono"
+location                   = "uksouth"
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Customize retention and disable VM Insights DCR
+management_resource_settings = {
+  log_analytics_workspace_retention_in_days = 90
+
+  data_collection_rules = {
+    vm_insights = { enabled = false }
+  }
+}
+
+flow_logs_storage = {
+  retention_days = 90
 }
 ```
 
-```text
-terraform init
-terraform apply -var-file ./examples/management_minimal.tfvars
-```
+### Full Azure Landing Zone with Management Groups
 
-##### Management Groups
-
-Create a `terraform.tfvars` file in the root of the module directory with the following content, replacing the placeholder with the actual values:
+Deploy the complete Azure Landing Zone Management Group hierarchy with policies:
 
 ```hcl
-subscription_ids  = {
-  "connectivity"  = "00000000-0000-0000-0000-000000000000",
-  "identity"      = "00000000-0000-0000-0000-000000000000",
-  "management"    = "00000000-0000-0000-0000-000000000000"
+company_name               = "ensono"
+location                   = "uksouth"
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Required: Platform subscriptions (per CAF)
+connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
+identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
+
+# Optional: Security subscription
+# security_subscription_id = "33333333-3333-3333-3333-333333333333"
+
+# Enable management groups (deploys under tenant root group by default)
+management_groups_enabled = true
+
+# Management Group Settings (all settings are optional)
+management_group_settings = {
+  # parent_management_group_id = "existing-mg-name"  # Optional: defaults to tenant root group
+  # default_management_group_name defaults to "sandbox" per CAF recommendation
 }
 ```
 
-```text
-terraform init
-terraform apply -var-file ./examples/management.tfvars
+### Development/Testing (Single Subscription)
+
+For testing with only a management subscription:
+
+```hcl
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+management_groups_enabled    = true
+skip_subscription_placement  = true  # Skips connectivity/identity validation
+```
+
+### Using Base ALZ Policies (No Customization)
+
+Use the standard Azure Landing Zones Library policies without custom overrides:
+
+```hcl
+management_groups_enabled        = true
+management_groups_use_custom_lib = false  # Use base ALZ policies
+
+management_group_settings = {
+  architecture_name          = "alz"  # Base ALZ architecture (not alz_custom)
+  parent_management_group_id = "your-tenant-id"  # Optional: defaults to tenant root
+}
+```
+
+> [!NOTE]
+> Management Groups require elevated permissions (`Management Group Contributor` at tenant root level).
+
+## Management Group Hierarchy
+
+When `management_groups_enabled = true`, the module deploys the following Azure Landing Zone management group hierarchy:
+
+```mermaid
+flowchart TB
+    Tenant["Tenant Root Group"]
+    ALZ["Azure Landing Zones<br/><i>root policies</i>"]
+
+    Platform["Platform"]
+    LandingZones["Landing Zones"]
+    Sandbox["Sandbox"]
+    Decommissioned["Decommissioned"]
+
+    Management["Management<br/><i>management subscription</i>"]
+    Connectivity["Connectivity<br/><i>connectivity subscription</i>"]
+    Identity["Identity<br/><i>identity subscription</i>"]
+    Security["Security<br/><i>security subscription</i>"]
+
+    Corp["Corp<br/><i>private workloads</i>"]
+    Online["Online<br/><i>public workloads</i>"]
+
+    Tenant --> ALZ
+    ALZ --> Platform
+    ALZ --> LandingZones
+    ALZ --> Sandbox
+    ALZ --> Decommissioned
+
+    Platform --> Management
+    Platform --> Connectivity
+    Platform --> Identity
+    Platform --> Security
+
+    LandingZones --> Corp
+    LandingZones --> Online
+
+    style ALZ fill:#0078d4,color:#fff
+    style Platform fill:#5c2d91,color:#fff
+    style LandingZones fill:#008272,color:#fff
+    style Management fill:#5c2d91,color:#fff
+    style Connectivity fill:#5c2d91,color:#fff
+    style Identity fill:#5c2d91,color:#fff
+    style Security fill:#5c2d91,color:#fff
+    style Corp fill:#008272,color:#fff
+    style Online fill:#008272,color:#fff
+```
+
+Platform subscriptions are automatically placed into their respective management groups when subscription IDs are provided.
+
+## Integration with Connectivity Module
+
+The management module outputs are consumed by the connectivity module via Terraform remote state:
+
+**Management module outputs:**
+
+- `log_analytics_workspace_id` - Used for AMPLS and diagnostics
+- `log_analytics_workspace_name` - Log Analytics Workspace name
+- `log_analytics_workspace_guid` - Used for Traffic Analytics
+- `flow_logs_storage_account_id` - Used for VNet flow logs
+
+**Connectivity module configuration:**
+
+```hcl
+management_remote_state = {
+  enabled              = true
+  storage_account_name = "<tfstate-storage-account>"
+}
+```
+
+## Azure Monitor Private Link Scope (AMPLS)
+
+This module is designed to work with AMPLS deployed by the connectivity module. By default, Log Analytics is configured with secure settings that require private connectivity:
+
+| Setting | Default | Description |
+| ------- | ------- | ----------- |
+| `internet_ingestion_enabled` | `false` | Blocks data ingestion from public internet |
+| `internet_query_enabled` | `false` | Blocks queries from public internet |
+| `local_authentication_enabled` | `false` | Requires Entra ID authentication |
+
+### Deployment Order
+
+1. **Deploy management module first** - Creates Log Analytics Workspace with private-only settings
+2. **Deploy connectivity module second** - Creates AMPLS and links Log Analytics to private network
+
+### Enabling Public Access (Development Only)
+
+For development environments without private networking, you can enable public access:
+
+```hcl
+management_resource_settings = {
+  # Enable public access for development/testing (not recommended for production)
+  log_analytics_workspace_internet_ingestion_enabled   = true
+  log_analytics_workspace_internet_query_enabled       = true
+  log_analytics_workspace_local_authentication_enabled = true
+}
+```
+
+> [!WARNING]
+> Enabling public access reduces security. Use only in development environments where AMPLS is not deployed.
+
+## Flow Logs Storage Account
+
+The storage account for VNet flow logs is:
+
+- Created with private network access by default (no public access)
+- Uses ZRS replication for high availability within the region
+- Uses Cool access tier by default for cost optimization (flow logs are infrequently accessed)
+- Configured with blob versioning for data protection
+- Configured with lifecycle management for automatic cleanup
+- Ready for private endpoint from connectivity module
+
+To connect from connectivity module, create a private endpoint to this storage account from your hub VNet's private endpoints subnet.
+
+## Reliability and Zone Redundancy
+
+The module implements Azure Well-Architected Framework reliability best practices:
+
+### Log Analytics Workspace
+
+| Feature | Status | Notes |
+| ------- | ------ | ----- |
+| Data Resilience | ✅ Automatic | Data replicated across availability zones in supported regions |
+| Service Resilience | ⚠️ Regional | Requires dedicated cluster for full zone-redundant service operations |
+| Diagnostics | ✅ Enabled | Self-monitoring via diagnostic settings |
+
+**Supported regions for data resilience**: UK South, West Europe, East US, West US 2, and [others](https://learn.microsoft.com/azure/azure-monitor/logs/availability-zones#supported-regions).
+
+### Storage Account
+
+| Feature | Status | Notes |
+| ------- | ------ | ----- |
+| Zone Redundancy | ✅ ZRS | Default replication across 3 availability zones |
+| Resource Locks | ✅ Enabled | CanNotDelete locks prevent accidental deletion |
+| Blob Versioning | ✅ Enabled | Point-in-time recovery for data protection |
+
+### For High Availability Requirements
+
+For mission-critical deployments requiring service resilience (not just data resilience):
+
+```hcl
+# Consider dedicated clusters for high-volume, mission-critical workloads
+# Requires 500+ GB/day commitment
+management_resource_settings = {
+  log_analytics_workspace_sku = "CapacityReservation"
+  log_analytics_workspace_reservation_capacity_in_gb_per_day = 500
+}
+```
+
+> [!NOTE]
+> Dedicated clusters provide service resilience (query availability during zone failures) but require minimum 500 GB/day commitment. For most workloads, standard data resilience is sufficient.
+
+## Health Monitoring Alerts
+
+The module supports optional health monitoring alerts to ensure the observability infrastructure remains healthy. Alerts are automatically enabled when an action group ID is provided:
+
+```hcl
+monitoring_alerts = {
+  action_group_id = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Insights/actionGroups/platform-alerts"
+}
+```
+
+To customize thresholds:
+
+```hcl
+monitoring_alerts = {
+  action_group_id                     = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Insights/actionGroups/platform-alerts"
+  ingestion_latency_threshold_seconds = 60   # Alert if latency > 1 minute (default: 120)
+  storage_availability_threshold      = 99.5 # Alert if availability < 99.5% (default: 99.9)
+  enable_query_failure_alerts         = true # Monitor query failures (default: true)
+  query_failure_threshold             = 10   # Alert after 10 failures (default: 5)
+}
+```
+
+### Alert Types
+
+| Alert | Severity | Description |
+| ----- | -------- | ----------- |
+| Ingestion Latency | 2 (Warning) | Triggers when data ingestion latency exceeds threshold |
+| Query Failures | 2 (Warning) | Triggers when query failures exceed threshold |
+| Storage Availability | 1 (Error) | Triggers when storage availability drops below threshold |
+
+> [!TIP]
+> Create an Action Group in Azure Monitor before enabling alerts to receive notifications via email, SMS, webhook, or other channels.
+
+## Estimated Monthly Costs
+
+The following table provides estimated monthly costs for typical deployments. Actual costs vary based on data ingestion volume, retention, and region.
+
+| Resource | Configuration | Estimated Cost (USD) |
+| -------- | ------------- | -------------------- |
+| Log Analytics Workspace | PerGB2018, ~5 GB/day | ~$73/month |
+| Storage Account (ZRS, Cool) | Standard, 10 GB | ~$2/month |
+| Data Collection Rules | N/A | Included |
+| User Assigned Managed Identity | N/A | Free |
+| Management Groups | N/A | Free |
+| Azure Policies | N/A | Free |
+
+**Typical Total**: ~$75/month (varies by ingestion volume)
+
+> [!TIP]
+>
+> - Use [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for precise estimates
+> - Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day)
+> - Set `log_analytics_workspace_daily_quota_gb` to cap unexpected ingestion costs
+> - Flow logs storage uses Cool tier by default (~50% cheaper than Hot)
+
+## Cost Optimization
+
+The module follows Azure Well-Architected Framework cost optimization guidance:
+
+### Log Analytics Workspace Cost Settings
+
+| Setting | Default | Cost Impact |
+| ------- | ------- | ----------- |
+| `log_analytics_workspace_daily_quota_gb` | `-1` (unlimited) | Set a cap to prevent runaway costs |
+| `log_analytics_workspace_sku` | `PerGB2018` | Pay-as-you-go pricing |
+| `log_analytics_workspace_reservation_capacity_in_gb_per_day` | `null` | Use commitment tiers for 15-25% savings |
+
+**Commitment tier pricing** (requires `sku = "CapacityReservation"`):
+
+```hcl
+management_resource_settings = {
+  log_analytics_workspace_sku                                = "CapacityReservation"
+  log_analytics_workspace_reservation_capacity_in_gb_per_day = 100  # 100, 200, 300, 400, or 500 GB/day
+}
+```
+
+### Storage Account Cost Settings
+
+| Setting | Default | Cost Impact |
+| ------- | ------- | ----------- |
+| `access_tier` | `Cool` | ~50% cheaper than Hot tier |
+| `account_replication_type` | `ZRS` | Balance of cost and availability |
+| `retention_days` | `30` | Reduces storage costs via lifecycle policy |
+
+For Hot tier (higher performance, higher cost):
+
+```hcl
+flow_logs_storage = {
+  access_tier = "Hot"
+}
+```
+
+## Resource Naming
+
+Resources follow Cloud Adoption Framework (CAF) naming conventions using the [Azure Naming module](https://registry.terraform.io/modules/Azure/naming/azurerm/latest):
+
+| Resource | Pattern | Example |
+| -------- | ------- | ------- |
+| Resource Group | `rg-{company}-{region}-{env}-man-001` | `rg-ens-uks-dev-man-001` |
+| Log Analytics | `log-{company}-{region}-{env}-man-001` | `log-ens-uks-dev-man-001` |
+| Storage Account | `st{company}{region}{env}fl{random}` | `stensuksdevflabc` |
+| User Assigned Identity | `uai-{company}-{region}-{env}-man-001` | `uai-ens-uks-dev-man-001` |
+| Data Collection Rule | `dcr-{type}` | `dcr-change-tracking` |
+
+### Naming Strategy
+
+The module uses two naming strategies:
+
+| Strategy | Suffix | Used For | Why |
+| -------- | ------ | -------- | --- |
+| **Deterministic** | `001` | Resource groups, Log Analytics, identities | ALZ policy values require names known at plan time |
+| **Unique** | Random 3-char | Storage accounts | Global uniqueness requirement |
+
+The random suffix is generated once using `random_string` and stored in Terraform state, ensuring consistency across deployments.
+
+> [!TIP]
+> Deterministic names (ending in `001`) are used for resources referenced in ALZ policy assignments. Storage accounts use `name_unique` from the naming module for global uniqueness.
+
+### Data Collection Rule Names
+
+DCR names use AVM defaults but can be customized:
+
+| DCR | Default Name | Description |
+| --- | ------------ | ----------- |
+| Change Tracking | `dcr-change-tracking` | File and registry change monitoring |
+| VM Insights | `dcr-vm-insights` | VM performance and dependency data |
+| Defender for SQL | `dcr-defender-sql` | SQL security telemetry |
+
+To override DCR names:
+
+```hcl
+management_resource_settings = {
+  data_collection_rules = {
+    change_tracking = { name = "dcr-custom-change-tracking" }
+    vm_insights     = { name = "dcr-custom-vm-insights" }
+    defender_sql    = { enabled = true, name = "dcr-custom-defender-sql" }
+  }
+}
 ```

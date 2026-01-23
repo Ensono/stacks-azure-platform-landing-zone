@@ -4,8 +4,8 @@ management_groups:
     display_name: Azure Landing Zones
     archetypes:
       - root_custom
+    parent_id: null # setting to null indicates to the provider that we should use the parent resource id
     exists: false
-    parent_id: null
 
   - id: platform
     display_name: Platform

@@ -27,6 +27,7 @@ crash.log
 **/terraform.tfvars
 !*_*.tfvars
 !**/examples/**/*.tfvars
+!**/tests/**/*.tfvars
 *.tfvars.json
 
 # Ignore override files as they are usually used to override resources locally and so
