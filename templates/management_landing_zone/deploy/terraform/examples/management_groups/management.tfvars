@@ -1,6 +1,6 @@
 # Management Groups (includes Management Resources)
 # =================================================
-# Deploys: Management Groups, Policies, Log Analytics, DCRs, Storage, Identity
+# Deploys: Management Groups, Policies, Log Analytics, DCRs, Identity
 #
 # Policy default values are computed from management_resources outputs.
 # Subscription placement is computed from subscription variables.

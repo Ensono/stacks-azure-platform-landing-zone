@@ -125,6 +125,16 @@ output "flow_log_ids" {
   value       = { for k, v in azurerm_network_watcher_flow_log.vnet : k => v.id }
 }
 
+output "flow_logs_storage_account_ids" {
+  description = "Flow logs storage account IDs, keyed by region. Storage accounts are created per-region to meet Azure requirements."
+  value       = { for k, v in module.flow_logs_storage : k => v.resource_id }
+}
+
+output "flow_logs_storage_account_names" {
+  description = "Flow logs storage account names, keyed by region."
+  value       = { for k, v in module.flow_logs_storage : k => v.name }
+}
+
 # -----------------------------------------------------------------------------
 # Outputs for Spoke Integration
 # -----------------------------------------------------------------------------

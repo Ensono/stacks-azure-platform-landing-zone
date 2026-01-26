@@ -1,8 +1,3 @@
-output "flow_logs_storage_account_id" {
-  description = "The resource ID of the storage account for VNet flow logs."
-  value       = try(module.flow_logs_storage[0].resource_id, null)
-}
-
 output "log_analytics_workspace_guid" {
   description = "The workspace GUID of the log analytics workspace."
   value       = try(module.management_resources[0].log_analytics_workspace.workspace_id, null)

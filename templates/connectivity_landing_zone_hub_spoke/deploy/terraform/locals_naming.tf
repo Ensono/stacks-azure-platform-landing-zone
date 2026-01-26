@@ -10,6 +10,7 @@ locals {
     { for region in keys(local.enabled_hubs) : "hub-std-${region}" => { component = "hub-std", region = region } },
     { for region in keys(local.enabled_hubs) : "hub-ampls-${region}" => { component = "hub-ampls", region = region } },
     { for region in keys(local.enabled_hubs) : "hub-dns-${region}" => { component = "hub-dns", region = region } },
+    { for region in keys(local.enabled_hubs) : "hub-flowlogs-${region}" => { component = "hub-flowlogs", region = region } },
     { "hub-dns" = { component = "hub-dns", region = local.primary_hub_region } },
     { "hub-ddos" = { component = "hub-ddos", region = local.primary_hub_region } }
   )
@@ -64,6 +65,9 @@ locals {
 
       route_table_firewall = coalesce(hub.name_overrides.route_table_firewall, module.naming["hub-fw-${region}"].route_table.name)
       route_table_user     = coalesce(hub.name_overrides.route_table_user, module.naming["hub-std-${region}"].route_table.name)
+
+      # Flow logs storage account - uses name_unique for global uniqueness
+      flow_logs_storage = module.naming["hub-flowlogs-${region}"].storage_account.name_unique
     }
   }
 }

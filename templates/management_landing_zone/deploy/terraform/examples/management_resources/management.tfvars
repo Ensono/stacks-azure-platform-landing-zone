@@ -1,6 +1,6 @@
 # Management Resources Only
 # =========================
-# Deploys: Log Analytics, Data Collection Rules, Storage Account, Managed Identity
+# Deploys: Log Analytics, Data Collection Rules, Managed Identity
 # Does NOT deploy: Management Groups or Policies
 #
 # Use when management groups are deployed separately or already exist.

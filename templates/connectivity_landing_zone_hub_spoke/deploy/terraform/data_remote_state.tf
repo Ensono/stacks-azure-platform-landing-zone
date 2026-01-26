@@ -28,15 +28,10 @@ locals {
     null
   )
 
-  # Flow logs storage account ID - sourced from variable or remote state
-  # Storage account should be in management module for Azure Policy compatibility
-  flow_logs_storage_account_id = (
-    var.flow_logs.storage_account_id != null ? var.flow_logs.storage_account_id :
-    try(local.management_outputs.flow_logs_storage_account_id, null)
+  # Flow logs can only be enabled if storage account is available (created locally or provided externally)
+  flow_logs_enabled = var.flow_logs.enabled && var.network_watcher.enabled && (
+    var.flow_logs.storage.create || var.flow_logs.storage.external_storage_account_id != null
   )
-
-  # Flow logs can only be enabled if storage account is available
-  flow_logs_enabled = var.flow_logs.enabled && var.network_watcher.enabled && local.flow_logs_storage_account_id != null
 }
 
 resource "terraform_data" "validate_ampls_requirements" {
@@ -55,8 +50,13 @@ resource "terraform_data" "validate_flow_logs_requirements" {
 
   lifecycle {
     precondition {
-      condition     = local.flow_logs_storage_account_id != null
-      error_message = "Flow logs require storage_account_id. Set it directly in flow_logs variable or enable management_remote_state (management module must export flow_logs_storage_account_id)."
+      condition     = var.flow_logs.storage.create || var.flow_logs.storage.external_storage_account_id != null
+      error_message = "Flow logs require storage. Either set storage.create=true (default) or provide storage.external_storage_account_id."
+    }
+
+    precondition {
+      condition     = !var.flow_logs.traffic_analytics_enabled || (local.log_analytics_workspace_id != null && local.log_analytics_workspace_guid != null)
+      error_message = "Traffic Analytics requires Log Analytics workspace. Enable management_remote_state or ensure management module exports log_analytics_workspace_id and log_analytics_workspace_guid."
     }
   }
 }

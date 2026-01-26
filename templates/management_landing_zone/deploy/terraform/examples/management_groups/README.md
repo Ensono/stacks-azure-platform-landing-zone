@@ -8,7 +8,6 @@ Deploys management resources plus management group hierarchy with policies.
 
 - Log Analytics Workspace (with diagnostic settings)
 - Data Collection Rules (Change Tracking, VM Insights)
-- Storage Account (for VNet flow logs)
 - User-Assigned Managed Identity (for Azure Monitor Agent)
 - Resource Groups (with `CanNotDelete` locks)
 

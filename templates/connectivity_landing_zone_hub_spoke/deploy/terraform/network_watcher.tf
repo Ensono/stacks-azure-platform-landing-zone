@@ -11,7 +11,7 @@ resource "azurerm_network_watcher" "this" {
 }
 
 # VNet Flow Logs for network traffic analysis
-# Requires storage account from management module (for Azure Policy compatibility)
+# Storage account is created in connectivity (same region as VNet) per Microsoft requirements
 resource "azurerm_network_watcher_flow_log" "vnet" {
   for_each = local.flow_logs_enabled ? local.enabled_hubs : {}
 
@@ -19,7 +19,7 @@ resource "azurerm_network_watcher_flow_log" "vnet" {
   network_watcher_name = azurerm_network_watcher.this[each.key].name
   resource_group_name  = azurerm_network_watcher.this[each.key].resource_group_name
   target_resource_id   = module.hub_and_spoke_vnet.virtual_network_resource_ids[each.key]
-  storage_account_id   = local.flow_logs_storage_account_id
+  storage_account_id   = local.flow_logs_storage_account_ids[each.key]
   enabled              = true
   version              = 2
   tags                 = merge(local.tags, each.value.tags)

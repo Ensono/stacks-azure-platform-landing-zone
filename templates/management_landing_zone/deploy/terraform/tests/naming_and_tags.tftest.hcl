@@ -77,26 +77,6 @@ run "naming_conventions" {
 }
 
 # =============================================================================
-# Random Seed for Unique Names
-# =============================================================================
-
-run "unique_seed_generates_storage_names" {
-  command   = plan
-  state_key = "unique_seed"
-
-  # Storage name uses name_unique (includes random suffix)
-  assert {
-    condition     = can(regex("^st[a-z0-9]+$", local.resource_names.flow_logs_storage))
-    error_message = "Storage account name should start with 'st' and contain only lowercase alphanumerics."
-  }
-
-  # Deterministic names use static suffix
-  assert {
-    condition     = can(regex("-001$", local.resource_names.resource_group))
-    error_message = "Resource group should use static '001' suffix for deterministic naming."
-  }
-}
-
 # =============================================================================
 # Location and Environment
 # =============================================================================

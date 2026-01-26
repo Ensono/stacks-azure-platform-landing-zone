@@ -13,8 +13,6 @@ flowchart TB
             LAW["Log Analytics Workspace"]
             DCR["Data Collection Rules"]
             UAI["User Assigned Identity (AMA)"]
-            SA["Storage Account"]
-            Blob["Flow Logs Container"]
         end
 
         subgraph Optional["Management Groups (Optional)"]
@@ -23,19 +21,8 @@ flowchart TB
         end
     end
 
-    subgraph Connectivity["Connectivity Subscription"]
-        PE["Private Endpoint"]
-        Hub["Hub VNet"]
-        FlowLogs["VNet Flow Logs"]
-    end
-
     LAW --> DCR
     DCR --> UAI
-    SA --> Blob
-    PE --> SA
-    Hub --> PE
-    FlowLogs --> SA
-    FlowLogs --> LAW
 ```
 
 ## Features
@@ -45,10 +32,9 @@ flowchart TB
 | Log Analytics Workspace | ✅ | Central logging for all Azure resources |
 | Data Collection Rules | ✅ | Change Tracking, VM Insights |
 | Azure Monitor Agent Identity | ✅ | User-assigned managed identity for AMA |
-| Flow Logs Storage Account | ✅ | Storage for VNet flow logs (private access) |
 | Resource Group Locks | ✅ | CanNotDelete locks on resource groups |
 | Log Analytics Diagnostics | ✅ | Self-monitoring diagnostic settings |
-| Health Monitoring Alerts | ❌ | Ingestion latency, query failures, storage alerts |
+| Health Monitoring Alerts | ❌ | Ingestion latency, query failures |
 | Defender for SQL DCR | ❌ | SQL security monitoring |
 | Management Groups | ❌ | Management group hierarchy with policies |
 
@@ -65,7 +51,7 @@ management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
 ### Management Resources Only (Default)
 
-Deploys Log Analytics, Data Collection Rules, and VNet Flow Logs Storage with sensible defaults:
+Deploys Log Analytics and Data Collection Rules with sensible defaults:
 
 ```hcl
 company_name               = "ensono"
@@ -89,10 +75,6 @@ management_resource_settings = {
   data_collection_rules = {
     vm_insights = { enabled = false }
   }
-}
-
-flow_logs_storage = {
-  retention_days = 90
 }
 ```
 
@@ -208,7 +190,6 @@ The management module outputs are consumed by the connectivity module via Terraf
 - `log_analytics_workspace_id` - Used for AMPLS and diagnostics
 - `log_analytics_workspace_name` - Log Analytics Workspace name
 - `log_analytics_workspace_guid` - Used for Traffic Analytics
-- `flow_logs_storage_account_id` - Used for VNet flow logs
 
 **Connectivity module configuration:**
 
@@ -250,19 +231,6 @@ management_resource_settings = {
 > [!WARNING]
 > Enabling public access reduces security. Use only in development environments where AMPLS is not deployed.
 
-## Flow Logs Storage Account
-
-The storage account for VNet flow logs is:
-
-- Created with private network access by default (no public access)
-- Uses ZRS replication for high availability within the region
-- Uses Cool access tier by default for cost optimization (flow logs are infrequently accessed)
-- Configured with blob versioning for data protection
-- Configured with lifecycle management for automatic cleanup
-- Ready for private endpoint from connectivity module
-
-To connect from connectivity module, create a private endpoint to this storage account from your hub VNet's private endpoints subnet.
-
 ## Reliability and Zone Redundancy
 
 The module implements Azure Well-Architected Framework reliability best practices:
@@ -276,14 +244,6 @@ The module implements Azure Well-Architected Framework reliability best practice
 | Diagnostics | ✅ Enabled | Self-monitoring via diagnostic settings |
 
 **Supported regions for data resilience**: UK South, West Europe, East US, West US 2, and [others](https://learn.microsoft.com/azure/azure-monitor/logs/availability-zones#supported-regions).
-
-### Storage Account
-
-| Feature | Status | Notes |
-| ------- | ------ | ----- |
-| Zone Redundancy | ✅ ZRS | Default replication across 3 availability zones |
-| Resource Locks | ✅ Enabled | CanNotDelete locks prevent accidental deletion |
-| Blob Versioning | ✅ Enabled | Point-in-time recovery for data protection |
 
 ### For High Availability Requirements
 
@@ -329,7 +289,6 @@ monitoring_alerts = {
 | ----- | -------- | ----------- |
 | Ingestion Latency | 2 (Warning) | Triggers when data ingestion latency exceeds threshold |
 | Query Failures | 2 (Warning) | Triggers when query failures exceed threshold |
-| Storage Availability | 1 (Error) | Triggers when storage availability drops below threshold |
 
 > [!TIP]
 > Create an Action Group in Azure Monitor before enabling alerts to receive notifications via email, SMS, webhook, or other channels.
@@ -341,20 +300,18 @@ The following table provides estimated monthly costs for typical deployments. Ac
 | Resource | Configuration | Estimated Cost (USD) |
 | -------- | ------------- | -------------------- |
 | Log Analytics Workspace | PerGB2018, ~5 GB/day | ~$73/month |
-| Storage Account (ZRS, Cool) | Standard, 10 GB | ~$2/month |
 | Data Collection Rules | N/A | Included |
 | User Assigned Managed Identity | N/A | Free |
 | Management Groups | N/A | Free |
 | Azure Policies | N/A | Free |
 
-**Typical Total**: ~$75/month (varies by ingestion volume)
+**Typical Total**: ~$73/month (varies by ingestion volume)
 
 > [!TIP]
 >
 > - Use [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for precise estimates
 > - Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day)
 > - Set `log_analytics_workspace_daily_quota_gb` to cap unexpected ingestion costs
-> - Flow logs storage uses Cool tier by default (~50% cheaper than Hot)
 
 ## Cost Optimization
 
@@ -377,22 +334,6 @@ management_resource_settings = {
 }
 ```
 
-### Storage Account Cost Settings
-
-| Setting | Default | Cost Impact |
-| ------- | ------- | ----------- |
-| `access_tier` | `Cool` | ~50% cheaper than Hot tier |
-| `account_replication_type` | `ZRS` | Balance of cost and availability |
-| `retention_days` | `30` | Reduces storage costs via lifecycle policy |
-
-For Hot tier (higher performance, higher cost):
-
-```hcl
-flow_logs_storage = {
-  access_tier = "Hot"
-}
-```
-
 ## Resource Naming
 
 Resources follow Cloud Adoption Framework (CAF) naming conventions using the [Azure Naming module](https://registry.terraform.io/modules/Azure/naming/azurerm/latest):
@@ -401,23 +342,15 @@ Resources follow Cloud Adoption Framework (CAF) naming conventions using the [Az
 | -------- | ------- | ------- |
 | Resource Group | `rg-{company}-{region}-{env}-man-001` | `rg-ens-uks-dev-man-001` |
 | Log Analytics | `log-{company}-{region}-{env}-man-001` | `log-ens-uks-dev-man-001` |
-| Storage Account | `st{company}{region}{env}fl{random}` | `stensuksdevflabc` |
 | User Assigned Identity | `uai-{company}-{region}-{env}-man-001` | `uai-ens-uks-dev-man-001` |
 | Data Collection Rule | `dcr-{type}` | `dcr-change-tracking` |
 
 ### Naming Strategy
 
-The module uses two naming strategies:
-
-| Strategy | Suffix | Used For | Why |
-| -------- | ------ | -------- | --- |
-| **Deterministic** | `001` | Resource groups, Log Analytics, identities | ALZ policy values require names known at plan time |
-| **Unique** | Random 3-char | Storage accounts | Global uniqueness requirement |
-
-The random suffix is generated once using `random_string` and stored in Terraform state, ensuring consistency across deployments.
+The module uses deterministic naming with `001` suffixes for all resources. This ensures resource names are known at plan time, which is required for ALZ policy assignments.
 
 > [!TIP]
-> Deterministic names (ending in `001`) are used for resources referenced in ALZ policy assignments. Storage accounts use `name_unique` from the naming module for global uniqueness.
+> Deterministic names (ending in `001`) are used for resources referenced in ALZ policy assignments.
 
 ### Data Collection Rule Names
 

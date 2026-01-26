@@ -6,7 +6,6 @@ Deploys management resources without management groups or policies.
 
 - Log Analytics Workspace (with diagnostic settings)
 - Data Collection Rules (Change Tracking, VM Insights)
-- Storage Account (for VNet flow logs)
 - User-Assigned Managed Identity (for Azure Monitor Agent)
 - Resource Groups (with `CanNotDelete` locks)
 
@@ -41,8 +40,6 @@ All other variables have sensible defaults. See [variables documentation](../../
 | -------- | ------- | ----------- |
 | `management_resource_settings.log_analytics_workspace_retention_in_days` | `30` | Log retention period |
 | `management_resource_settings.log_analytics_workspace_sku` | `"PerGB2018"` | Pricing tier |
-| `flow_logs_storage.enabled` | `true` | Enable storage account |
-| `flow_logs_storage.retention_days` | `30` | Flow logs retention |
 | `resource_group_lock_enabled` | `true` | Enable CanNotDelete locks |
 | `monitoring_alerts.enabled` | `false` | Enable health monitoring alerts |
 
@@ -53,4 +50,3 @@ These outputs are consumed by the connectivity module via remote state:
 - `log_analytics_workspace_id`
 - `log_analytics_workspace_name`
 - `log_analytics_workspace_guid`
-- `flow_logs_storage_account_id`

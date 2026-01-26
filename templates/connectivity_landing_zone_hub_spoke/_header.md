@@ -65,7 +65,7 @@ flowchart TB
 | Private DNS Zones | ✅ | For Azure Private Link services |
 | Private DNS Resolver | ❌ | For hybrid DNS resolution |
 | Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics |
-| Flow Logs | ❌ | NSG/VNet flow logs (storage costs apply) |
+| Flow Logs | ❌ | VNet flow logs with per-region storage (storage costs apply) |
 | Azure Bastion | ❌ | Secure VM access |
 | VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN |
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity |
@@ -175,24 +175,28 @@ hubs = {
   }
 }
 
-# Flow logs require storage account from management module
+# Flow logs with per-region storage (recommended)
+flow_logs = {
+  enabled        = true
+  retention_days = 90
+  storage = {
+    create = true  # Creates storage account per hub region
+  }
+  traffic_analytics_enabled = true
+}
+
+# Traffic Analytics requires Log Analytics workspace
 management_remote_state = {
   enabled              = true
   storage_account_name = "<storage-account-name>"
-}
-
-flow_logs = {
-  enabled                   = true
-  retention_days            = 90
-  traffic_analytics_enabled = true
 }
 ```
 
 > [!NOTE]
 > Availability zones are auto-detected. Regions that support zones (e.g., uksouth) automatically get zone-redundant resources with 99.99% SLA.
 
-> [!NOTE]
-> Flow logs require a storage account ID from the management module (via `management_remote_state`) or provided directly via `flow_logs.storage_account_id`. This design enables Azure Policy to deploy flow logs using a central storage account.
+> [!IMPORTANT]
+> **Storage Account Placement**: Azure requires flow logs storage accounts to be in the **same region** as the monitored VNet. This module creates one storage account per hub region in the connectivity subscription when `flow_logs.storage.create = true`. This is the recommended approach for multi-region deployments.
 
 > [!NOTE]
 > Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
@@ -295,6 +299,58 @@ hubs = {
       }
     }
   }
+}
+```
+
+### Flow Logs Storage Configuration
+
+VNet flow logs require a storage account in the **same region** as the monitored VNet. This module can create per-region storage accounts automatically:
+
+**Create storage per hub region (recommended):**
+
+```hcl
+flow_logs = {
+  enabled = true
+  storage = {
+    create                 = true
+    account_tier           = "Standard"
+    account_replication    = "LRS"  # Use GRS for production
+    retention_days         = 30
+    public_network_access  = false
+  }
+  retention_days            = 7      # Flow logs retention
+  traffic_analytics_enabled = true
+}
+```
+
+**Use external storage accounts:**
+
+If you have existing storage accounts, provide the ID per region:
+
+```hcl
+flow_logs = {
+  enabled = true
+  storage = {
+    create                      = false
+    external_storage_account_id = "/subscriptions/.../storageAccounts/existing-storage"
+  }
+}
+```
+
+> [!WARNING]
+> The `external_storage_account_id` option only supports a single storage account. For multi-region deployments, use `storage.create = true` to create per-region storage accounts.
+
+**Storage account outputs:**
+
+The module exports storage account details for downstream use:
+
+```hcl
+output "flow_logs_storage_account_ids" {
+  # Map of region => storage account ID
+}
+
+output "flow_logs_storage_account_names" {
+  # Map of region => storage account name
 }
 ```
 

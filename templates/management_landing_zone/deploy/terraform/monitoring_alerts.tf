@@ -76,33 +76,3 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "law_query_failures" {
     }
   }
 }
-
-# Storage account availability alert
-resource "azurerm_monitor_metric_alert" "storage_availability" {
-  count = var.management_resources_enabled && var.flow_logs_storage.enabled && local.monitoring_alerts_enabled ? 1 : 0
-
-  name                = "storage-availability-${terraform.workspace}"
-  resource_group_name = coalesce(var.management_resource_settings.resource_group_name, local.resource_names.resource_group)
-  scopes              = [module.flow_logs_storage[0].resource_id]
-  description         = "Alert when flow logs storage account availability drops below ${var.monitoring_alerts.storage_availability_threshold}%."
-  severity            = 1
-  frequency           = "PT5M"
-  window_size         = "PT15M"
-  enabled             = true
-  tags                = var.tags
-
-  criteria {
-    metric_namespace = "Microsoft.Storage/storageAccounts"
-    metric_name      = "Availability"
-    aggregation      = "Average"
-    operator         = "LessThan"
-    threshold        = var.monitoring_alerts.storage_availability_threshold
-  }
-
-  dynamic "action" {
-    for_each = var.monitoring_alerts.action_group_id != null ? [1] : []
-    content {
-      action_group_id = var.monitoring_alerts.action_group_id
-    }
-  }
-}
