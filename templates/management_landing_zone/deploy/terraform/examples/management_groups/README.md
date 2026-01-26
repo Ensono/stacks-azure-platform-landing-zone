@@ -1,6 +1,6 @@
 # Management Groups
 
-Deploys management resources plus management group hierarchy with policies.
+Deploys management resources plus management group architecture with policies.
 
 ## What Gets Deployed
 
@@ -13,7 +13,7 @@ Deploys management resources plus management group hierarchy with policies.
 
 **Management Groups:**
 
-- ALZ management group hierarchy
+- ALZ management group architecture
 - Policy definitions and assignments
 - Subscription placement into management groups
 
@@ -46,7 +46,7 @@ eirctl infrastructure:apply
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `management_group_settings.parent_management_group_id` | Tenant root | Parent management group ID/name |
-| `management_group_settings.default_management_group_name` | `"sandbox"` | Default MG for unassigned subscriptions (per CAF) |
+| `management_group_settings.default_management_group_name` | `"sandbox"` | Default MG for unassigned subscriptions |
 | `security_subscription_id` | `null` | Auto-placed in security management group |
 | `skip_subscription_placement` | `false` | Skip connectivity/identity validation for dev/testing |
 | `resource_group_lock_enabled` | `true` | Enable CanNotDelete locks |
@@ -59,10 +59,9 @@ These policy default values are **automatically computed** from module outputs:
 - `log_analytics_workspace_id`
 - `ama_user_assigned_managed_identity_id`
 - `ama_user_assigned_managed_identity_name`
-- `ama_change_tracking_data_collection_rule_id`
-- `ama_vm_insights_data_collection_rule_id`
-- `ama_mdfc_sql_data_collection_rule_id`
-- `private_dns_zone_subscription_id`
+- `ama_change_tracking_data_collection_rule_id` (when change tracking enabled)
+- `ama_vm_insights_data_collection_rule_id` (when VM insights enabled)
+- `ama_mdfc_sql_data_collection_rule_id` (when Defender for SQL enabled)
 
 No need to manually construct resource IDs.
 
