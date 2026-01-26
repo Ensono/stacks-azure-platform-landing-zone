@@ -865,7 +865,6 @@ object({
     enabled                             = optional(bool)
     action_group_id                     = optional(string)
     ingestion_latency_threshold_seconds = optional(number, 120)
-    storage_availability_threshold      = optional(number, 99.9)
     enable_query_failure_alerts         = optional(bool, true)
     query_failure_threshold             = optional(number, 5)
   })

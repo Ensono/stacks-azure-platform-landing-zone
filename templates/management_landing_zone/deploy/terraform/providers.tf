@@ -15,13 +15,13 @@ provider "azapi" {
 }
 
 provider "azurerm" {
-  resource_provider_registrations = "none"
-  storage_use_azuread             = true
-  subscription_id                 = var.management_subscription_id
-
   features {
     resource_group {
       prevent_deletion_if_contains_resources = false
     }
   }
+
+  resource_provider_registrations = "none"
+  storage_use_azuread             = true
+  subscription_id                 = var.management_subscription_id
 }

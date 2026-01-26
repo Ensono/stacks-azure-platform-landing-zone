@@ -3,7 +3,6 @@ variable "monitoring_alerts" {
     enabled                             = optional(bool)
     action_group_id                     = optional(string)
     ingestion_latency_threshold_seconds = optional(number, 120)
-    storage_availability_threshold      = optional(number, 99.9)
     enable_query_failure_alerts         = optional(bool, true)
     query_failure_threshold             = optional(number, 5)
   })
@@ -25,14 +24,6 @@ variable "monitoring_alerts" {
       var.monitoring_alerts.ingestion_latency_threshold_seconds <= 600
     )
     error_message = "ingestion_latency_threshold_seconds must be between 30 and 600 seconds."
-  }
-
-  validation {
-    condition = (
-      var.monitoring_alerts.storage_availability_threshold >= 90 &&
-      var.monitoring_alerts.storage_availability_threshold <= 100
-    )
-    error_message = "storage_availability_threshold must be between 90 and 100 percent."
   }
 
   validation {
