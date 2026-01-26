@@ -1,6 +1,6 @@
 # Stacks Azure Platform Landing Zone - Management
 
-This module deploys management resources using Azure Verified Modules (AVM). It provides centralized logging, monitoring, and an optional default management group hierarchy for Azure Landing Zones.
+This module deploys management resources using Azure Verified Modules (AVM). It provides centralized logging, monitoring, and an optional default management group architecture for Azure Landing Zones.
 
 ## Architecture
 
@@ -30,12 +30,11 @@ flowchart TB
 | Feature | Default | Description |
 | ------- | ------- | ----------- |
 | Log Analytics Workspace | ✅ | Central logging for all Azure resources |
-| Data Collection Rules | ✅ | Change Tracking, VM Insights |
+| Data Collection Rules | ✅ | Change Tracking, VM Insights (Defender for SQL optional) |
 | Azure Monitor Agent Identity | ✅ | User-assigned managed identity for AMA |
-| Resource Group Locks | ✅ | CanNotDelete locks on resource groups |
+| Resource Group Locks | ✅ | `CanNotDelete` locks on resource groups |
 | Log Analytics Diagnostics | ✅ | Self-monitoring diagnostic settings |
 | Health Monitoring Alerts | ❌ | Ingestion latency, query failures |
-| Defender for SQL DCR | ❌ | SQL security monitoring |
 | Management Groups | ❌ | Management group hierarchy with policies |
 
 ## Quick Start
@@ -59,7 +58,7 @@ location                   = "uksouth"
 management_subscription_id = "00000000-0000-0000-0000-000000000000"
 ```
 
-### Customizing Management Resources
+### Customising Management Resources
 
 Override specific settings while using defaults for the rest:
 
@@ -80,14 +79,14 @@ management_resource_settings = {
 
 ### Full Azure Landing Zone with Management Groups
 
-Deploy the complete Azure Landing Zone Management Group hierarchy with policies:
+Deploy the complete Azure Landing Zone management group architecture with policies:
 
 ```hcl
 company_name               = "ensono"
 location                   = "uksouth"
 management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
-# Required: Platform subscriptions (per CAF)
+# Required: Platform subscriptions
 connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
 identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
 
@@ -96,45 +95,12 @@ identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
 
 # Enable management groups (deploys under tenant root group by default)
 management_groups_enabled = true
-
-# Management Group Settings (all settings are optional)
-management_group_settings = {
-  # parent_management_group_id = "existing-mg-name"  # Optional: defaults to tenant root group
-  # default_management_group_name defaults to "sandbox" per CAF recommendation
 }
 ```
 
-### Development/Testing (Single Subscription)
+#### Management Group Architecture
 
-For testing with only a management subscription:
-
-```hcl
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
-
-management_groups_enabled    = true
-skip_subscription_placement  = true  # Skips connectivity/identity validation
-```
-
-### Using Base ALZ Policies (No Customization)
-
-Use the standard Azure Landing Zones Library policies without custom overrides:
-
-```hcl
-management_groups_enabled        = true
-management_groups_use_custom_lib = false  # Use base ALZ policies
-
-management_group_settings = {
-  architecture_name          = "alz"  # Base ALZ architecture (not alz_custom)
-  parent_management_group_id = "your-tenant-id"  # Optional: defaults to tenant root
-}
-```
-
-> [!NOTE]
-> Management Groups require elevated permissions (`Management Group Contributor` at tenant root level).
-
-## Management Group Hierarchy
-
-When `management_groups_enabled = true`, the module deploys the following Azure Landing Zone management group hierarchy:
+When `management_groups_enabled = true`, the module deploys the following Azure Landing Zone management group architecture:
 
 ```mermaid
 flowchart TB
@@ -181,6 +147,44 @@ flowchart TB
 
 Platform subscriptions are automatically placed into their respective management groups when subscription IDs are provided.
 
+> [!NOTE]
+> Management Groups require elevated permissions (`Management Group Contributor` at Tenant Root level, and `Owner` in each subscription).
+
+#### Customising Management Groups
+
+##### Updating the Management Group Architecture
+
+Ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file to suit your requirements.
+
+##### Existing Management Group
+
+If an existing management group is being used as the root, ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file. For example
+
+```yaml
+management_groups:
+  - id: existing_group
+    display_name: Existing Group
+    archetypes:
+      - root
+    parent_id: null # setting to null indicates to the provider that we should use the parent resource id
+    exists: true
+```
+
+#### Using ALZ Library Policies (No Customisation)
+
+The module by default uses the standard [Azure Landing Zones Library](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz) policies without custom overrides.
+
+### Development/Testing (Single Subscription)
+
+For testing with only a management subscription:
+
+```hcl
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+management_groups_enabled    = true
+skip_subscription_placement  = true  # Skips connectivity/identity validation
+```
+
 ## Integration with Connectivity Module
 
 The management module outputs are consumed by the connectivity module via Terraform remote state:
@@ -212,8 +216,8 @@ This module is designed to work with AMPLS deployed by the connectivity module. 
 
 ### Deployment Order
 
-1. **Deploy management module first** - Creates Log Analytics Workspace with private-only settings
-2. **Deploy connectivity module second** - Creates AMPLS and links Log Analytics to private network
+1. **Management module** - Creates Log Analytics Workspace with private-only settings
+2. **Connectivity module** - Creates AMPLS and links Log Analytics to private network
 
 ### Enabling Public Access (Development Only)
 
@@ -297,15 +301,15 @@ monitoring_alerts = {
 
 The following table provides estimated monthly costs for typical deployments. Actual costs vary based on data ingestion volume, retention, and region.
 
-| Resource | Configuration | Estimated Cost (USD) |
+| Resource | Configuration | Estimated Cost (GBP) |
 | -------- | ------------- | -------------------- |
-| Log Analytics Workspace | PerGB2018, ~5 GB/day | ~$73/month |
+| Log Analytics Workspace | PerGB2018, ~5 GB/day | ~£58/month |
 | Data Collection Rules | N/A | Included |
 | User Assigned Managed Identity | N/A | Free |
 | Management Groups | N/A | Free |
 | Azure Policies | N/A | Free |
 
-**Typical Total**: ~$73/month (varies by ingestion volume)
+**Typical Total**: ~£58/month (varies by ingestion volume)
 
 > [!TIP]
 >
@@ -342,15 +346,12 @@ Resources follow Cloud Adoption Framework (CAF) naming conventions using the [Az
 | -------- | ------- | ------- |
 | Resource Group | `rg-{company}-{region}-{env}-man-001` | `rg-ens-uks-dev-man-001` |
 | Log Analytics | `log-{company}-{region}-{env}-man-001` | `log-ens-uks-dev-man-001` |
-| User Assigned Identity | `uai-{company}-{region}-{env}-man-001` | `uai-ens-uks-dev-man-001` |
+| User Assigned Identity | `uai-ama` | `uai-ama` |
 | Data Collection Rule | `dcr-{type}` | `dcr-change-tracking` |
 
 ### Naming Strategy
 
-The module uses deterministic naming with `001` suffixes for all resources. This ensures resource names are known at plan time, which is required for ALZ policy assignments.
-
-> [!TIP]
-> Deterministic names (ending in `001`) are used for resources referenced in ALZ policy assignments.
+The module uses deterministic naming with `001` suffixes for all resources by default. This ensures resource names are known at plan time, which is [required for ALZ policy assignments](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm/latest#unknown-values--depends-on).
 
 ### Data Collection Rule Names
 

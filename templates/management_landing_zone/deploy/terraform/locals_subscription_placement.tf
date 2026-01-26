@@ -1,5 +1,5 @@
 locals {
-  # When skip_subscription_placement is true, only place management subscription
+  # When skip_subscription_placement = true, only place management subscription
   default_subscription_placement = var.skip_subscription_placement ? {
     management = {
       subscription_id       = var.management_subscription_id

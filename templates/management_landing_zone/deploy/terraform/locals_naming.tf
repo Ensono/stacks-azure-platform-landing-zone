@@ -1,10 +1,8 @@
 locals {
-  # Naming instances
-  # - static_suffix = true:  Use .name output (deterministic, for ALZ policy values)
-  # - static_suffix = false: Use .name_unique output (globally unique, for storage)
+  # Naming instances for module.naming
   naming_instances = {
-    asc_export = { component = "asc", static_suffix = true }
-    management = { component = "man", static_suffix = true }
+    asc_export = { component = "asc" }
+    management = { component = "man" }
   }
 
   # Resource names from naming module

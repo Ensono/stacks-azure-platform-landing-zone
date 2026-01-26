@@ -15,8 +15,6 @@ flowchart TB
             LAW["Log Analytics Workspace"]
             DCR["Data Collection Rules"]
             UAI["User Assigned Identity (AMA)"]
-            SA["Storage Account"]
-            Blob["Flow Logs Container"]
         end
 
         subgraph Optional["Management Groups (Optional)"]
@@ -25,19 +23,8 @@ flowchart TB
         end
     end
 
-    subgraph Connectivity["Connectivity Subscription"]
-        PE["Private Endpoint"]
-        Hub["Hub VNet"]
-        FlowLogs["VNet Flow Logs"]
-    end
-
     LAW --> DCR
     DCR --> UAI
-    SA --> Blob
-    PE --> SA
-    Hub --> PE
-    FlowLogs --> SA
-    FlowLogs --> LAW
 ```
 
 ## Features
@@ -47,10 +34,9 @@ flowchart TB
 | Log Analytics Workspace | ✅ | Central logging for all Azure resources |
 | Data Collection Rules | ✅ | Change Tracking, VM Insights |
 | Azure Monitor Agent Identity | ✅ | User-assigned managed identity for AMA |
-| Flow Logs Storage Account | ✅ | Storage for VNet flow logs (private access) |
 | Resource Group Locks | ✅ | CanNotDelete locks on resource groups |
 | Log Analytics Diagnostics | ✅ | Self-monitoring diagnostic settings |
-| Health Monitoring Alerts | ❌ | Ingestion latency, query failures, storage alerts |
+| Health Monitoring Alerts | ❌ | Ingestion latency, query failures |
 | Defender for SQL DCR | ❌ | SQL security monitoring |
 | Management Groups | ❌ | Management group hierarchy with policies |
 
@@ -67,7 +53,7 @@ management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
 ### Management Resources Only (Default)
 
-Deploys Log Analytics, Data Collection Rules, and VNet Flow Logs Storage with sensible defaults:
+Deploys Log Analytics and Data Collection Rules with sensible defaults:
 
 ```hcl
 company_name               = "ensono"
@@ -91,10 +77,6 @@ management_resource_settings = {
   data_collection_rules = {
     vm_insights = { enabled = false }
   }
-}
-
-flow_logs_storage = {
-  retention_days = 90
 }
 ```
 
@@ -210,7 +192,6 @@ The management module outputs are consumed by the connectivity module via Terraf
 - `log_analytics_workspace_id` - Used for AMPLS and diagnostics
 - `log_analytics_workspace_name` - Log Analytics Workspace name
 - `log_analytics_workspace_guid` - Used for Traffic Analytics
-- `flow_logs_storage_account_id` - Used for VNet flow logs
 
 **Connectivity module configuration:**
 
@@ -252,19 +233,6 @@ management_resource_settings = {
 > [!WARNING]
 > Enabling public access reduces security. Use only in development environments where AMPLS is not deployed.
 
-## Flow Logs Storage Account
-
-The storage account for VNet flow logs is:
-
-- Created with private network access by default (no public access)
-- Uses ZRS replication for high availability within the region
-- Uses Cool access tier by default for cost optimization (flow logs are infrequently accessed)
-- Configured with blob versioning for data protection
-- Configured with lifecycle management for automatic cleanup
-- Ready for private endpoint from connectivity module
-
-To connect from connectivity module, create a private endpoint to this storage account from your hub VNet's private endpoints subnet.
-
 ## Reliability and Zone Redundancy
 
 The module implements Azure Well-Architected Framework reliability best practices:
@@ -278,14 +246,6 @@ The module implements Azure Well-Architected Framework reliability best practice
 | Diagnostics | ✅ Enabled | Self-monitoring via diagnostic settings |
 
 **Supported regions for data resilience**: UK South, West Europe, East US, West US 2, and [others](https://learn.microsoft.com/azure/azure-monitor/logs/availability-zones#supported-regions).
-
-### Storage Account
-
-| Feature | Status | Notes |
-| ------- | ------ | ----- |
-| Zone Redundancy | ✅ ZRS | Default replication across 3 availability zones |
-| Resource Locks | ✅ Enabled | CanNotDelete locks prevent accidental deletion |
-| Blob Versioning | ✅ Enabled | Point-in-time recovery for data protection |
 
 ### For High Availability Requirements
 
@@ -331,7 +291,6 @@ monitoring_alerts = {
 | ----- | -------- | ----------- |
 | Ingestion Latency | 2 (Warning) | Triggers when data ingestion latency exceeds threshold |
 | Query Failures | 2 (Warning) | Triggers when query failures exceed threshold |
-| Storage Availability | 1 (Error) | Triggers when storage availability drops below threshold |
 
 > [!TIP]
 > Create an Action Group in Azure Monitor before enabling alerts to receive notifications via email, SMS, webhook, or other channels.
@@ -343,20 +302,18 @@ The following table provides estimated monthly costs for typical deployments. Ac
 | Resource | Configuration | Estimated Cost (USD) |
 | -------- | ------------- | -------------------- |
 | Log Analytics Workspace | PerGB2018, ~5 GB/day | ~$73/month |
-| Storage Account (ZRS, Cool) | Standard, 10 GB | ~$2/month |
 | Data Collection Rules | N/A | Included |
 | User Assigned Managed Identity | N/A | Free |
 | Management Groups | N/A | Free |
 | Azure Policies | N/A | Free |
 
-**Typical Total**: ~$75/month (varies by ingestion volume)
+**Typical Total**: ~$73/month (varies by ingestion volume)
 
 > [!TIP]
 >
 > - Use [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for precise estimates
 > - Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day)
 > - Set `log_analytics_workspace_daily_quota_gb` to cap unexpected ingestion costs
-> - Flow logs storage uses Cool tier by default (~50% cheaper than Hot)
 
 ## Cost Optimization
 
@@ -379,69 +336,23 @@ management_resource_settings = {
 }
 ```
 
-### Storage Account Cost Settings
-
-| Setting | Default | Cost Impact |
-| ------- | ------- | ----------- |
-| `access_tier` | `Cool` | ~50% cheaper than Hot tier |
-| `account_replication_type` | `ZRS` | Balance of cost and availability |
-| `retention_days` | `30` | Reduces storage costs via lifecycle policy |
-
-For Hot tier (higher performance, higher cost):
-
-```hcl
-flow_logs_storage = {
-  access_tier = "Hot"
-}
-```
-
 ## Resource Naming
 
 Resources follow Cloud Adoption Framework (CAF) naming conventions using the [Azure Naming module](https://registry.terraform.io/modules/Azure/naming/azurerm/latest):
 
 | Resource | Pattern | Example |
 | -------- | ------- | ------- |
-| Resource Group | `rg-{company}-{region}-{env}-man-{suffix}` | `rg-ens-uks-dev-man-abc` |
-| Log Analytics | `log-{company}-{region}-{env}-man-{suffix}` | `log-ens-uks-dev-man-abc` |
-| Storage Account | `st{company}{region}{env}manfl{suffix}` | `stensuksdevmanflabc` |
-| User Assigned Identity | `uai-{company}-{region}-{env}-man-{suffix}` | `uai-ens-uks-dev-man-abc` |
+| Resource Group | `rg-{company}-{region}-{env}-man-001` | `rg-ens-uks-dev-man-001` |
+| Log Analytics | `log-{company}-{region}-{env}-man-001` | `log-ens-uks-dev-man-001` |
+| User Assigned Identity | `uai-{company}-{region}-{env}-man-001` | `uai-ens-uks-dev-man-001` |
 | Data Collection Rule | `dcr-{type}` | `dcr-change-tracking` |
 
-### Naming Uniqueness (Random Seed)
+### Naming Strategy
 
-By default, resources include a 3-character random suffix for uniqueness. This is controlled via the `random_seed` variable:
-
-| Setting | Default | Description |
-| ------- | ------- | ----------- |
-| `enabled` | `true` | When enabled, uses random or custom seed for suffix |
-| `value` | `null` | Optional: provide a specific 3-letter seed (a-z) |
-
-**Default behaviour (random suffix):**
-
-```hcl
-# Uses a random 3-character suffix like 'abc', 'xyz', etc.
-random_seed = {}  # or don't set it
-```
-
-**Custom seed (repeatable deployments):**
-
-```hcl
-random_seed = {
-  enabled = true
-  value   = "prd"  # Resources will end with 'prd'
-}
-```
-
-**Disable random seed (static '001' suffix):**
-
-```hcl
-random_seed = {
-  enabled = false  # Resources will end with '001'
-}
-```
+The module uses deterministic naming with `001` suffixes for all resources. This ensures resource names are known at plan time, which is required for ALZ policy assignments.
 
 > [!TIP]
-> Use a custom seed value for consistent naming across deployments or when migrating existing resources. The random seed is generated once and stored in Terraform state.
+> Deterministic names (ending in `001`) are used for resources referenced in ALZ policy assignments.
 
 ### Data Collection Rule Names
 
@@ -480,20 +391,15 @@ The following requirements are needed by this module:
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.0)
-
 ## Resources
 
 The following resources are used by this module:
 
 - [azurerm_monitor_diagnostic_setting.log_analytics_workspace](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_metric_alert.law_ingestion_latency](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
-- [azurerm_monitor_metric_alert.storage_availability](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_scheduled_query_rules_alert_v2.law_query_failures](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_scheduled_query_rules_alert_v2) (resource)
-- [azurerm_storage_management_policy.flow_logs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_management_policy) (resource)
-- [random_string.random_seed](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) (resource)
 - [terraform_data.validate_subscriptions](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
-- [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
+- [azapi_client_config.current](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
@@ -539,44 +445,6 @@ Description: Enable telemetry collection for Azure Verified Modules. See https:/
 Type: `bool`
 
 Default: `false`
-
-### <a name="input_flow_logs_storage"></a> [flow\_logs\_storage](#input\_flow\_logs\_storage)
-
-Description: Storage account configuration for VNet flow logs. Used by connectivity module.
-
-Type:
-
-```hcl
-object({
-    enabled                   = optional(bool, true)
-    name                      = optional(string)
-    account_tier              = optional(string, "Standard")
-    account_replication_type  = optional(string, "GZRS")
-    account_kind              = optional(string, "StorageV2")
-    access_tier               = optional(string, "Cool")
-    min_tls_version           = optional(string, "TLS1_2")
-    public_network_access     = optional(bool, false)
-    retention_days            = optional(number, 30)
-    shared_access_key_enabled = optional(bool, false)
-    tags                      = optional(map(string), {})
-
-    # Network rules - default to deny all when public_network_access is false
-    network_rules = optional(object({
-      default_action             = optional(string, "Deny")
-      bypass                     = optional(list(string), ["AzureServices"])
-      ip_rules                   = optional(list(string), [])
-      virtual_network_subnet_ids = optional(list(string), [])
-    }), {})
-  })
-```
-
-Default:
-
-```json
-{
-  "enabled": true
-}
-```
 
 ### <a name="input_identity_subscription_id"></a> [identity\_subscription\_id](#input\_identity\_subscription\_id)
 
@@ -642,6 +510,7 @@ Properties:
     - `update` - (Optional) Timeout for update operations.
     - `read` - (Optional) Timeout for read operations.
 - `dependencies` - (Optional) Dependency configurations:
+  - `management_groups` - (Optional) Dependencies for management group creation.
   - `policy_role_assignments` - (Optional) Dependencies for policy role assignments.
   - `policy_assignments` - (Optional) Dependencies for policy assignments.
 - `override_policy_definition_parameter_assign_permissions_set` - (Optional) Set of policy definition parameters to assign permissions:
@@ -669,6 +538,8 @@ Properties:
   - `enforced_replacement` - (Optional) Replacement text for enforced mode.
   - `not_enforced_replacement` - (Optional) Replacement text for not enforced mode.
 - `role_assignment_name_use_random_uuid` - (Optional) Use random UUID for role assignment names. Defaults to true.
+- `subscription_placement_destroy_behavior` - (Optional) Behavior when destroying subscription placement. Possible values: "parent", "intermediate\_root", "custom", "default". Defaults to "default".
+- `subscription_placement_destroy_custom_target_management_group_id` - (Optional) Target management group ID when using "custom" destroy behavior.
 
 Details of the settings can be found in the module documentation at https://registry.terraform.io/modules/Azure/avm-ptn-alz
 
@@ -801,6 +672,7 @@ object({
       }), {})
     }), {})
     dependencies = optional(object({
+      management_groups       = optional(any)
       policy_role_assignments = optional(any)
       policy_assignments      = optional(any)
     }))
@@ -832,7 +704,9 @@ object({
       enforced_replacement                     = optional(string)
       not_enforced_replacement                 = optional(string)
     }))
-    role_assignment_name_use_random_uuid = optional(bool, true)
+    role_assignment_name_use_random_uuid                             = optional(bool, true)
+    subscription_placement_destroy_behavior                          = optional(string, "default")
+    subscription_placement_destroy_custom_target_management_group_id = optional(string)
   })
 ```
 
@@ -956,21 +830,21 @@ Default: `true`
 
 ### <a name="input_microsoft_defender_settings"></a> [microsoft\_defender\_settings](#input\_microsoft\_defender\_settings)
 
-Description: (Optional) Microsoft Defender for Cloud configuration. Required when management\_groups\_enabled = true.
+Description: (Optional) Microsoft Defender for Cloud configuration.
 
-- `email_security_contact` - Email address for security alerts.
-- `export_resource_group_name` - Resource group for ASC continuous export.
+- `email_security_contact` - Email address for security alerts. Defaults to "security@replace-me.com" - update for production.
+- `export_resource_group_name` - Resource group name for ASC continuous export. Defaults to "rg-asc-export".
 
 Type:
 
 ```hcl
 object({
-    email_security_contact     = string
-    export_resource_group_name = optional(string)
+    email_security_contact     = optional(string, "security@replace-me.com")
+    export_resource_group_name = optional(string, "rg-asc-export")
   })
 ```
 
-Default: `null`
+Default: `{}`
 
 ### <a name="input_monitoring_alerts"></a> [monitoring\_alerts](#input\_monitoring\_alerts)
 
@@ -993,26 +867,6 @@ object({
     storage_availability_threshold      = optional(number, 99.9)
     enable_query_failure_alerts         = optional(bool, true)
     query_failure_threshold             = optional(number, 5)
-  })
-```
-
-Default: `{}`
-
-### <a name="input_random_seed"></a> [random\_seed](#input\_random\_seed)
-
-Description: Controls the uniqueness suffix in resource names.
-
-When enabled (default): Uses a 3-character random seed for uniqueness.  
-When disabled: Uses '001' as a static suffix.
-
-Provide 'value' to use a specific seed instead of random generation.
-
-Type:
-
-```hcl
-object({
-    enabled = optional(bool, true)
-    value   = optional(string)
   })
 ```
 
@@ -1078,10 +932,6 @@ Default: `{}`
 
 The following outputs are exported:
 
-### <a name="output_flow_logs_storage_account_id"></a> [flow\_logs\_storage\_account\_id](#output\_flow\_logs\_storage\_account\_id)
-
-Description: The resource ID of the storage account for VNet flow logs.
-
 ### <a name="output_log_analytics_workspace_guid"></a> [log\_analytics\_workspace\_guid](#output\_log\_analytics\_workspace\_guid)
 
 Description: The workspace GUID of the log analytics workspace.
@@ -1104,17 +954,11 @@ Source: Azure/avm-utl-regions/azurerm
 
 Version: 0.9.3
 
-### <a name="module_flow_logs_storage"></a> [flow\_logs\_storage](#module\_flow\_logs\_storage)
-
-Source: Azure/avm-res-storage-storageaccount/azurerm
-
-Version: 0.6.1
-
 ### <a name="module_management_groups"></a> [management\_groups](#module\_management\_groups)
 
 Source: Azure/avm-ptn-alz/azurerm
 
-Version: 0.15.0
+Version: 0.18.0
 
 ### <a name="module_management_resources"></a> [management\_resources](#module\_management\_resources)
 

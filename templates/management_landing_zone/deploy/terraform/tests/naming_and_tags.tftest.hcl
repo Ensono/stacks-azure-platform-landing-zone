@@ -25,8 +25,6 @@ mock_provider "azapi" {
   }
 }
 
-mock_provider "random" {}
-
 mock_provider "modtm" {}
 
 mock_provider "time" {}
@@ -63,9 +61,6 @@ run "naming_conventions" {
     condition     = startswith(local.resource_names.log_analytics_workspace, "log-")
     error_message = "Log Analytics workspace name should start with 'log-' CAF prefix."
   }
-
-  # Note: Storage account name uses name_unique which includes random suffix
-  # and cannot be evaluated during plan phase
 
   # User assigned identity naming (CAF uses 'uai-' prefix)
   assert {
