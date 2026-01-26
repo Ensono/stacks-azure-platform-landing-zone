@@ -37,15 +37,6 @@ flowchart TB
 | Health Monitoring Alerts | ❌ | Ingestion latency, query failures |
 | Management Groups | ❌ | Management group hierarchy with policies |
 
-## Quick Start
-
-```hcl
-company_name = "ensono"
-location     = "uksouth"
-
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
-```
-
 ## Configuration Examples
 
 ### Management Resources Only (Default)
@@ -79,7 +70,7 @@ management_resource_settings = {
 
 ### Full Azure Landing Zone with Management Groups
 
-Deploy the complete Azure Landing Zone management group architecture with policies:
+Deploy a complete Azure Landing Zone management group architecture with policies:
 
 ```hcl
 company_name               = "ensono"
@@ -145,20 +136,21 @@ flowchart TB
     style Online fill:#008272,color:#fff
 ```
 
-Platform subscriptions are automatically placed into their respective management groups when subscription IDs are provided.
+>[!NOTE]
+> Platform subscriptions are automatically placed into their respective management groups when subscription IDs are provided.
 
 > [!NOTE]
-> Management Groups require elevated permissions (`Management Group Contributor` at Tenant Root level, and `Owner` in each subscription).
+> Management Groups deployments require elevated permissions (`Management Group Contributor` at Tenant Root level, and `Owner` in each subscription).
 
 #### Customising Management Groups
 
 ##### Updating the Management Group Architecture
 
-Ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file to suit your requirements.
+If the architecture needs to be changed, ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file to suit your requirements.
 
 ##### Existing Management Group
 
-If an existing management group is being used as the root, ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file. For example
+It's recommended to keep the hierarchy flat where possible, but if an existing management group is being used as the root, ensure you update the [alz_custom.alz_architecture_definition.yaml](./deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml) file. For example
 
 ```yaml
 management_groups:
@@ -170,11 +162,11 @@ management_groups:
     exists: true
 ```
 
-#### Using ALZ Library Policies (No Customisation)
+#### Using Azure Landing Zones Library Policies (No Customisation)
 
-The module by default uses the standard [Azure Landing Zones Library](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz) policies without custom overrides.
+The module by default uses the standard [ALZ Library](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz) policies without custom overrides. Policy default values and assignments are managed in the [locals_policy_assignments.tf](./deploy/terraform/locals_policy_assignments.tf) file.
 
-### Development/Testing (Single Subscription)
+#### Development/Testing (Single Subscription)
 
 For testing with only a management subscription:
 
@@ -267,7 +259,7 @@ management_resource_settings = {
 
 ## Health Monitoring Alerts
 
-The module supports optional health monitoring alerts to ensure the observability infrastructure remains healthy. Alerts are automatically enabled when an action group ID is provided:
+The module supports optional Azure Monitor health monitoring alerts to ensure the observability infrastructure remains healthy. Alerts are automatically enabled when an action group ID is provided:
 
 ```hcl
 monitoring_alerts = {
@@ -281,7 +273,6 @@ To customize thresholds:
 monitoring_alerts = {
   action_group_id                     = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Insights/actionGroups/platform-alerts"
   ingestion_latency_threshold_seconds = 60   # Alert if latency > 1 minute (default: 120)
-  storage_availability_threshold      = 99.5 # Alert if availability < 99.5% (default: 99.9)
   enable_query_failure_alerts         = true # Monitor query failures (default: true)
   query_failure_threshold             = 10   # Alert after 10 failures (default: 5)
 }
@@ -294,7 +285,7 @@ monitoring_alerts = {
 | Ingestion Latency | 2 (Warning) | Triggers when data ingestion latency exceeds threshold |
 | Query Failures | 2 (Warning) | Triggers when query failures exceed threshold |
 
-> [!TIP]
+> [!NOTE]
 > Create an Action Group in Azure Monitor before enabling alerts to receive notifications via email, SMS, webhook, or other channels.
 
 ## Estimated Monthly Costs
