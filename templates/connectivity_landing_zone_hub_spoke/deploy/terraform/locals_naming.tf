@@ -10,12 +10,12 @@ locals {
     { for region in keys(local.enabled_hubs) : "hub-std-${region}" => { component = "hub-std", region = region } },
     { for region in keys(local.enabled_hubs) : "hub-ampls-${region}" => { component = "hub-ampls", region = region } },
     { for region in keys(local.enabled_hubs) : "hub-dns-${region}" => { component = "hub-dns", region = region } },
-    { for region in keys(local.enabled_hubs) : "hub-flowlogs-${region}" => { component = "hub-flowlogs", region = region } },
+    { for region in keys(local.enabled_hubs) : "hub-fl-${region}" => { component = "hub-fl", region = region } },
     { "hub-dns" = { component = "hub-dns", region = local.primary_hub_region } },
     { "hub-ddos" = { component = "hub-ddos", region = local.primary_hub_region } }
   )
 
-  # Cloud Adoption Framework prefixes for resource types not in Azure/naming module
+  # CAF prefixes for resource types not in Azure/naming module
   caf_prefixes = {
     ampls    = "ampls"
     bastion  = "bas"
@@ -54,9 +54,10 @@ locals {
       bastion     = coalesce(hub.name_overrides.bastion, local.naming_extended["hub-${region}"].bastion_host.name)
       bastion_pip = module.naming["hub-bas-${region}"].public_ip.name
 
-      vpn_gateway              = coalesce(hub.name_overrides.vpn_gateway, module.naming["hub-vpn-${region}"].virtual_network_gateway.name)
-      vpn_gateway_pip_1        = "${module.naming["hub-vpn-${region}"].public_ip.name}-001"
-      vpn_gateway_pip_2        = "${module.naming["hub-vpn-${region}"].public_ip.name}-002"
+      vpn_gateway       = coalesce(hub.name_overrides.vpn_gateway, module.naming["hub-vpn-${region}"].virtual_network_gateway.name)
+      vpn_gateway_pip_1 = "${module.naming["hub-vpn-${region}"].public_ip.name}-001"
+      vpn_gateway_pip_2 = "${module.naming["hub-vpn-${region}"].public_ip.name}-002"
+
       expressroute_gateway     = coalesce(hub.name_overrides.expressroute_gateway, module.naming["hub-er-${region}"].virtual_network_gateway.name)
       expressroute_gateway_pip = module.naming["hub-er-${region}"].public_ip.name
 
@@ -67,7 +68,7 @@ locals {
       route_table_user     = coalesce(hub.name_overrides.route_table_user, module.naming["hub-std-${region}"].route_table.name)
 
       # Flow logs storage account - uses name_unique for global uniqueness
-      flow_logs_storage = module.naming["hub-flowlogs-${region}"].storage_account.name_unique
+      flow_logs_storage = module.naming["hub-fl-${region}"].storage_account.name_unique
     }
   }
 }

@@ -1,7 +1,7 @@
 variable "management_remote_state" {
-  description = "Configuration for fetching management landing zone outputs via remote state."
+  description = "Configuration for fetching management landing zone outputs via remote state. Enabled by default - set enabled = false for local testing."
   type = object({
-    enabled              = optional(bool, false)
+    enabled              = optional(bool, true)
     backend              = optional(string, "azurerm")
     workspace            = optional(string, null)
     storage_account_name = optional(string, null)
@@ -9,9 +9,7 @@ variable "management_remote_state" {
     key                  = optional(string, "management.tfstate")
     use_azuread_auth     = optional(bool, true)
   })
-  default = {
-    enabled = false
-  }
+  default = {}
 
   validation {
     condition = (

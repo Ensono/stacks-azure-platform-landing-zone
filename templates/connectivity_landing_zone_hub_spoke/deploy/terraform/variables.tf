@@ -1,6 +1,6 @@
 variable "company_name" {
   type        = string
-  description = "Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'Ensono' becomes 'ens')."
+  description = "Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'ensono' becomes 'ens')."
 }
 
 variable "connectivity_subscription_id" {
@@ -23,4 +23,10 @@ variable "resource_group_lock_enabled" {
   type        = bool
   description = "Enable CanNotDelete locks on all resource groups. Set to false before running terraform destroy."
   default     = true
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Tags applied to all resources."
 }

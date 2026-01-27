@@ -26,10 +26,13 @@ mock_provider "azapi" {
 }
 
 mock_provider "random" {}
-
 mock_provider "local" {}
-
 mock_provider "modtm" {}
+
+override_data {
+  target = data.terraform_remote_state.management
+  values = { outputs = {} }
+}
 
 # Variables loaded from terraform.tfvars
 

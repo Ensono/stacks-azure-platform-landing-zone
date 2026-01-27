@@ -5,5 +5,5 @@ module "hub_and_spoke_vnet" {
   hub_virtual_networks            = local.hub_virtual_networks
   hub_and_spoke_networks_settings = local.hub_and_spoke_settings
   enable_telemetry                = var.enable_avm_telemetry
-  tags                            = local.tags
+  tags                            = var.tags
 }

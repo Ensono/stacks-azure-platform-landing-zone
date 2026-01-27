@@ -29,11 +29,6 @@ pipelines:
   scan:
     - task: scan:terraform:checkov
 
-  test:
-    - task: terraform:init
-    - task: terraform:tests
-      depends_on: terraform:init
-
   documentation:
     - task: doc:terraform:generate
 

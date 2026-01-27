@@ -11,7 +11,7 @@ module "nsg_private_endpoints" {
   location            = each.key
   resource_group_name = module.resource_groups["hub-${each.key}"].name
   enable_telemetry    = var.enable_avm_telemetry
-  tags                = merge(local.tags, each.value.tags)
+  tags                = merge(var.tags, each.value.tags)
 
   security_rules = {
     allow_vnet_inbound = {

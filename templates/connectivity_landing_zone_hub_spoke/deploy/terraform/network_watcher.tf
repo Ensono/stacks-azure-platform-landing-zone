@@ -1,4 +1,4 @@
-# Network Watcher for network diagnostics (free resource)
+# Network Watcher for network diagnostics
 # Provides: Connection Monitor, IP Flow Verify, Next Hop, Packet Capture, NSG Diagnostics
 
 resource "azurerm_network_watcher" "this" {
@@ -7,7 +7,7 @@ resource "azurerm_network_watcher" "this" {
   name                = module.naming["hub-${each.key}"].network_watcher.name
   location            = each.key
   resource_group_name = module.resource_groups["hub-${each.key}"].name
-  tags                = merge(local.tags, each.value.tags)
+  tags                = merge(var.tags, each.value.tags)
 }
 
 # VNet Flow Logs for network traffic analysis
@@ -22,7 +22,7 @@ resource "azurerm_network_watcher_flow_log" "vnet" {
   storage_account_id   = local.flow_logs_storage_account_ids[each.key]
   enabled              = true
   version              = 2
-  tags                 = merge(local.tags, each.value.tags)
+  tags                 = merge(var.tags, each.value.tags)
 
   retention_policy {
     enabled = var.flow_logs.retention_days > 0

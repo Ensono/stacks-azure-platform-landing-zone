@@ -7,6 +7,7 @@ variable "hubs" {
       firewall               = optional(bool, true)
       firewall_sku           = optional(string, "Standard")
       firewall_management_ip = optional(bool, false)
+      firewall_dns_proxy     = optional(bool, true)
       bastion                = optional(bool, false)
       vpn_gateway            = optional(bool, false)
       expressroute_gateway   = optional(bool, false)
@@ -42,6 +43,7 @@ variable "hubs" {
 
     dns = optional(object({
       auto_registration_zone_name = optional(string)
+      servers                     = optional(list(string))
     }), {})
 
     name_overrides = optional(object({

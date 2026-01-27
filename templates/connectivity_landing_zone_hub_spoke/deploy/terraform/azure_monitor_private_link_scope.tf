@@ -8,7 +8,7 @@ resource "azurerm_monitor_private_link_scope" "this" {
   resource_group_name   = module.resource_groups["hub-${local.primary_hub_region}"].name
   ingestion_access_mode = var.azure_monitor_private_link.ingestion_access_mode
   query_access_mode     = var.azure_monitor_private_link.query_access_mode
-  tags                  = local.tags
+  tags                  = var.tags
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "log_analytics" {
@@ -40,5 +40,5 @@ resource "azurerm_private_endpoint" "ampls" {
     private_dns_zone_ids = local.ampls_dns_zone_ids
   }
 
-  tags = merge(local.tags, each.value.tags)
+  tags = merge(var.tags, each.value.tags)
 }

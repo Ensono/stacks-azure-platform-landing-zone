@@ -11,7 +11,7 @@ hubs = {
   }
 }
 
-ensono_tags = {
+management_remote_state = {
   enabled = false
 }
 

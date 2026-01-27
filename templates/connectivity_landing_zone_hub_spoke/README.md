@@ -62,15 +62,20 @@ flowchart TB
 |---------|---------|-------------|
 | Hub Virtual Networks | ✅ | With mesh peering for multi-region |
 | Azure Firewall | ✅ | Standard SKU (configurable: Basic/Standard/Premium) |
+| Firewall DNS Proxy | ✅ | Enables FQDN filtering and DNS query logging |
+| Firewall Health Alerts | ✅ | Alerts for health, SNAT exhaustion, and throughput |
+| Firewall Diagnostics | ✅ | All log categories sent to Log Analytics |
 | Network Watcher | ✅ | Free network diagnostics (Connection Monitor, Packet Capture) |
 | Private Endpoints NSG | ✅ | NSG for visibility and access control |
 | Private DNS Zones | ✅ | For Azure Private Link services |
 | Private DNS Resolver | ❌ | For hybrid DNS resolution |
 | Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics |
-| Flow Logs | ❌ | NSG/VNet flow logs (storage costs apply) |
+| Flow Logs | ❌ | VNet flow logs with per-region storage (storage costs apply) |
 | Azure Bastion | ❌ | Secure VM access |
 | VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN |
+| VPN Gateway Diagnostics | ✅ | Tunnel, route, and IKE diagnostics (when gateway enabled) |
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity |
+| ExpressRoute Diagnostics | ✅ | Gateway and route diagnostics (when gateway enabled) |
 | DDoS Protection Plan | ❌ | Shared across all hubs |
 
 ## Quick Start
@@ -138,6 +143,25 @@ ddos_protection_plan = {
 > [!NOTE]
 > DDoS Protection Plan provides L3/L4 protection, telemetry, and rapid response support. Consider enabling for production workloads with public-facing endpoints.
 
+### Cost Estimation
+
+Estimated monthly costs per hub (UK South, January 2025):
+
+| Resource | Default | Monthly Cost (GBP) | Notes |
+|----------|---------|-------------------|-------|
+| Azure Firewall Standard | ✅ | ~£720 | 3 AZ deployment |
+| Azure Firewall Basic | ❌ | ~£180 | Dev/test alternative |
+| VPN Gateway (VpnGw1AZ) | ❌ | ~£140 | Active-active |
+| ExpressRoute Gateway | ❌ | ~£140 | ErGw1AZ SKU |
+| Azure Bastion Standard | ❌ | ~£140 | 2 scale units |
+| DDoS Protection Plan | ❌ | ~£2,200 | Shared across subscription |
+| Log Analytics | - | Variable | ~£2/GB/month ingestion |
+| **Minimum (Firewall only)** | | **~£720** | |
+| **Full Production** | | **~£1,140** | Firewall + VPN + Bastion |
+
+> [!TIP]
+> For multi-region, multiply per-hub costs. DDoS Protection Plan is shared across all regions.
+
 ### Private Endpoints NSG
 
 A Network Security Group is deployed on the private endpoints subnet by default, as recommended by [Microsoft's hub-spoke architecture guidance](https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network).
@@ -164,6 +188,47 @@ private_endpoints_nsg = {
 > [!NOTE]
 > When using Azure Firewall, the NSG provides additional visibility and logging. Traffic is already controlled by the firewall, but the NSG enables NSG flow logs for the private endpoints subnet.
 
+### Firewall DNS Proxy
+
+DNS Proxy is **enabled by default** on the firewall policy, as recommended by [Microsoft's Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security).
+
+DNS Proxy provides:
+- **FQDN filtering** - Required for network rules that filter by FQDN (not just IP)
+- **DNS query logging** - All DNS queries are logged to Log Analytics
+- **Consistent resolution** - All spoke workloads resolve DNS through the firewall
+
+When enabled, spoke VNets should configure their DNS servers to point to the firewall private IP (available via `firewall_private_ip_addresses` output).
+
+To disable DNS Proxy:
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      firewall_dns_proxy = false
+    }
+  }
+}
+```
+
+To use custom DNS servers with DNS Proxy:
+
+```hcl
+hubs = {
+  uksouth = {
+    dns = {
+      servers = ["10.0.0.4", "10.0.0.5"]  # Custom upstream DNS
+    }
+    features = {
+      firewall_dns_proxy = true  # Default, shown for clarity
+    }
+  }
+}
+```
+
+> [!TIP]
+> DNS Proxy is essential for FQDN-based network rules. Without it, firewall network rules can only filter by IP address.
+
 ### Production Configuration
 
 For production workloads, enable flow logs for network visibility:
@@ -177,24 +242,28 @@ hubs = {
   }
 }
 
-# Flow logs require storage account from management module
+# Flow logs with per-region storage (recommended)
+flow_logs = {
+  enabled        = true
+  retention_days = 90
+  storage = {
+    create = true  # Creates storage account per hub region
+  }
+  traffic_analytics_enabled = true
+}
+
+# Traffic Analytics requires Log Analytics workspace
 management_remote_state = {
   enabled              = true
   storage_account_name = "<storage-account-name>"
-}
-
-flow_logs = {
-  enabled                   = true
-  retention_days            = 90
-  traffic_analytics_enabled = true
 }
 ```
 
 > [!NOTE]
 > Availability zones are auto-detected. Regions that support zones (e.g., uksouth) automatically get zone-redundant resources with 99.99% SLA.
 
-> [!NOTE]
-> Flow logs require a storage account ID from the management module (via `management_remote_state`) or provided directly via `flow_logs.storage_account_id`. This design enables Azure Policy to deploy flow logs using a central storage account.
+> [!IMPORTANT]
+> **Storage Account Placement**: Azure requires flow logs storage accounts to be in the **same region** as the monitored VNet. This module creates one storage account per hub region in the connectivity subscription when `flow_logs.storage.create = true`. This is the recommended approach for multi-region deployments.
 
 > [!NOTE]
 > Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
@@ -297,6 +366,58 @@ hubs = {
       }
     }
   }
+}
+```
+
+### Flow Logs Storage Configuration
+
+VNet flow logs require a storage account in the **same region** as the monitored VNet. This module can create per-region storage accounts automatically:
+
+**Create storage per hub region (recommended):**
+
+```hcl
+flow_logs = {
+  enabled = true
+  storage = {
+    create                   = true
+    account_tier             = "Standard"
+    account_replication_type = "GRS"   # LRS for dev/test
+    retention_days           = 30      # Blob lifecycle retention
+    public_network_access    = false
+  }
+  retention_days            = 90     # Flow logs retention (min 90 for compliance)
+  traffic_analytics_enabled = true
+}
+```
+
+**Use external storage accounts:**
+
+If you have existing storage accounts, provide the ID per region:
+
+```hcl
+flow_logs = {
+  enabled = true
+  storage = {
+    create                      = false
+    external_storage_account_id = "/subscriptions/.../storageAccounts/existing-storage"
+  }
+}
+```
+
+> [!WARNING]
+> The `external_storage_account_id` option only supports a single storage account. For multi-region deployments, use `storage.create = true` to create per-region storage accounts.
+
+**Storage account outputs:**
+
+The module exports storage account details for downstream use:
+
+```hcl
+output "flow_logs_storage_account_ids" {
+  # Map of region => storage account ID
+}
+
+output "flow_logs_storage_account_names" {
+  # Map of region => storage account name
 }
 ```
 
@@ -460,8 +581,7 @@ eirctl test
 | Test File | Description |
 |-----------|-------------|
 | `hub_networking.tftest.hcl` | Address space, subnets, multi-hub, mesh peering |
-| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall SKU, Network Watcher, flow logs, private endpoints NSG |
-| `naming_and_tags.tftest.hcl` | CAF naming conventions, tags |
+| `hub_resources.tftest.hcl` | Features, DDoS, AMPLS, flow logs, private endpoints NSG |
 
 <!-- markdownlint-disable MD033 -->
 ## Requirements
@@ -478,18 +598,26 @@ The following requirements are needed by this module:
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
+- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.8)
+
 ## Resources
 
 The following resources are used by this module:
 
-- [azurerm_management_lock.resource_groups](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_lock) (resource)
+- [azurerm_monitor_diagnostic_setting.expressroute_gateway](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_diagnostic_setting.firewall](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
+- [azurerm_monitor_diagnostic_setting.vpn_gateway](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
+- [azurerm_monitor_metric_alert.firewall_health](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.firewall_snat_exhaustion](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.firewall_throughput](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_private_link_scope.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scope) (resource)
 - [azurerm_monitor_private_link_scoped_service.log_analytics](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scoped_service) (resource)
 - [azurerm_network_watcher.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher) (resource)
 - [azurerm_network_watcher_flow_log.vnet](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher_flow_log) (resource)
 - [azurerm_private_endpoint.ampls](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) (resource)
+- [azurerm_storage_management_policy.flow_logs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_management_policy) (resource)
 - [azurerm_subnet_network_security_group_association.private_endpoints](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association) (resource)
+- [random_string.random_seed](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) (resource)
 - [terraform_data.validate_ampls_requirements](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
 - [terraform_data.validate_flow_logs_requirements](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
 - [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
@@ -502,7 +630,7 @@ The following input variables are required:
 
 ### <a name="input_company_name"></a> [company\_name](#input\_company\_name)
 
-Description: Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'Ensono' becomes 'ens').
+Description: Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'ensono' becomes 'ens').
 
 Type: `string`
 
@@ -527,6 +655,7 @@ map(object({
       firewall               = optional(bool, true)
       firewall_sku           = optional(string, "Standard")
       firewall_management_ip = optional(bool, false)
+      firewall_dns_proxy     = optional(bool, true)
       bastion                = optional(bool, false)
       vpn_gateway            = optional(bool, false)
       expressroute_gateway   = optional(bool, false)
@@ -562,6 +691,7 @@ map(object({
 
     dns = optional(object({
       auto_registration_zone_name = optional(string)
+      servers                     = optional(list(string))
     }), {})
 
     name_overrides = optional(object({
@@ -626,54 +756,30 @@ Type: `bool`
 
 Default: `false`
 
-### <a name="input_ensono_tags"></a> [ensono\_tags](#input\_ensono\_tags)
-
-Description: Ensono-specific tags for CMDB and billing integration. Set enabled = true and provide required fields. CreatedBy is automatically set to the deploying identity.
-
-Type:
-
-```hcl
-object({
-    enabled = optional(bool, false)
-
-    # Required when enabled
-    application          = optional(string, "Connectivity Platform Landing Zone")
-    customer_ref         = optional(string)
-    deployment_date      = optional(string)
-    description          = optional(string, "Connectivity Platform Landing Zone")
-    ensono_support_level = optional(string)
-    environment          = optional(string)
-    billing              = optional(string)
-  })
-```
-
-Default:
-
-```json
-{
-  "enabled": false
-}
-```
-
 ### <a name="input_flow_logs"></a> [flow\_logs](#input\_flow\_logs)
 
-Description: Flow logs configuration for network traffic analysis. Disabled by default.
+Description:     Flow logs configuration for network traffic analysis. Disabled by default.
 
-Requirements:
-- Storage account ID must be provided (via storage\_account\_id or management\_remote\_state)
-- Storage account should be in the management module for Azure Policy compatibility
+    Per Microsoft documentation, the storage account MUST be in the same region as the VNet.  
+    This module creates a storage account per hub region to ensure compliance.
 
-When enabled, creates:
-- VNet flow logs for each hub virtual network
+    When enabled, creates:
+    - Storage account per hub region
+    - VNet flow logs for each hub virtual network
 
-Optional:
-- Traffic Analytics (requires Log Analytics workspace via management\_remote\_state)
+    Storage options:
+    - create: Set to true (default) to create storage accounts
+    - external\_storage\_account\_id: If create=false, provide an existing storage account ID
+      (must be in same region as hub VNet)
 
-Cost considerations:
-- Storage: ~£0.02/GB stored (~£15-50/month depending on traffic volume)
-- Traffic Analytics: Additional Log Analytics ingestion costs
+    Optional:
+    - Traffic Analytics (requires Log Analytics workspace via management\_remote\_state)
 
-Note: Retention defaults to 90 days to meet security compliance requirements (CKV\_AZURE\_12).
+    Cost considerations:
+    - Storage: ~£0.02/GB stored (~£15-50/month depending on traffic volume)
+    - Traffic Analytics: Additional Log Analytics ingestion costs
+
+    Note: Retention defaults to 90 days to meet security compliance requirements (CKV\_AZURE\_12).
 
 Type:
 
@@ -682,7 +788,22 @@ object({
     enabled                   = optional(bool, false)
     retention_days            = optional(number, 90)
     traffic_analytics_enabled = optional(bool, false)
-    storage_account_id        = optional(string, null)
+    storage = optional(object({
+      create                      = optional(bool, true)
+      external_storage_account_id = optional(string, null)
+      access_tier                 = optional(string, "Hot")
+      account_kind                = optional(string, "StorageV2")
+      account_replication_type    = optional(string, "GRS")
+      account_tier                = optional(string, "Standard") # Premium not supported
+      min_tls_version             = optional(string, "TLS1_2")
+      public_network_access       = optional(bool, false)
+      shared_access_key_enabled   = optional(bool, true)
+      retention_days              = optional(number, 30) # Blob lifecycle
+      network_rules = optional(object({
+        ip_rules                   = optional(list(string), [])
+        virtual_network_subnet_ids = optional(list(string), [])
+      }), {})
+    }), {})
   })
 ```
 
@@ -698,13 +819,13 @@ Default: `"10.0.0.0/8"`
 
 ### <a name="input_management_remote_state"></a> [management\_remote\_state](#input\_management\_remote\_state)
 
-Description: Configuration for fetching management landing zone outputs via remote state.
+Description: Configuration for fetching management landing zone outputs via remote state. Enabled by default - set enabled = false for local testing.
 
 Type:
 
 ```hcl
 object({
-    enabled              = optional(bool, false)
+    enabled              = optional(bool, true)
     backend              = optional(string, "azurerm")
     workspace            = optional(string, null)
     storage_account_name = optional(string, null)
@@ -714,13 +835,7 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "enabled": false
-}
-```
+Default: `{}`
 
 ### <a name="input_network_watcher"></a> [network\_watcher](#input\_network\_watcher)
 
@@ -796,7 +911,7 @@ Default: `true`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
-Description: Tags applied to all resources. Merged with ensono\_tags (if enabled) and hub-specific tags.
+Description: Tags applied to all resources.
 
 Type: `map(string)`
 
@@ -840,7 +955,7 @@ Description: Bastion host resource IDs.
 
 ### <a name="output_dns_server_ip_addresses"></a> [dns\_server\_ip\_addresses](#output\_dns\_server\_ip\_addresses)
 
-Description: Private DNS Resolver IPs.
+Description: DNS server IPs (firewall private IP when DNS Proxy enabled, or DNS Resolver IPs).
 
 ### <a name="output_firewall_diagnostic_setting_ids"></a> [firewall\_diagnostic\_setting\_ids](#output\_firewall\_diagnostic\_setting\_ids)
 
@@ -869,6 +984,14 @@ Description: Azure Firewall names, keyed by region.
 ### <a name="output_flow_log_ids"></a> [flow\_log\_ids](#output\_flow\_log\_ids)
 
 Description: VNet Flow Log resource IDs, keyed by region.
+
+### <a name="output_flow_logs_storage_account_ids"></a> [flow\_logs\_storage\_account\_ids](#output\_flow\_logs\_storage\_account\_ids)
+
+Description: Flow logs storage account IDs, keyed by region. Storage accounts are created per-region to meet Azure requirements.
+
+### <a name="output_flow_logs_storage_account_names"></a> [flow\_logs\_storage\_account\_names](#output\_flow\_logs\_storage\_account\_names)
+
+Description: Flow logs storage account names, keyed by region.
 
 ### <a name="output_hub_address_spaces"></a> [hub\_address\_spaces](#output\_hub\_address\_spaces)
 
@@ -935,6 +1058,12 @@ The following Modules are called:
 Source: Azure/avm-utl-regions/azurerm
 
 Version: 0.9.3
+
+### <a name="module_flow_logs_storage"></a> [flow\_logs\_storage](#module\_flow\_logs\_storage)
+
+Source: Azure/avm-res-storage-storageaccount/azurerm
+
+Version: 0.6.7
 
 ### <a name="module_hub_and_spoke_vnet"></a> [hub\_and\_spoke\_vnet](#module\_hub\_and\_spoke\_vnet)
 

@@ -60,6 +60,9 @@ flowchart TB
 |---------|---------|-------------|
 | Hub Virtual Networks | ✅ | With mesh peering for multi-region |
 | Azure Firewall | ✅ | Standard SKU (configurable: Basic/Standard/Premium) |
+| Firewall DNS Proxy | ✅ | Enables FQDN filtering and DNS query logging |
+| Firewall Health Alerts | ✅ | Alerts for health, SNAT exhaustion, and throughput |
+| Firewall Diagnostics | ✅ | All log categories sent to Log Analytics |
 | Network Watcher | ✅ | Free network diagnostics (Connection Monitor, Packet Capture) |
 | Private Endpoints NSG | ✅ | NSG for visibility and access control |
 | Private DNS Zones | ✅ | For Azure Private Link services |
@@ -68,7 +71,9 @@ flowchart TB
 | Flow Logs | ❌ | VNet flow logs with per-region storage (storage costs apply) |
 | Azure Bastion | ❌ | Secure VM access |
 | VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN |
+| VPN Gateway Diagnostics | ✅ | Tunnel, route, and IKE diagnostics (when gateway enabled) |
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity |
+| ExpressRoute Diagnostics | ✅ | Gateway and route diagnostics (when gateway enabled) |
 | DDoS Protection Plan | ❌ | Shared across all hubs |
 
 ## Quick Start
@@ -136,6 +141,25 @@ ddos_protection_plan = {
 > [!NOTE]
 > DDoS Protection Plan provides L3/L4 protection, telemetry, and rapid response support. Consider enabling for production workloads with public-facing endpoints.
 
+### Cost Estimation
+
+Estimated monthly costs per hub (UK South, January 2025):
+
+| Resource | Default | Monthly Cost (GBP) | Notes |
+|----------|---------|-------------------|-------|
+| Azure Firewall Standard | ✅ | ~£720 | 3 AZ deployment |
+| Azure Firewall Basic | ❌ | ~£180 | Dev/test alternative |
+| VPN Gateway (VpnGw1AZ) | ❌ | ~£140 | Active-active |
+| ExpressRoute Gateway | ❌ | ~£140 | ErGw1AZ SKU |
+| Azure Bastion Standard | ❌ | ~£140 | 2 scale units |
+| DDoS Protection Plan | ❌ | ~£2,200 | Shared across subscription |
+| Log Analytics | - | Variable | ~£2/GB/month ingestion |
+| **Minimum (Firewall only)** | | **~£720** | |
+| **Full Production** | | **~£1,140** | Firewall + VPN + Bastion |
+
+> [!TIP]
+> For multi-region, multiply per-hub costs. DDoS Protection Plan is shared across all regions.
+
 ### Private Endpoints NSG
 
 A Network Security Group is deployed on the private endpoints subnet by default, as recommended by [Microsoft's hub-spoke architecture guidance](https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network).
@@ -161,6 +185,47 @@ private_endpoints_nsg = {
 
 > [!NOTE]
 > When using Azure Firewall, the NSG provides additional visibility and logging. Traffic is already controlled by the firewall, but the NSG enables NSG flow logs for the private endpoints subnet.
+
+### Firewall DNS Proxy
+
+DNS Proxy is **enabled by default** on the firewall policy, as recommended by [Microsoft's Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security).
+
+DNS Proxy provides:
+- **FQDN filtering** - Required for network rules that filter by FQDN (not just IP)
+- **DNS query logging** - All DNS queries are logged to Log Analytics
+- **Consistent resolution** - All spoke workloads resolve DNS through the firewall
+
+When enabled, spoke VNets should configure their DNS servers to point to the firewall private IP (available via `firewall_private_ip_addresses` output).
+
+To disable DNS Proxy:
+
+```hcl
+hubs = {
+  uksouth = {
+    features = {
+      firewall_dns_proxy = false
+    }
+  }
+}
+```
+
+To use custom DNS servers with DNS Proxy:
+
+```hcl
+hubs = {
+  uksouth = {
+    dns = {
+      servers = ["10.0.0.4", "10.0.0.5"]  # Custom upstream DNS
+    }
+    features = {
+      firewall_dns_proxy = true  # Default, shown for clarity
+    }
+  }
+}
+```
+
+> [!TIP]
+> DNS Proxy is essential for FQDN-based network rules. Without it, firewall network rules can only filter by IP address.
 
 ### Production Configuration
 
@@ -312,13 +377,13 @@ VNet flow logs require a storage account in the **same region** as the monitored
 flow_logs = {
   enabled = true
   storage = {
-    create                 = true
-    account_tier           = "Standard"
-    account_replication    = "LRS"  # Use GRS for production
-    retention_days         = 30
-    public_network_access  = false
+    create                   = true
+    account_tier             = "Standard"
+    account_replication_type = "GRS"   # LRS for dev/test
+    retention_days           = 30      # Blob lifecycle retention
+    public_network_access    = false
   }
-  retention_days            = 7      # Flow logs retention
+  retention_days            = 90     # Flow logs retention (min 90 for compliance)
   traffic_analytics_enabled = true
 }
 ```
@@ -514,5 +579,4 @@ eirctl test
 | Test File | Description |
 |-----------|-------------|
 | `hub_networking.tftest.hcl` | Address space, subnets, multi-hub, mesh peering |
-| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall SKU, Network Watcher, flow logs, private endpoints NSG |
-| `naming_and_tags.tftest.hcl` | CAF naming conventions, tags |
+| `hub_resources.tftest.hcl` | Features, DDoS, AMPLS, flow logs, private endpoints NSG |

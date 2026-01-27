@@ -92,6 +92,10 @@ locals {
 
       firewall_policy = hub.features.firewall ? {
         name = local.hub_names[region].firewall_policy
+        dns = hub.features.firewall_dns_proxy ? {
+          proxy_enabled = true
+          servers       = hub.dns.servers # Custom upstream DNS or null for Azure DNS
+        } : null
       } : null
 
       bastion = hub.features.bastion ? {

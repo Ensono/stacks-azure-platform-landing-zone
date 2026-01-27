@@ -59,7 +59,7 @@ output "route_tables_user_subnets" {
 }
 
 output "dns_server_ip_addresses" {
-  description = "Private DNS Resolver IPs."
+  description = "DNS server IPs (firewall private IP when DNS Proxy enabled, or DNS Resolver IPs)."
   value       = module.hub_and_spoke_vnet.dns_server_ip_addresses
 }
 

@@ -3,7 +3,7 @@ locals {
     for region, hub in local.enabled_hubs : "hub-${region}" => {
       name     = local.hub_names[region].resource_group
       location = region
-      tags     = merge(local.tags, hub.tags)
+      tags     = merge(var.tags, hub.tags)
     }
   }
 
@@ -11,7 +11,7 @@ locals {
     dns = {
       name     = module.naming["hub-dns"].resource_group.name
       location = local.primary_hub_region
-      tags     = local.tags
+      tags     = var.tags
     }
   } : {}
 
@@ -19,7 +19,7 @@ locals {
     ddos = {
       name     = module.naming["hub-ddos"].resource_group.name
       location = local.primary_hub_region
-      tags     = local.tags
+      tags     = var.tags
     }
   } : {}
 

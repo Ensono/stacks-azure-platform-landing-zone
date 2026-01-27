@@ -1,6 +1,16 @@
 # Flow logs storage account - one per hub region
-# Per Microsoft documentation: "The storage account must be in the same region as the virtual network"
 # https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-overview#considerations-for-virtual-network-flow-logs
+
+locals {
+  # Use created storage account or externally provided ID
+  flow_logs_storage_account_ids = var.flow_logs.enabled ? {
+    for region in keys(local.enabled_hubs) : region => (
+      var.flow_logs.storage.create
+      ? module.flow_logs_storage[region].resource_id
+      : var.flow_logs.storage.external_storage_account_id
+    )
+  } : {}
+}
 
 module "flow_logs_storage" {
   source   = "Azure/avm-res-storage-storageaccount/azurerm"
@@ -13,16 +23,15 @@ module "flow_logs_storage" {
   resource_group_name = module.resource_groups["hub-${each.key}"].name
 
   # Storage account configuration
-  access_tier              = var.flow_logs.storage.access_tier
-  account_kind             = var.flow_logs.storage.account_kind
-  account_replication_type = var.flow_logs.storage.account_replication_type
-  account_tier             = var.flow_logs.storage.account_tier
-  enable_telemetry         = var.enable_avm_telemetry
-  min_tls_version          = var.flow_logs.storage.min_tls_version
+  access_tier               = var.flow_logs.storage.access_tier
+  account_kind              = var.flow_logs.storage.account_kind
+  account_replication_type  = var.flow_logs.storage.account_replication_type
+  account_tier              = var.flow_logs.storage.account_tier
+  enable_telemetry          = var.enable_avm_telemetry
+  min_tls_version           = var.flow_logs.storage.min_tls_version
   shared_access_key_enabled = var.flow_logs.storage.shared_access_key_enabled
-  tags                     = merge(local.tags, each.value.tags)
+  tags                      = merge(var.tags, each.value.tags)
 
-  # Network access - flow logs require trusted Azure services access
   public_network_access_enabled = var.flow_logs.storage.public_network_access
 
   # Blob service configuration - soft delete for accidental deletion protection
@@ -79,16 +88,4 @@ resource "azurerm_storage_management_policy" "flow_logs" {
       prefix_match = ["insights-logs-"]
     }
   }
-}
-
-# Local to determine the storage account ID to use for flow logs
-locals {
-  # Use created storage account or externally provided ID
-  flow_logs_storage_account_ids = var.flow_logs.enabled ? {
-    for region in keys(local.enabled_hubs) : region => (
-      var.flow_logs.storage.create
-      ? module.flow_logs_storage[region].resource_id
-      : var.flow_logs.storage.external_storage_account_id
-    )
-  } : {}
 }
