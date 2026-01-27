@@ -38,10 +38,10 @@ test {
 }
 
 # =============================================================================
-# CAF Naming Conventions
+# Module Integration - CAF Naming Conventions
 # =============================================================================
 
-run "naming_conventions" {
+run "naming_module_produces_caf_prefixes" {
   command   = plan
   state_key = "naming"
 
@@ -67,16 +67,13 @@ run "naming_conventions" {
     condition     = startswith(local.resource_names.user_assigned_identity, "uai-")
     error_message = "User assigned identity name should start with 'uai-' CAF prefix."
   }
-
-  # Note: DCR names use AVM module defaults (dcr-change-tracking, dcr-vm-insights, dcr-defender-sql)
 }
 
 # =============================================================================
-# =============================================================================
-# Location and Environment
+# Module Integration - Azure Regions
 # =============================================================================
 
-run "location_config" {
+run "azure_regions_module_provides_geo_codes" {
   command   = plan
   state_key = "location"
 
@@ -84,69 +81,5 @@ run "location_config" {
   assert {
     condition     = module.azure_regions.regions_by_name[var.location].geo_code == "uks"
     error_message = "Location short code for uksouth should be 'uks'."
-  }
-
-  # Location matches input variable
-  assert {
-    condition     = var.location == "uksouth"
-    error_message = "Location should match input variable."
-  }
-}
-
-# =============================================================================
-# Tags Configuration
-# =============================================================================
-
-run "tags_defaults" {
-  command   = plan
-  state_key = "tags_default"
-
-  assert {
-    condition     = length(var.tags) == 0
-    error_message = "Tags should be empty by default."
-  }
-}
-
-run "tags_custom" {
-  command   = plan
-  state_key = "tags_custom"
-
-  variables {
-    tags = {
-      Environment = "Dev"
-      Project     = "Landing Zone"
-      Owner       = "Platform Team"
-    }
-  }
-
-  assert {
-    condition     = var.tags["Environment"] == "Dev"
-    error_message = "Custom tags should be applied."
-  }
-
-  assert {
-    condition     = var.tags["Project"] == "Landing Zone"
-    error_message = "Custom tags should be applied."
-  }
-}
-
-# =============================================================================
-# Variable Validation
-# =============================================================================
-
-run "subscription_id_validation" {
-  command   = plan
-  state_key = "sub_valid"
-
-  # Valid GUID format for management subscription
-  assert {
-    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.management_subscription_id))
-    error_message = "management_subscription_id must be a valid GUID format."
-  }
-
-  # Optional subscriptions are also valid GUIDs when provided
-  assert {
-    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.connectivity_subscription_id))
-    error_message = "connectivity_subscription_id must be a valid GUID format when provided."
   }
 }

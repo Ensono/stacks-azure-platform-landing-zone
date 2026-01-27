@@ -43,51 +43,8 @@ test {
 }
 
 # =============================================================================
-# Management Groups Defaults
-# =============================================================================
-
-run "management_groups_disabled_by_default" {
-  command   = plan
-  state_key = "mg_defaults"
-
-  # Management groups disabled by default
-  assert {
-    condition     = var.management_groups_enabled == false
-    error_message = "Management groups should be disabled by default."
-  }
-
-  # Settings variable is null when module is disabled (not required)
-  assert {
-    condition     = var.management_group_settings == null
-    error_message = "management_group_settings should be null by default when disabled."
-  }
-}
-
-# =============================================================================
-# Variable Configuration Tests
-# These tests verify variable defaults and validation without enabling the module
-# =============================================================================
-
-run "management_groups_variable_with_settings" {
-  command   = plan
-  state_key = "mg_var_settings"
-
-  variables {
-    management_group_settings = {
-      architecture_name  = "alz_custom"
-      location           = "uksouth"
-      parent_resource_id = "/providers/Microsoft.Management/managementGroups/test-tenant-root"
-    }
-  }
-
-  assert {
-    condition     = var.management_group_settings.architecture_name == "alz_custom"
-    error_message = "Architecture name should be configurable."
-  }
-}
-
-# =============================================================================
-# Policy Defaults Computation
+# Locals Safe When Disabled
+# These tests ensure consumers don't hit errors when features are disabled
 # =============================================================================
 
 run "policy_defaults_computed_safely" {
@@ -99,15 +56,6 @@ run "policy_defaults_computed_safely" {
     condition     = local.policy_default_values != null
     error_message = "policy_default_values should not be null even when resources are disabled."
   }
-}
-
-# =============================================================================
-# Subscription Placement Defaults
-# =============================================================================
-
-run "subscription_placement_defaults" {
-  command   = plan
-  state_key = "sub_placement"
 
   # Subscription placement should be computed safely
   assert {

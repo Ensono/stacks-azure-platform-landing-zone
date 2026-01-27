@@ -12,10 +12,9 @@ to validate configuration logic without deploying actual Azure resources.
 | File | Purpose |
 | ---- | ------- |
 | `terraform.tfvars` | Default variable values auto-loaded by all tests |
-| `naming_and_tags.tftest.hcl` | CAF naming conventions, tags, location, validation |
-| `management_resources.tftest.hcl` | Resource groups, Log Analytics, DCRs, storage, identities |
-| `management_groups.tftest.hcl` | Management group configuration, subscription placement |
-| `monitoring_alerts.tftest.hcl` | Health monitoring alerts variable validation |
+| `locals_safe_defaults.tftest.hcl` | Ensures locals don't error when features are disabled |
+| `monitoring_alerts.tftest.hcl` | Auto-enable logic for health monitoring alerts |
+| `naming.tftest.hcl` | CAF naming module integration and azure_regions module |
 
 ## Running Tests
 
@@ -24,7 +23,7 @@ to validate configuration logic without deploying actual Azure resources.
 terraform test
 
 # Run a specific test file
-terraform test -filter=tests/naming_and_tags.tftest.hcl
+terraform test -filter=tests/naming.tftest.hcl
 
 # Run with verbose output
 terraform test -verbose
