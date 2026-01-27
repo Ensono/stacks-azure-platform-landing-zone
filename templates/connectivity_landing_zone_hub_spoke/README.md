@@ -478,11 +478,14 @@ The module provides outputs for spoke landing zones to integrate with hub infras
 ```hcl
 # In spoke landing zone
 data "terraform_remote_state" "connectivity" {
-  backend = "azurerm"
+  backend   = "azurerm"
+  workspace = terraform.workspace
+
   config = {
     storage_account_name = "<storage-account>"
     container_name       = "tfstate"
     key                  = "connectivity.tfstate"
+    use_azuread_auth     = true
   }
 }
 
