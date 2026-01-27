@@ -78,18 +78,24 @@ flowchart TB
 | ExpressRoute Diagnostics | ✅ | Gateway and route diagnostics (when gateway enabled) |
 | DDoS Protection Plan | ❌ | Shared across all hubs |
 
-## Quick Start
+## Configuration Examples
+
+### Single Region Deployment
 
 ```hcl
 company_name                 = "ensono"
 connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
 
+# Azure Monitor Private Link Scope (enabled by default)
+# Use remote state to fetch workspace ID from management module
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+
 hubs = {
   uksouth = {}
 }
 ```
-
-## Configuration Examples
 
 ### Multi-Region Deployment
 
@@ -109,7 +115,7 @@ Mesh VNet peering is configured automatically between all hubs.
 
 ### Cost Optimization for Non-Production
 
-Use Firewall Basic SKU for dev/test environments (~£540/month savings per hub):
+Use Firewall `Basic` SKU for dev/test environments (~£540/month savings per hub):
 
 ```hcl
 hubs = {
@@ -128,7 +134,7 @@ hubs = {
 | Premium | ~£800 | TLS inspection, IDPS signatures |
 
 > [!WARNING]
-> Firewall Basic SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
+> Firewall `Basic` SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
 
 ### DDoS Protection Plan
 
@@ -167,6 +173,7 @@ Estimated monthly costs per hub (UK South, January 2025):
 A Network Security Group is deployed on the private endpoints subnet by default, as recommended by [Microsoft's hub-spoke architecture guidance](https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network).
 
 The NSG provides:
+
 - **Visibility** - NSG flow logs for auditing and compliance
 - **Access control** - Centralized place to control traffic to private endpoints
 - **Defense in depth** - Additional security layer alongside Azure Firewall
@@ -193,6 +200,7 @@ private_endpoints_nsg = {
 DNS Proxy is **enabled by default** on the firewall policy, as recommended by [Microsoft's Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security).
 
 DNS Proxy provides:
+
 - **FQDN filtering** - Required for network rules that filter by FQDN (not just IP)
 - **DNS query logging** - All DNS queries are logged to Log Analytics
 - **Consistent resolution** - All spoke workloads resolve DNS through the firewall
@@ -254,7 +262,6 @@ flow_logs = {
 
 # Traffic Analytics requires Log Analytics workspace
 management_remote_state = {
-  enabled              = true
   storage_account_name = "<storage-account-name>"
 }
 ```
@@ -266,7 +273,7 @@ management_remote_state = {
 > **Storage Account Placement**: Azure requires flow logs storage accounts to be in the **same region** as the monitored VNet. This module creates one storage account per hub region in the connectivity subscription when `flow_logs.storage.create = true`. This is the recommended approach for multi-region deployments.
 
 > [!NOTE]
-> Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
+> Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID, this is the default. If only `log_analytics_workspace_id` is provided directly, Traffic Analytics will be skipped.
 
 ### Availability Zones
 
@@ -429,7 +436,6 @@ AMPLS is **enabled by default** to provide private connectivity to Log Analytics
 
 ```hcl
 management_remote_state = {
-  enabled              = true
   storage_account_name = "<storage-account-name>"
 }
 # Workspace ID is fetched automatically from management module
@@ -573,7 +579,14 @@ Unit tests validate configuration logic without deploying infrastructure. Tests 
 ### Run Tests
 
 ```bash
-eirctl test
+# Run all tests (~3 minutes)
+terraform test
+
+# Run a specific test file (~1 minute)
+terraform test -filter=tests/hub_networking.tftest.hcl
+
+# Run with verbose output
+terraform test -verbose
 ```
 
 ### Test Coverage

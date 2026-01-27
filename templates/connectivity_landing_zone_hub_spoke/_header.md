@@ -76,7 +76,9 @@ flowchart TB
 | ExpressRoute Diagnostics | ✅ | Gateway and route diagnostics (when gateway enabled) |
 | DDoS Protection Plan | ❌ | Shared across all hubs |
 
-## Quick Start
+## Configuration Examples
+
+### Single Region Deployment
 
 ```hcl
 company_name                 = "ensono"
@@ -92,8 +94,6 @@ hubs = {
   uksouth = {}
 }
 ```
-
-## Configuration Examples
 
 ### Multi-Region Deployment
 
