@@ -620,12 +620,18 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azurerm_monitor_diagnostic_setting.bastion](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_diagnostic_setting.expressroute_gateway](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_diagnostic_setting.firewall](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_diagnostic_setting.vpn_gateway](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
+- [azurerm_monitor_metric_alert.expressroute_bits_received](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.expressroute_cpu](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_metric_alert.firewall_health](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.firewall_latency](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_metric_alert.firewall_snat_exhaustion](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_metric_alert.firewall_throughput](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.vpn_p2s_connections](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
+- [azurerm_monitor_metric_alert.vpn_tunnel_egress](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_private_link_scope.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scope) (resource)
 - [azurerm_monitor_private_link_scoped_service.log_analytics](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scoped_service) (resource)
 - [azurerm_network_watcher.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher) (resource)
@@ -957,6 +963,10 @@ Description: AMPLS private IPs, keyed by region.
 
 Description: Resource group containing AMPLS.
 
+### <a name="output_bastion_diagnostic_setting_ids"></a> [bastion\_diagnostic\_setting\_ids](#output\_bastion\_diagnostic\_setting\_ids)
+
+Description: Diagnostic setting IDs for Bastion hosts, keyed by region.
+
 ### <a name="output_bastion_host_dns_names"></a> [bastion\_host\_dns\_names](#output\_bastion\_host\_dns\_names)
 
 Description: Bastion DNS names, keyed by region.
@@ -973,6 +983,10 @@ Description: Bastion host resource IDs.
 
 Description: DNS server IPs (firewall private IP when DNS Proxy enabled, or DNS Resolver IPs).
 
+### <a name="output_firewall_alert_ids"></a> [firewall\_alert\_ids](#output\_firewall\_alert\_ids)
+
+Description: Firewall metric alert IDs, keyed by region and alert type.
+
 ### <a name="output_firewall_diagnostic_setting_ids"></a> [firewall\_diagnostic\_setting\_ids](#output\_firewall\_diagnostic\_setting\_ids)
 
 Description: Diagnostic setting IDs for firewall.
@@ -980,6 +994,10 @@ Description: Diagnostic setting IDs for firewall.
 ### <a name="output_firewall_policies"></a> [firewall\_policies](#output\_firewall\_policies)
 
 Description: Firewall Policy resources.
+
+### <a name="output_firewall_policy_resource_ids"></a> [firewall\_policy\_resource\_ids](#output\_firewall\_policy\_resource\_ids)
+
+Description: Azure Firewall Policy resource IDs, keyed by region.
 
 ### <a name="output_firewall_private_ip_addresses"></a> [firewall\_private\_ip\_addresses](#output\_firewall\_private\_ip\_addresses)
 
@@ -1009,6 +1027,14 @@ Description: Flow logs storage account IDs, keyed by region. Storage accounts ar
 
 Description: Flow logs storage account names, keyed by region.
 
+### <a name="output_gateway_alert_ids"></a> [gateway\_alert\_ids](#output\_gateway\_alert\_ids)
+
+Description: Gateway metric alert IDs, keyed by region and alert type.
+
+### <a name="output_gateway_diagnostic_setting_ids"></a> [gateway\_diagnostic\_setting\_ids](#output\_gateway\_diagnostic\_setting\_ids)
+
+Description: Diagnostic setting IDs for VPN and ExpressRoute gateways, keyed by type and region.
+
 ### <a name="output_hub_address_spaces"></a> [hub\_address\_spaces](#output\_hub\_address\_spaces)
 
 Description: Address space per hub.
@@ -1020,6 +1046,10 @@ Description: Regions where hubs are deployed.
 ### <a name="output_network_watcher_ids"></a> [network\_watcher\_ids](#output\_network\_watcher\_ids)
 
 Description: Network Watcher resource IDs, keyed by region.
+
+### <a name="output_primary_hub_region"></a> [primary\_hub\_region](#output\_primary\_hub\_region)
+
+Description: Primary hub region (first alphabetically).
 
 ### <a name="output_private_dns_zone_resource_ids"></a> [private\_dns\_zone\_resource\_ids](#output\_private\_dns\_zone\_resource\_ids)
 

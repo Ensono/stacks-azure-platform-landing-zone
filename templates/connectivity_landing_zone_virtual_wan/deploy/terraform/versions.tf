@@ -14,9 +14,17 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.5"
     }
+    modtm = {
+      source  = "Azure/modtm"
+      version = "~> 0.3"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.8"
+    }
   }
 
-  # backend "azurerm" {
-  #   use_azuread_auth = true
-  # }
+  backend "azurerm" {
+    use_azuread_auth = true
+  }
 }

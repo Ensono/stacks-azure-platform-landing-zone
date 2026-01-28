@@ -16,15 +16,8 @@ watchers:
     events: [create, write]
     task: lint:terraform:format
 
-tasks:
-  doc:terraform:modules:
-    context: eir
-    description: Generate Terraform Module Documentation for Child Modules
-    command: |
-      terraform-docs "$env:TF_FILE_LOCATION/modules"
-
 pipelines:
-  code:linting:
+  lint:
     - task: lint:yaml
     - task: lint:terraform:format
       depends_on: lint:yaml
@@ -33,13 +26,11 @@ pipelines:
     - task: lint:terraform:tflint
       depends_on: lint:terraform:validate
 
-  code:scanning:
+  scan:
     - task: scan:terraform:checkov
 
-  code:documentation:
-    - task: doc:terraform:modules
+  documentation:
     - task: doc:terraform:generate
-      depends_on: doc:terraform:modules
 
   infrastructure:plan:
     - task: terraform:init

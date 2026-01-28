@@ -13,11 +13,10 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   for_each = local.firewalls_with_diagnostics
 
   name                           = "diag-firewall-${each.key}"
-  target_resource_id             = module.hub_and_spoke_vnet.firewall_resource_ids[each.key]
+  target_resource_id             = module.virtual_wan.firewall_resource_ids[each.key]
   log_analytics_workspace_id     = local.log_analytics_workspace_id
   log_analytics_destination_type = "Dedicated"
 
-  # Structured logs - resource-specific tables
   enabled_log {
     category = "AZFWApplicationRule"
   }

@@ -11,7 +11,7 @@ resource "azurerm_monitor_metric_alert" "firewall_health" {
 
   name                = "alert-firewall-health-${each.key}"
   resource_group_name = module.resource_groups["hub-${each.key}"].name
-  scopes              = [module.hub_and_spoke_vnet.firewall_resource_ids[each.key]]
+  scopes              = [module.virtual_wan.firewall_resource_ids[each.key]]
   description         = "Alert when Azure Firewall health degrades in ${each.key}"
   severity            = 1
   frequency           = "PT1M"
@@ -34,7 +34,7 @@ resource "azurerm_monitor_metric_alert" "firewall_snat_exhaustion" {
 
   name                = "alert-firewall-snat-${each.key}"
   resource_group_name = module.resource_groups["hub-${each.key}"].name
-  scopes              = [module.hub_and_spoke_vnet.firewall_resource_ids[each.key]]
+  scopes              = [module.virtual_wan.firewall_resource_ids[each.key]]
   description         = "Alert when SNAT port utilization exceeds 80% in ${each.key}"
   severity            = 2
   frequency           = "PT5M"
@@ -57,7 +57,7 @@ resource "azurerm_monitor_metric_alert" "firewall_throughput" {
 
   name                = "alert-firewall-throughput-${each.key}"
   resource_group_name = module.resource_groups["hub-${each.key}"].name
-  scopes              = [module.hub_and_spoke_vnet.firewall_resource_ids[each.key]]
+  scopes              = [module.virtual_wan.firewall_resource_ids[each.key]]
   description         = "Alert when firewall throughput is high in ${each.key}"
   severity            = 2
   frequency           = "PT5M"
@@ -80,7 +80,7 @@ resource "azurerm_monitor_metric_alert" "firewall_latency" {
 
   name                = "alert-firewall-latency-${each.key}"
   resource_group_name = module.resource_groups["hub-${each.key}"].name
-  scopes              = [module.hub_and_spoke_vnet.firewall_resource_ids[each.key]]
+  scopes              = [module.virtual_wan.firewall_resource_ids[each.key]]
   description         = "Alert when firewall latency exceeds 20ms in ${each.key}"
   severity            = 2
   frequency           = "PT1M"

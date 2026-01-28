@@ -1,4 +1,5 @@
-# Multi-Region Deployment
+# Single Region Deployment
+# WARNING: Not recommended for production. Use multi-region for HA/DR.
 # See ../../_header.md for more configuration examples.
 #
 # Required environment variable:
@@ -8,7 +9,6 @@ company_name = "ensono"
 
 hubs = {
   uksouth = {}
-  ukwest  = {}
 }
 
 # Azure Monitor Private Link Scope (enabled by default)

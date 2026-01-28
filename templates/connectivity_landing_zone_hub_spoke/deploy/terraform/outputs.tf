@@ -3,6 +3,11 @@ output "hub_regions" {
   value       = keys(local.enabled_hubs)
 }
 
+output "primary_hub_region" {
+  description = "Primary hub region (first alphabetically)."
+  value       = local.primary_hub_region
+}
+
 output "hub_address_spaces" {
   description = "Address space per hub."
   value       = { for region, addr in local.hub_addresses : region => addr.hub_address_space }
@@ -43,9 +48,47 @@ output "firewall_policies" {
   value       = module.hub_and_spoke_vnet.firewall_policies
 }
 
+output "firewall_policy_resource_ids" {
+  description = "Azure Firewall Policy resource IDs, keyed by region."
+  value       = { for k, v in module.hub_and_spoke_vnet.firewall_policies : k => v.id }
+}
+
 output "firewall_diagnostic_setting_ids" {
   description = "Diagnostic setting IDs for firewall."
   value       = { for k, v in azurerm_monitor_diagnostic_setting.firewall : k => v.id }
+}
+
+output "gateway_diagnostic_setting_ids" {
+  description = "Diagnostic setting IDs for VPN and ExpressRoute gateways, keyed by type and region."
+  value = {
+    vpn_gateway          = { for k, v in azurerm_monitor_diagnostic_setting.vpn_gateway : k => v.id }
+    expressroute_gateway = { for k, v in azurerm_monitor_diagnostic_setting.expressroute_gateway : k => v.id }
+  }
+}
+
+output "bastion_diagnostic_setting_ids" {
+  description = "Diagnostic setting IDs for Bastion hosts, keyed by region."
+  value       = { for k, v in azurerm_monitor_diagnostic_setting.bastion : k => v.id }
+}
+
+output "firewall_alert_ids" {
+  description = "Firewall metric alert IDs, keyed by region and alert type."
+  value = {
+    health     = { for k, v in azurerm_monitor_metric_alert.firewall_health : k => v.id }
+    snat       = { for k, v in azurerm_monitor_metric_alert.firewall_snat_exhaustion : k => v.id }
+    throughput = { for k, v in azurerm_monitor_metric_alert.firewall_throughput : k => v.id }
+    latency    = { for k, v in azurerm_monitor_metric_alert.firewall_latency : k => v.id }
+  }
+}
+
+output "gateway_alert_ids" {
+  description = "Gateway metric alert IDs, keyed by region and alert type."
+  value = {
+    vpn_tunnel_egress   = { for k, v in azurerm_monitor_metric_alert.vpn_tunnel_egress : k => v.id }
+    vpn_p2s_connections = { for k, v in azurerm_monitor_metric_alert.vpn_p2s_connections : k => v.id }
+    expressroute_bits   = { for k, v in azurerm_monitor_metric_alert.expressroute_bits_received : k => v.id }
+    expressroute_cpu    = { for k, v in azurerm_monitor_metric_alert.expressroute_cpu : k => v.id }
+  }
 }
 
 output "route_tables_firewall" {

@@ -32,7 +32,7 @@ repos:
         stages: [pre-commit]
       - id: terraform_docs
         args:
-          - --args=--config=../../.terraform-docs.yml
+          - --args=--config=deploy/terraform/.terraform-docs.yml
         stages: [pre-commit]
       - id: terraform_validate
         stages: [pre-commit]
