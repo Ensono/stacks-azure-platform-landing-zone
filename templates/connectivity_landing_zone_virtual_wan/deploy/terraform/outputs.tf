@@ -77,7 +77,6 @@ output "firewall_alert_ids" {
     health     = { for k, v in azurerm_monitor_metric_alert.firewall_health : k => v.id }
     snat       = { for k, v in azurerm_monitor_metric_alert.firewall_snat_exhaustion : k => v.id }
     throughput = { for k, v in azurerm_monitor_metric_alert.firewall_throughput : k => v.id }
-    latency    = { for k, v in azurerm_monitor_metric_alert.firewall_latency : k => v.id }
   }
 }
 
@@ -114,11 +113,6 @@ output "private_dns_resolver_resource_ids" {
 output "sidecar_virtual_network_resource_ids" {
   description = "Sidecar virtual network resource IDs, keyed by region."
   value       = module.virtual_wan.sidecar_virtual_network_resource_ids
-}
-
-output "virtual_hub_diagnostic_setting_ids" {
-  description = "Diagnostic setting IDs for virtual hubs, keyed by region."
-  value       = { for k, v in azurerm_monitor_diagnostic_setting.virtual_hub : k => v.id }
 }
 
 output "azure_monitor_private_link_scope_id" {

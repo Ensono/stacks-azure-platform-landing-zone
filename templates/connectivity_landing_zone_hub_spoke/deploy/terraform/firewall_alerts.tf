@@ -73,26 +73,3 @@ resource "azurerm_monitor_metric_alert" "firewall_throughput" {
 
   tags = var.tags
 }
-
-# Firewall latency probe alert (severity 2)
-resource "azurerm_monitor_metric_alert" "firewall_latency" {
-  for_each = local.firewalls_with_alerts
-
-  name                = "alert-firewall-latency-${each.key}"
-  resource_group_name = module.resource_groups["hub-${each.key}"].name
-  scopes              = [module.hub_and_spoke_vnet.firewall_resource_ids[each.key]]
-  description         = "Alert when firewall latency exceeds 20ms in ${each.key}"
-  severity            = 2
-  frequency           = "PT1M"
-  window_size         = "PT5M"
-
-  criteria {
-    metric_namespace = "Microsoft.Network/azureFirewalls"
-    metric_name      = "AzureFirewallLatencyProbe"
-    aggregation      = "Average"
-    operator         = "GreaterThan"
-    threshold        = 20000 # 20ms in microseconds
-  }
-
-  tags = var.tags
-}

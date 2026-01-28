@@ -77,7 +77,6 @@ output "firewall_alert_ids" {
     health     = { for k, v in azurerm_monitor_metric_alert.firewall_health : k => v.id }
     snat       = { for k, v in azurerm_monitor_metric_alert.firewall_snat_exhaustion : k => v.id }
     throughput = { for k, v in azurerm_monitor_metric_alert.firewall_throughput : k => v.id }
-    latency    = { for k, v in azurerm_monitor_metric_alert.firewall_latency : k => v.id }
   }
 }
 
