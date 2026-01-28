@@ -70,29 +70,31 @@ flowchart TB
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity |
 | DDoS Protection Plan | ❌ | Shared across all hubs |
 
-## Quick Start
+## Configuration Examples
+
+### Single Region Deployment
 
 ```hcl
 company_name                 = "ensono"
 connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Azure Monitor Private Link Scope (enabled by default)
+# Use remote state to fetch workspace ID from management module
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
 
 hubs = {
   uksouth = {}
 }
 ```
 
-## Configuration Examples
-
 ### Multi-Region Deployment
 
 ```hcl
 hubs = {
-  uksouth       = {}
-  ukwest        = {}
-  northeurope   = {}
-  westeurope    = {}
-  eastus        = {}
-  westus        = {}
+  uksouth = {}
+  ukwest  = {}
 }
 ```
 
@@ -100,12 +102,8 @@ IP addresses are calculated automatically (sorted alphabetically). Each hub rece
 
 | Region | Hub Address Space | Virtual Hub Prefix |
 |--------|------------------|-------------------|
-| eastus | `10.0.0.0/16` | `10.0.0.0/23` |
-| northeurope | `10.1.0.0/16` | `10.1.0.0/23` |
-| uksouth | `10.2.0.0/16` | `10.2.0.0/23` |
-| ukwest | `10.3.0.0/16` | `10.3.0.0/23` |
-| westeurope | `10.4.0.0/16` | `10.4.0.0/23` |
-| westus | `10.5.0.0/16` | `10.5.0.0/23` |
+| uksouth | `10.0.0.0/16` | `10.0.0.0/23` |
+| ukwest | `10.1.0.0/16` | `10.1.0.0/23` |
 
 > [!NOTE]
 > The module supports up to 256 regions using the `10.0.0.0/8` address space. Regions are sorted alphabetically for consistent IP allocation across deployments.
@@ -168,6 +166,7 @@ Estimated monthly costs per hub (UK South, January 2025):
 DNS Proxy is **enabled by default** on the firewall policy, as recommended by [Microsoft's Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security).
 
 DNS Proxy provides:
+
 - **FQDN filtering** - Required for network rules that filter by FQDN (not just IP)
 - **DNS query logging** - All DNS queries are logged to Log Analytics
 - **Consistent resolution** - All spoke workloads resolve DNS through the firewall
@@ -287,12 +286,14 @@ hubs = {
 | **Complexity** | Lower operational | Higher operational |
 
 **Choose Virtual WAN when:**
+
 - You have 50+ spoke VNets
 - You need global transit routing
 - You want simplified VPN/ExpressRoute management
 - Operational simplicity is more important than cost
 
 **Choose Hub-Spoke when:**
+
 - You have fewer spoke VNets
 - Cost optimization is critical
 - You need granular routing control
@@ -301,15 +302,13 @@ hubs = {
 ## Module Integration
 
 This module can integrate with the Management Landing Zone to enable:
+
 - Firewall diagnostics to Log Analytics
 - Centralized monitoring and alerting
 
 ```hcl
 management_remote_state = {
-  enabled              = true
-  storage_account_name = "stpmcetfstate"
-  container_name       = "tfstate"
-  key                  = "management.tfstate"
+  storage_account_name = "<storage-account-name>"
 }
 ```
 
