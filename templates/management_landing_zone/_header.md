@@ -34,7 +34,8 @@ flowchart TB
 | Azure Monitor Agent Identity | ✅ | User-assigned managed identity for AMA |
 | Resource Group Locks | ✅ | `CanNotDelete` locks on resource groups |
 | Log Analytics Diagnostics | ✅ | Self-monitoring diagnostic settings |
-| Health Monitoring Alerts | ❌ | Ingestion latency, query failures |
+| Subscription Activity Logs | ✅ | Routes Activity Logs into Log Analytics |
+| Health Monitoring Alerts | ❌ | Latency, search availability, query failures/runtime, ingestion guardrails |
 | Management Groups | ❌ | Management group hierarchy with policies |
 
 ## Configuration Examples
@@ -191,7 +192,6 @@ The management module outputs are consumed by the connectivity module via Terraf
 
 ```hcl
 management_remote_state = {
-  enabled              = true
   storage_account_name = "<tfstate-storage-account>"
 }
 ```
@@ -259,31 +259,32 @@ management_resource_settings = {
 
 ## Health Monitoring Alerts
 
-The module supports optional Azure Monitor health monitoring alerts to ensure the observability infrastructure remains healthy. Alerts are automatically enabled when an action group ID is provided:
+The module supports optional Azure Monitor health monitoring alerts to ensure the observability infrastructure remains healthy. Alerts require an Action Group so notifications always reach operations teams. Provide an action group ID (and optional overrides) to enable all alerts:
 
 ```hcl
 monitoring_alerts = {
-  action_group_id = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Insights/actionGroups/platform-alerts"
+  action_group_id                         = "/subscriptions/.../actionGroups/platform-alerts"
+  ingestion_latency_threshold_seconds     = 60   # default 120
+  data_ingest_threshold_gb                = 50   # default 100
+  search_availability_threshold_percent   = 99.5 # default 99
+  query_duration_threshold_ms             = 20000 # default 15000
+  enable_query_failure_alerts             = true  # default true
+  query_failure_threshold                 = 10    # default 5
 }
 ```
 
-To customize thresholds:
-
-```hcl
-monitoring_alerts = {
-  action_group_id                     = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Insights/actionGroups/platform-alerts"
-  ingestion_latency_threshold_seconds = 60   # Alert if latency > 1 minute (default: 120)
-  enable_query_failure_alerts         = true # Monitor query failures (default: true)
-  query_failure_threshold             = 10   # Alert after 10 failures (default: 5)
-}
-```
+> [!NOTE]
+> If `monitoring_alerts.enabled = true` (or an action group is supplied), an Action Group ID must be provided. This keeps alerts actionable and prevents silent monitoring failures.
 
 ### Alert Types
 
 | Alert | Severity | Description |
 | ----- | -------- | ----------- |
 | Ingestion Latency | 2 (Warning) | Triggers when data ingestion latency exceeds threshold |
+| Search Availability | 2 (Warning) | Triggers when SearchableResultsAvailability drops below threshold |
 | Query Failures | 2 (Warning) | Triggers when query failures exceed threshold |
+| Slow Query Runtime | 3 (Informational) | Triggers when QueryStoreRuntimeStatistics shows long-running queries |
+| Data Ingestion Guardrail | 3 (Informational) | Triggers when daily data ingestion exceeds budgeted GB |
 
 > [!NOTE]
 > Create an Action Group in Azure Monitor before enabling alerts to receive notifications via email, SMS, webhook, or other channels.
