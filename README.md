@@ -10,7 +10,7 @@ This repository contains starter modules for deploying Azure Platform Landing Zo
 | [Connectivity Hub-Spoke](templates/connectivity_landing_zone_hub_spoke/) | Hub-and-spoke network topology with Azure Firewall, Bastion, and DNS |
 | [Connectivity Virtual WAN](templates/connectivity_landing_zone_virtual_wan/) | Virtual WAN topology with secured hubs, Bastion, and DNS |
 
-Each module includes a README with architecture diagrams, configuration examples in `deploy/terraform/examples/`, and unit tests in `deploy/terraform/tests/`.
+Each module includes a `README` with architecture diagrams, configuration examples in `deploy/terraform/examples/`, and unit tests in `deploy/terraform/tests/`.
 
 ## Technology Stack
 
@@ -38,7 +38,13 @@ Run from within a template directory:
 | `eirctl infrastructure:plan` | terraform init → plan |
 | `eirctl infrastructure:apply` | terraform init → apply |
 
-Run `eirctl lint` from the repository root for YAML and format checks across all modules.
+### Linting/Formatting
+
+Run `eirctl lint` from the repository root for YAML and Terraform checks across all modules.
+
+### Testing
+
+Run `eirctl test:*` from the repository root to run unit tests for each module. For example, `eirctl test:management`.
 
 ## Contributing
 

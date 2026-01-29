@@ -15,6 +15,35 @@ watchers:
     events: [create, write]
     task: lint:terraform:format
 
+# Local Tasks
+tasks:
+  test:management:
+    context: eir
+    description: Run terraform tests for management_landing_zone module
+    dir: templates/management_landing_zone/deploy/terraform
+    command:
+      - |
+        terraform init -backend=false
+        terraform test
+
+  test:connectivity_hub_spoke:
+    context: eir
+    description: Run terraform tests for connectivity_landing_zone_hub_spoke module
+    dir: templates/connectivity_landing_zone_hub_spoke/deploy/terraform
+    command:
+      - |
+        terraform init -backend=false
+        terraform test
+
+  test:connectivity_virtual_wan:
+    context: eir
+    description: Run terraform tests for connectivity_landing_zone_virtual_wan module
+    dir: templates/connectivity_landing_zone_virtual_wan/deploy/terraform
+    command:
+      - |
+        terraform init -backend=false
+        terraform test
+
 pipelines:
   lint:
     - task: lint:yaml
