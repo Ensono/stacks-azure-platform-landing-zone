@@ -2,6 +2,7 @@
 
 import:
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/shared/contexts.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/ado/pipelines.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/linting.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/infra/terraform.yaml
 
