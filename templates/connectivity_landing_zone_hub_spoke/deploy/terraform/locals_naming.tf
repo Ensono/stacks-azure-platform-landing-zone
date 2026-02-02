@@ -17,9 +17,10 @@ locals {
 
   # CAF prefixes for resource types not in Azure/naming module
   caf_prefixes = {
-    ampls    = "ampls"
-    bastion  = "bas"
-    firewall = "afw"
+    ampls       = "ampls"
+    bastion     = "bas"
+    firewall    = "afw"
+    route_table = "rt"
   }
 
   # Extended naming with CAF prefixes for resources not covered by naming module
@@ -35,6 +36,9 @@ locals {
         }
         firewall = {
           name = replace(module.naming[key].resource_group.name, "/^rg-/", "${local.caf_prefixes.firewall}-")
+        }
+        route_table = {
+          name = replace(module.naming[key].resource_group.name, "/^rg-/", "${local.caf_prefixes.route_table}-")
         }
       }
     )
@@ -64,8 +68,8 @@ locals {
       dns_resolver           = coalesce(hub.name_overrides.private_dns_resolver, module.naming["hub-dns-${region}"].dns_private_resolver.name)
       auto_registration_zone = coalesce(hub.dns.auto_registration_zone_name, "${region}.azure.local")
 
-      route_table_firewall = coalesce(hub.name_overrides.route_table_firewall, module.naming["hub-fw-${region}"].route_table.name)
-      route_table_user     = coalesce(hub.name_overrides.route_table_user, module.naming["hub-std-${region}"].route_table.name)
+      route_table_firewall = coalesce(hub.name_overrides.route_table_firewall, local.naming_extended["hub-fw-${region}"].route_table.name)
+      route_table_user     = coalesce(hub.name_overrides.route_table_user, local.naming_extended["hub-std-${region}"].route_table.name)
 
       # Flow logs storage account - uses name_unique for global uniqueness
       flow_logs_storage = module.naming["hub-fl-${region}"].storage_account.name_unique
