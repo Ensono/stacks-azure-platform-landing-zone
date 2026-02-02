@@ -1,0 +1,37 @@
+name: 0.0$(Rev:.r)
+
+pr:
+  - main
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - templates/*
+
+# Set the agent pool that stages should be run in
+pool:
+  vmImage: $(pool_vm_image)
+
+variables:
+  - template: azuredevops-vars.yml
+  - template: agent-config-vars.yml
+
+# Configure the stages
+stages:
+  - stage: Build
+    jobs:
+      - job: Lint
+        steps:
+          - template: templates/setup.yaml
+            parameters:
+              eirctl_version: ${{ variables.eirctl_version }}
+
+          - task: Bash@3
+            displayName: Lint Modules
+            inputs:
+              targetType: inline
+              script: |
+                eirctl lint

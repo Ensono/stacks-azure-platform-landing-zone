@@ -1,0 +1,23 @@
+parameters:
+  - name: eirctl_version
+    type: string
+
+steps:
+  - checkout: self
+
+  - task: Bash@3
+    displayName: "Install Eirctl"
+    inputs:
+      targetType: inline
+      script: |
+        rm -rf /tmp/eirctl /usr/local/bin/eirctl
+        wget https://github.com/Ensono/eirctl/releases/download/${{ parameters.eirctl_version }}/eirctl-linux-amd64 -O /tmp/eirctl
+
+        EXIT_CODE=$?
+
+        if [ $EXIT_CODE -ne 0 ]; then
+          exit $EXIT_CODE
+        fi
+
+        chmod u+x /tmp/eirctl
+        mv /tmp/eirctl /usr/local/bin/eirctl
