@@ -1,0 +1,275 @@
+# Test: Hub Resources
+# Validates hub configuration, feature toggles, computed locals, and conditional resources
+
+mock_provider "azurerm" {
+  mock_data "azurerm_client_config" {
+    defaults = {
+      client_id       = "00000000-0000-0000-0000-000000000000"
+      tenant_id       = "00000000-0000-0000-0000-000000000000"
+      subscription_id = "00000000-0000-0000-0000-000000000000"
+      object_id       = "00000000-0000-0000-0000-000000000000"
+    }
+  }
+}
+
+mock_provider "azapi" {
+  mock_data "azapi_resource_action" {
+    defaults = {
+      output = {
+        value = [
+          { name = "uksouth", displayName = "UK South", metadata = { regionType = "Physical", regionCategory = "Recommended", geography = "United Kingdom", geographyGroup = "Europe", physicalLocation = "London", pairedRegion = [{ name = "ukwest" }] } },
+          { name = "ukwest", displayName = "UK West", metadata = { regionType = "Physical", regionCategory = "Other", geography = "United Kingdom", geographyGroup = "Europe", physicalLocation = "Cardiff", pairedRegion = [{ name = "uksouth" }] } }
+        ]
+      }
+    }
+  }
+}
+
+mock_provider "random" {}
+mock_provider "local" {}
+mock_provider "modtm" {}
+
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = { geo_code = "uks", name = "uksouth", display_name = "UK South", zones = ["1", "2", "3"] }
+      ukwest  = { geo_code = "ukw", name = "ukwest", display_name = "UK West", zones = ["1", "2", "3"] }
+    }
+  }
+}
+
+override_data {
+  target = data.terraform_remote_state.management
+  values = { outputs = {} }
+}
+
+test {
+  parallel = true
+}
+
+# =============================================================================
+# Default Configuration
+# =============================================================================
+
+run "hub_defaults" {
+  command   = plan
+  state_key = "defaults"
+
+  # Firewall enabled by default
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.firewall == true
+    error_message = "Firewall should be enabled by default."
+  }
+
+  # Gateways disabled by default
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.virtual_network_gateway_vpn == false
+    error_message = "VPN gateway should be disabled by default."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.virtual_network_gateway_express_route == false
+    error_message = "ExpressRoute gateway should be disabled by default."
+  }
+
+  # Private DNS zones enabled by default
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.private_dns_zones == true
+    error_message = "Private DNS zones should be enabled by default."
+  }
+
+  # DDoS disabled by default
+  assert {
+    condition     = var.ddos_protection_plan.enabled == false
+    error_message = "DDoS should be disabled by default."
+  }
+
+  # No diagnostics without workspace ID
+  assert {
+    condition     = length(local.firewalls_with_diagnostics) == 0
+    error_message = "Firewall diagnostics should be empty without workspace ID."
+  }
+}
+
+# =============================================================================
+# Feature Flags
+# =============================================================================
+
+run "enabled_hubs_filtering" {
+  command   = plan
+  state_key = "filtering"
+
+  variables {
+    hubs = {
+      uksouth = { enabled = true }
+      ukwest  = { enabled = false }
+    }
+  }
+
+  assert {
+    condition     = contains(keys(local.enabled_hubs), "uksouth") && !contains(keys(local.enabled_hubs), "ukwest")
+    error_message = "Only enabled hubs should appear in enabled_hubs map."
+  }
+}
+
+run "feature_toggles_propagate" {
+  command   = plan
+  state_key = "toggles"
+
+  variables {
+    hubs = {
+      uksouth = {
+        enabled = true
+        features = {
+          firewall = true
+          bastion  = false
+          # VPN/ExpressRoute disabled to avoid mock data issues in upstream module
+          vpn_gateway          = false
+          expressroute_gateway = false
+          private_dns_resolver = true
+        }
+      }
+    }
+  }
+
+  # All feature flags propagate to hub config
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.firewall == true
+    error_message = "Firewall feature should propagate."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.bastion == false
+    error_message = "Bastion feature should propagate."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.virtual_network_gateway_vpn == false
+    error_message = "VPN gateway feature should propagate."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.virtual_network_gateway_express_route == false
+    error_message = "ExpressRoute gateway feature should propagate."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].enabled_resources.private_dns_resolver == true
+    error_message = "Private DNS resolver feature should propagate."
+  }
+}
+
+# =============================================================================
+# Firewall Configuration
+# =============================================================================
+
+run "firewall_sku_propagates" {
+  command   = plan
+  state_key = "fw_sku"
+
+  variables {
+    hubs = {
+      uksouth = {
+        enabled = true
+        features = {
+          firewall     = true
+          firewall_sku = "Premium"
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall.sku_tier == "Premium"
+    error_message = "Firewall SKU should propagate to hub config."
+  }
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall_policy.sku == "Premium"
+    error_message = "Firewall policy SKU should match firewall SKU."
+  }
+}
+
+run "firewall_dns_proxy_default" {
+  command   = plan
+  state_key = "dns_proxy"
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall_policy.dns.proxy_enabled == true
+    error_message = "DNS Proxy should be enabled by default."
+  }
+}
+
+run "firewall_threat_intel_default" {
+  command   = plan
+  state_key = "threat_intel"
+
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall_policy.threat_intelligence_mode == "Alert"
+    error_message = "Threat intelligence mode should default to Alert."
+  }
+}
+
+# =============================================================================
+# Resource Groups
+# =============================================================================
+
+run "resource_groups_created" {
+  command   = plan
+  state_key = "rgs"
+
+  # Hub resource group exists
+  assert {
+    condition     = contains(keys(local.all_resource_groups), "hub-uksouth")
+    error_message = "Hub resource group should exist."
+  }
+
+  # VWAN resource group exists
+  assert {
+    condition     = contains(keys(local.all_resource_groups), "vwan")
+    error_message = "VWAN resource group should exist."
+  }
+}
+
+# =============================================================================
+# Naming
+# =============================================================================
+
+run "naming_conventions" {
+  command   = plan
+  state_key = "naming"
+
+  # Virtual WAN name follows pattern
+  assert {
+    condition     = can(regex("^vwan-", local.virtual_wan_name))
+    error_message = "Virtual WAN name should start with 'vwan-'."
+  }
+
+  # Virtual Hub name follows pattern
+  assert {
+    condition     = can(regex("^vhub-", local.hub_names["uksouth"].virtual_hub))
+    error_message = "Virtual Hub name should start with 'vhub-'."
+  }
+
+  # Firewall name follows pattern
+  assert {
+    condition     = can(regex("^afw-", local.hub_names["uksouth"].firewall))
+    error_message = "Firewall name should start with 'afw-'."
+  }
+}
+
+# =============================================================================
+# Availability Zones
+# =============================================================================
+
+run "availability_zones_auto_detected" {
+  command   = plan
+  state_key = "zones"
+
+  # UK South has zones
+  assert {
+    condition     = local.hub_availability_zones["uksouth"] != null
+    error_message = "Availability zones should be auto-detected for uksouth."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/library_metadata.json",
+  "name": "local",
+  "display_name": "Azure Landing Zones",
+  "description": "This library allows overriding policies, archetypes, and management group architecture.",
+  "dependencies": [
+    {
+      "path": "platform/alz",
+      "ref": "2025.09.3"
+    }
+  ]
+}

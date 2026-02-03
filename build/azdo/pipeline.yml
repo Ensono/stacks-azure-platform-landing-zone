@@ -1,0 +1,50 @@
+name: 0.0$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - templates/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - templates/*
+
+# Set the agent pool that stages should be run in
+pool:
+  vmImage: $(pool_vm_image)
+
+variables:
+  - template: variables.yml
+
+# Configure the stages
+stages:
+  - stage: Prereqs
+    displayName: Prerequisites
+    jobs:
+      - job: build_number
+        displayName: Set Build Number
+        steps:
+          - template: templates/setup.yaml
+            parameters:
+              eirctl_version: ${{ variables.eirctl_version }}
+
+          - task: Bash@3
+            displayName: Set Build Number
+            inputs:
+              targetType: inline
+              script: |
+                eirctl ado:buildnumber
+
+          - task: Bash@3
+            displayName: Lint Modules
+            inputs:
+              targetType: inline
+              script: |
+                eirctl lint

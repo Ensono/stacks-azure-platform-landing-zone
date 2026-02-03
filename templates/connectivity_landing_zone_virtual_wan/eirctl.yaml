@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
+
+import:
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/shared/contexts.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/linting.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/scanning.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/infra/terraform.yaml
+
+watchers:
+  lint:
+    watch: ["*.yml"]
+    events: [create, write]
+    task: lint:yaml
+  terraform:
+    watch: ["*.tf", "*.tfvars"]
+    events: [create, write]
+    task: lint:terraform:format
+
+pipelines:
+  lint:
+    - task: lint:yaml
+    - task: lint:terraform:format
+      depends_on: lint:yaml
+    - task: lint:terraform:validate
+      depends_on: lint:terraform:format
+    - task: lint:terraform:tflint
+      depends_on: lint:terraform:validate
+
+  scan:
+    - task: scan:terraform:checkov
+
+  documentation:
+    - task: doc:terraform:generate
+
+  infrastructure:plan:
+    - task: terraform:init
+    - task: terraform:plan
+      depends_on: terraform:init
+
+  infrastructure:apply:
+    - task: terraform:init
+    - task: terraform:apply
+      depends_on: terraform:init
+
+  infrastructure:destroy:plan:
+    - task: terraform:init
+    - task: terraform:destroy:plan
+      depends_on: terraform:init
+
+  infrastructure:destroy:apply:
+    - task: terraform:init
+    - task: terraform:destroy:apply
+      depends_on: terraform:init
