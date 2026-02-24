@@ -1,0 +1,19 @@
+# Taskctl
+taskctl_version: "1.7.5"
+
+# Checkov
+# uncomment code to install a specific version, else the latest version is installed
+# checkov_version: '3.2.431'
+
+# TEnv
+# When set to true, will install the specified Terraform version in '.terraform-version' if not installed
+TENV_AUTO_INSTALL: 'true'
+
+
+# Terraform
+tf_state_storage_account_container_name: 'tfstate'
+
+# Terrform inputs
+TF_VAR_landing_zone_name: 'identity'
+TF_VAR_lz_short_code: 'ide'
+TF_VAR_service_name: 'core'
