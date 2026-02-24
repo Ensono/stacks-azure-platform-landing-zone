@@ -1,0 +1,9 @@
+# Terraform
+tf_state_resource_group_name: 'rg-eus2-ide-prd-tf-state'
+tf_state_storage_account_name: 'steus2ideprdtfstatehe1'
+
+# Terrform inputs
+# these will also be mapped to environment variables in uppercase with 'TF_VAR_' removed. For example: 'AZURE_LOCATION'
+TF_VAR_azure_geography: 'United States'
+TF_VAR_azure_location: 'eastus2'
+TF_VAR_environment: 'prd'

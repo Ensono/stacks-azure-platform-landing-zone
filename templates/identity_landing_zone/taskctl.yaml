@@ -1,0 +1,74 @@
+# Import contexts and tasks for Taskctl
+import:
+  - ./build/taskctl/tasks.yaml
+
+# Define contexts for different execution environments
+contexts:
+  native:
+    executable:
+      bin: bash
+      args:
+        - -c
+  pwsh:
+    executable:
+      bin: pwsh
+      args:
+        - -Command
+
+watchers:
+  lint:
+    watch:
+      - "*.yml"
+    events: [create, write]
+    task: lint:yaml
+
+pipelines:
+  setup:
+    - task: buildnumber
+
+  code:linting:
+    - task: configure:git:auth
+    - task: lint:yaml
+      depends_on: configure:git:auth
+    - task: lint:line_endings
+      depends_on: lint:yaml
+    - task: lint:terraform:format
+      depends_on: lint:line_endings
+    - task: lint:terraform:validate
+      depends_on: lint:terraform:format
+    - task: lint:terraform:tflint
+      depends_on: lint:terraform:validate
+
+  code:scanning:
+    - task: configure:git:auth
+    - task: scan:terraform:checkov
+      depends_on: configure:git:auth
+
+  code:documentation:
+    - task: configure:git:auth
+    - task: doc:terraform:terraform-docs
+      depends_on: configure:git:auth
+
+  infrastructure:plan:
+    - task: configure:git:auth
+    - task: terraform:init
+      depends_on: configure:git:auth
+    - task: terraform:plan
+      depends_on: terraform:init
+
+  infrastructure:apply:
+    - task: configure:git:auth
+    - task: terraform:init
+      depends_on: configure:git:auth
+    - task: terraform:apply
+      depends_on: terraform:init
+
+  infrastructure:destroy:
+    - task: configure:git:auth
+    - task: terraform:init
+      depends_on: configure:git:auth
+    - task: terraform:destroy
+      depends_on: terraform:init
+
+  complete:pipeline:tag:
+    - task: git:tag

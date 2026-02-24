@@ -1,0 +1,173 @@
+tasks:
+
+  ### Build Tasks
+
+  buildnumber:
+    description: Update the build number
+    command:
+      - Update-BuildNumber
+
+  lint:yaml:
+    context: pwsh
+    description: Perform YAML linting
+    command:
+      - Invoke-YamlLint
+
+  lint:terraform:format:
+    context: pwsh
+    description: Perform Terraform format check
+    command:
+      - |
+        tenv tf list
+        terraform version
+
+        Invoke-Terraform -Format -Path $env:TF_FILE_LOCATION
+
+  lint:terraform:validate:
+    context: pwsh
+    description: Perform Terraform validation
+    command:
+      - |
+        tenv tf list
+        terraform version
+
+        Invoke-Terraform -Validate -Path $env:TF_FILE_LOCATION
+
+  lint:terraform:tflint:
+    context: pwsh
+    description: Perform Terraform Linting using TFLint
+    command:
+      - |
+        tflint --version
+        Write-Host ("Path: {0}" -f $env:TF_FILE_LOCATION)
+
+        tflint --init
+        tflint --chdir=$env:TF_FILE_LOCATION
+
+  scan:terraform:checkov:
+    context: pwsh
+    description: Perform Terraform Static Code Analysis using Checkov
+    command:
+      - |
+        Write-Host ("Path: {0}" -f $env:TF_FILE_LOCATION)
+
+        if ([string]::IsNullOrEmpty($env:checkov_version)) {
+          pip3 -q install -U checkov
+        } elseif ($(checkov -v) -ne $env:checkov_version) {
+          pip3 -q install -U checkov==$env:checkov_version
+        }
+
+        checkov -d $env:TF_FILE_LOCATION -o cli -o junitxml --output-file-path console,terraform_results.xml
+
+  doc:terraform:terraform-docs:
+    context: pwsh
+    description: Check Terraform Documentation using Terraform-docs
+    command:
+      - |
+        terraform-docs --version
+        terraform-docs $env:TF_FILE_LOCATION
+
+        git config --global --add safe.directory "/app"
+        git diff --exit-code . ":(exclude)$env:TF_FILE_LOCATION/.terraform.lock.hcl"
+
+  lint:line_endings:
+    context: pwsh
+    description: Check for CRLF endings in all files
+    command:
+      - |
+        build/powershell/Check-LineEndings.ps1
+
+  git:tag:
+    context: pwsh
+    description: Tag a commit
+    command:
+      - |
+        # Configure safe directories for GitHub Actions
+        git config --global --add safe.directory "/app" 2>$null
+        git config --global --add safe.directory $env:GITHUB_WORKSPACE 2>$null
+        git config --global --add safe.directory "/github/workspace" 2>$null
+        git config --global --add safe.directory "." 2>$null
+
+        $tagName = ("{0}-{1}.{2}" -f $env:SERVICE_NAME, $(Get-Date -Format "yyyy.MM.dd"), $env:GITHUB_RUN_NUMBER)
+        git tag $tagName $env:GITHUB_SHA
+        git push origin $tagName
+
+  ### Terraform Tasks
+
+  terraform:init:
+    context: pwsh
+    description: Initialise Terraform for the environment
+    command:
+      - |
+        $env:TF_BACKEND_INIT = ("storage_account_name={0},container_name={1},key={2}/{3}" -f $env:TF_STATE_STORAGE_ACCOUNT_NAME, $env:TF_STATE_STORAGE_ACCOUNT_CONTAINER_NAME, $env:LANDING_ZONE_NAME, $env:SERVICE_NAME)
+
+        tenv tf list
+        terraform version
+
+        Invoke-Terraform -Init -Path $env:TF_FILE_LOCATION -Arguments $env:TF_BACKEND_INIT -Debug
+        Invoke-Terraform -Workspace -Path $env:TF_FILE_LOCATION -Arguments $env:ENVIRONMENT_NAME -Debug
+
+  terraform:plan:
+    context: pwsh
+    description: Plan Terraform
+    command:
+      - |
+        $env:TF_BACKEND_PLAN = ("'-out=tfplan,-input=false,--var-file=./workspace_variables/{0}_{1}_terraform.tfvars'" -f $env:ENVIRONMENT_NAME, $env:AZURE_LOCATION)
+
+        Invoke-Terraform -Plan -Path $env:TF_FILE_LOCATION -Arguments $env:TF_BACKEND_PLAN -Debug
+
+        Push-Location -Path $env:TF_FILE_LOCATION
+        terraform show -json tfplan | Set-Content -Path ./tfplan.json -Force
+
+        Pop-Location
+
+  terraform:apply:
+    context: pwsh
+    description: Apply Terraform Plan
+    command:
+      - |
+        Push-Location -Path $env:TF_FILE_LOCATION
+
+        Invoke-Terraform -Apply -Path tfplan
+
+        Pop-Location
+
+  terraform:destroy:
+    context: pwsh
+    description: Destroy Environment.ShortName
+    command:
+      - |
+        $env:TF_BACKEND_DESTROY_PLAN = ("'-destroy,-out=destroy_tfplan,-input=false,--var-file=./workspace_variables/{0}_{1}_terraform.tfvars'" -f $env:ENVIRONMENT_NAME, $env:AZURE_LOCATION)
+
+        Invoke-Terraform -Plan -Path $env:TF_FILE_LOCATION -Arguments $env:TF_BACKEND_DESTROY_PLAN -Debug
+
+        Push-Location -Path $env:TF_FILE_LOCATION
+        Invoke-Terraform -Apply -Path destroy_tfplan -Debug
+        Pop-Location
+
+  ### Git Auth PAT
+
+  configure:git:auth:
+    description: Configure Git authentication for private repositories
+    command:
+      - |
+        # Configure Git authentication for private repositories
+        echo "Checking for GITHUB_PAT environment variable..."
+        if [ -n "$GITHUB_PAT" ]; then
+          echo "GITHUB_PAT found, configuring Git authentication..."
+          git config --global url."https://${GITHUB_PAT}@github.com/".insteadOf "https://github.com/"
+          echo "Git authentication configured for private repositories"
+
+          # Configure safe directories for GitHub Actions
+          echo "Configuring git safe directories..."
+          git config --global --add safe.directory "${GITHUB_WORKSPACE:-/github/workspace}" || true
+          git config --global --add safe.directory "." || true
+
+          # Verify the configuration
+          echo "Current Git URL rewrites:"
+          git config --global --get-regexp "url.*insteadof" || echo "No URL rewrites configured"
+        else
+          echo "WARNING: No GITHUB_PAT found - skipping Git authentication configuration"
+          echo "Available environment variables starting with 'G':"
+          env | grep "^G" || echo "No environment variables starting with 'G' found"
+        fi
