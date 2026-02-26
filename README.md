@@ -1,7 +1,5 @@
 # Stacks Azure Platform Landing Zone
 
-[![Build Status](https://dev.azure.com/ensonodigitaluk/Stacks/_apis/build/status%2Fterraform_modules%2Fazure-platform-landing-zone?branchName=main)](https://dev.azure.com/ensonodigitaluk/Stacks/_build/latest?definitionId=182&branchName=main)
-
 This repository contains starter modules for deploying Azure Platform Landing Zones using [Azure Verified Modules (AVM)](https://aka.ms/avm).
 
 ## Modules
