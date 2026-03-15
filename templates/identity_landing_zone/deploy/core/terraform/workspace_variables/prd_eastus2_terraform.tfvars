@@ -124,3 +124,15 @@ vms = {
 vm_settings = {
   encryption_at_host_enabled = true
 }
+
+# ADR #0113 - Identity DNS must use central firewall DNS proxy path.
+# Replace with the East US 2 connectivity DNS proxy/firewall private IP.
+identity_vnet_dns_servers = [
+  "REPLACE_WITH_EASTUS2_CONNECTIVITY_DNS_PROXY_IP"
+]
+
+# ADR #0113 - ADDS DNS forwarders for onward resolution.
+# Keep aligned with identity_vnet_dns_servers unless a different approved forwarder path is required.
+adds_dns_forwarders = [
+  "REPLACE_WITH_EASTUS2_CONNECTIVITY_DNS_PROXY_IP"
+]

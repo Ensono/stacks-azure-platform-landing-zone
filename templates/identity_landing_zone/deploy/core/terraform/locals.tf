@@ -1,13 +1,33 @@
 locals {
-  # Dynamic regional virtual hub selection based on current location
-  regional_virtual_hub_resource_id = (
-    can(module.remote_state.connectivity_remote_states[var.azure_location].virtual_hub_resource_id) ?
-    module.remote_state.connectivity_remote_states[var.azure_location].virtual_hub_resource_id :
+  selected_region = {
+    geo_code = module.azure_regions.regions_by_name[var.azure_location].geo_code
+    zones    = module.azure_regions.regions_by_name[var.azure_location].zones
+  }
+
+  resource_tags = var.tags
+
+  regional_virtual_hub_resource_id = coalesce(
+    try(module.remote_state.connectivity_remote_states[var.azure_location].virtual_hub_resource_id, null),
+    try(module.remote_state.connectivity_remote_states[var.azure_location].virtual_hub_id, null),
     null
   )
 
-  # Determine the remote region based on current location
-  remote_region = var.azure_location == "eastus2" ? "centralus" : "eastus2"
+  connectivity_dns_proxy_ips = distinct(compact(flatten([
+    try([module.remote_state.connectivity_remote_states[var.azure_location].dns_proxy_ip_address], []),
+    try(module.remote_state.connectivity_remote_states[var.azure_location].dns_proxy_private_ip_addresses, []),
+    try([module.remote_state.connectivity_remote_states[var.azure_location].firewall_private_ip_address], []),
+    try(module.remote_state.connectivity_remote_states[var.azure_location].firewall_private_ip_addresses, [])
+  ])))
+
+  identity_vnet_dns_servers = length(var.identity_vnet_dns_servers) > 0 ? var.identity_vnet_dns_servers : local.connectivity_dns_proxy_ips
+
+  adds_dns_forwarders = length(var.adds_dns_forwarders) > 0 ? var.adds_dns_forwarders : local.identity_vnet_dns_servers
+
+  identity_admin_scopes = {
+    adds       = module.resource_groups["adds"].resource_id
+    key_vault  = module.key_vault.resource_id
+    networking = module.resource_groups["networking"].resource_id
+  }
 
   # =============================================================================
   # VM Naming per HLD: A{env}{os}{appcode}{role}{##}
@@ -75,30 +95,4 @@ locals {
   # =============================================================================
   # DNS Configuration
   # =============================================================================
-
-  # Get DNS servers from current region first, then remote region
-  current_region_dns = (
-    can(module.remote_state.identity_remote_states[var.azure_location].domain_controller_private_ips) ?
-    module.remote_state.identity_remote_states[var.azure_location].domain_controller_private_ips :
-    []
-  )
-
-  remote_region_dns = (
-    can(module.remote_state.identity_remote_states[local.remote_region].domain_controller_private_ips) ?
-    module.remote_state.identity_remote_states[local.remote_region].domain_controller_private_ips :
-    []
-  )
-
-  # Combine DNS servers: current region first, then remote region
-  combined_dns_servers = concat(
-    module.vm_domain_controller.private_ip_addresses, # Current deployment DNS servers
-    local.current_region_dns,                         # Current region existing DNS servers
-    local.remote_region_dns                           # Remote region DNS servers
-  )
-
-  # Remove duplicates and filter out empty values
-  dns_servers = distinct([
-    for ip in local.combined_dns_servers : ip
-    if ip != null && ip != ""
-  ])
 }
