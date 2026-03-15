@@ -12,28 +12,22 @@ module "domain_controllers" {
   source = "./modules/vm_domain_controller"
 
   # Required inputs - these would come from your existing locals and variables
-  resource_group_name = module.resource_groups.resource_groups["rg-eus2-fb-prd-identity-01"].name
-  location           = local.naming.location
+  resource_group_name = module.resource_groups["adds"].name
+  resource_group_location = var.azure_location
+  region                  = local.selected_region
 
   # Subnet where DCs will be deployed - from your VNet module
-  default_subnet_id = module.network.subnets["subn-activedirectory-1"].id
+  subnet_resource_id = module.network.subnets["subn-activedirectory-1"].resource_id
 
   # VM configurations - from your terraform.tfvars
   vms = var.vms
 
-  # Key vault for admin credentials
-  key_vault_id = data.azurerm_key_vault.core.id
-
-  # Networking (optional - has sensible defaults)
-  # dns_servers = ["172.25.2.10", "172.25.2.11"]  # IPs of your DCs
-
   # Tagging from your existing locals
-  tags = local.tags
+  tags = local.resource_tags
 
   # Optional overrides
-  # availability_set_name = "as-domain-controllers"
+  # availability_set_name = "A${local.env_letter_map[var.environment]}W${var.vm_app_code}${var.vm_role}-avail"
   # admin_username = "domainadmin"
-  # os_disk_size_gb = 256
 }
 ```
 
@@ -70,7 +64,7 @@ variable "vms" {
 # In your outputs.tf
 output "domain_controller_ips" {
   description = "Private IP addresses of domain controllers"
-  value       = module.domain_controllers.vm_private_ips
+  value       = module.domain_controllers.private_ip_addresses
 }
 
 output "domain_controller_names" {
@@ -115,7 +109,7 @@ vms = {
       }
     }
     tags = {
-      computer_name = "EUS2FBPRDDOM01"  # Make sure this is set
+      computer_name = "APW000DC01"  # Make sure this is set
     }
   }
   DOM02 = {
@@ -140,7 +134,7 @@ vms = {
       }
     }
     tags = {
-      computer_name = "EUS2FBPRDDOM02"  # Make sure this is set
+      computer_name = "APW000DC02"  # Make sure this is set
     }
   }
 }
@@ -174,7 +168,7 @@ vms = {
       }
     }
     tags = {
-      computer_name = "CUS1FBPRDDOM01"
+      computer_name = "APW000DC03"
     }
   }
   DOM02 = {
@@ -198,7 +192,7 @@ vms = {
       }
     }
     tags = {
-      computer_name = "CUS1FBPRDDOM02"
+      computer_name = "APW000DC04"
     }
   }
 }
@@ -212,8 +206,8 @@ After deploying the domain controllers, you can use their IPs for DNS:
 # In your locals_vnet.tf - this would reference the module outputs
 locals {
   cross_region_dns_servers = try(
-    length(module.domain_controllers.vm_private_ips) > 0 ?
-    { dns_servers = values(module.domain_controllers.vm_private_ips) } :
+    length(module.domain_controllers.private_ip_addresses) > 0 ?
+    { dns_servers = module.domain_controllers.private_ip_addresses } :
     null,
     null
   )

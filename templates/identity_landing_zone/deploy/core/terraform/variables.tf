@@ -1,14 +1,24 @@
 # Naming
-variable "lz_short_code" {
-  description = "A short code for the LZ to use in naming of resources."
+variable "company_name" {
+  description = "Company name used in naming. The first 3 characters are used for resource suffixes."
   type        = string
-  sensitive   = false
 }
 
 variable "component_names" {
   description = "A list of component names which can be used in naming of resources used with different module calls."
   type        = set(string)
-  sensitive   = false
+  default     = ["networking", "adds"]
+
+  validation {
+    condition     = contains(var.component_names, "networking") && contains(var.component_names, "adds")
+    error_message = "component_names must include at least 'networking' and 'adds'."
+  }
+}
+
+variable "enable_avm_telemetry" {
+  description = "Enable telemetry collection for Azure Verified Modules."
+  type        = bool
+  default     = false
 }
 
 # Azure
@@ -24,14 +34,12 @@ https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azu
 variable "azure_location" {
   description = "The Azure location to target all resources."
   type        = string
-  sensitive   = false
 }
 
 
 variable "azure_resource_group_management_lock_level" {
   description = "Optional: The level of Management Lock apply to Resource Groups"
   type        = string
-  sensitive   = false
   default     = ""
 
   validation {
@@ -84,6 +92,101 @@ variable "vnet_nsg_rules" {
 variable "environment" {
   description = "The Azure environment to target all resources."
   type        = string
+
+  validation {
+    condition     = contains(["dev", "uat", "prd"], var.environment)
+    error_message = "environment must be one of: dev, uat, prd."
+  }
+}
+
+variable "tags" {
+  description = "Tags applied to all identity landing zone resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "remote_state_configs" {
+  description = "Map of remote state configurations by domain and region, for example management_eastus2, connectivity_eastus2, identity_eastus2."
+  type = map(object({
+    storage_account_name = string
+    container_name       = string
+    key                  = string
+    use_azuread_auth     = bool
+  }))
+}
+
+variable "identity_vnet_dns_servers" {
+  description = "Optional explicit DNS servers for the identity VNet. When omitted, DNS proxy IPs are discovered from connectivity remote state outputs."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for ip in var.identity_vnet_dns_servers : can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}$", ip)) && !can(regex("^(REPLACE_WITH_|TODO_)", ip))
+    ])
+    error_message = "identity_vnet_dns_servers must contain IPv4 addresses only and must not contain placeholder values (REPLACE_WITH_* or TODO_*)."
+  }
+}
+
+variable "adds_dns_forwarders" {
+  description = "Optional explicit ADDS DNS forwarders configured on domain controllers. Defaults to identity_vnet_dns_servers when not provided."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for ip in var.adds_dns_forwarders : can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}$", ip)) && !can(regex("^(REPLACE_WITH_|TODO_)", ip))
+    ])
+    error_message = "adds_dns_forwarders must contain IPv4 addresses only and must not contain placeholder values (REPLACE_WITH_* or TODO_*)."
+  }
+}
+
+variable "identity_admin_role_assignments" {
+  description = "Least-privilege role assignments for identity administration. Keys are assignment names."
+  type = map(object({
+    principal_id         = string
+    role_definition_name = string
+    scope                = optional(string, "adds")
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for assignment in values(var.identity_admin_role_assignments) : can(regex("^[0-9a-fA-F-]{36}$", assignment.principal_id))
+    ])
+    error_message = "Each identity_admin_role_assignments principal_id must be a valid GUID."
+  }
+
+  validation {
+    condition = alltrue([
+      for assignment in values(var.identity_admin_role_assignments) : contains([
+        "Reader",
+        "Virtual Machine Administrator Login",
+        "Virtual Machine User Login",
+        "Key Vault Secrets Officer",
+        "Key Vault Secrets User"
+      ], assignment.role_definition_name)
+    ])
+    error_message = "identity_admin_role_assignments.role_definition_name must be one of: Reader, Virtual Machine Administrator Login, Virtual Machine User Login, Key Vault Secrets Officer, Key Vault Secrets User."
+  }
+
+  validation {
+    condition = alltrue([
+      for assignment in values(var.identity_admin_role_assignments) : contains(["adds", "networking", "key_vault"], assignment.scope)
+    ])
+    error_message = "identity_admin_role_assignments.scope must be one of: adds, networking, key_vault."
+  }
+}
+
+variable "enforce_identity_admin_role_assignments" {
+  description = "When true, requires explicit least-privilege identity admin role assignments for production environments."
+  type        = bool
+  default     = true
+
+  validation {
+    condition     = var.enforce_identity_admin_role_assignments == false || var.environment != "prd" || length(var.identity_admin_role_assignments) > 0
+    error_message = "At least one identity_admin_role_assignments entry is required for prd when enforce_identity_admin_role_assignments is true."
+  }
 }
 
 # VM Naming Variables (HLD Compliance)

@@ -15,5 +15,5 @@ tf_state_storage_account_container_name: 'tfstate'
 
 # Terrform inputs
 TF_VAR_landing_zone_name: 'identity'
-TF_VAR_lz_short_code: 'ide'
+TF_VAR_company_name: 'ensono'
 TF_VAR_service_name: 'core'

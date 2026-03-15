@@ -1,6 +1,5 @@
 terraform {
-  # Terraform >= 1.10.0 required for ephemeral resources
-  required_version = ">= 1.10.0, < 2"
+  required_version = "~> 1.12"
 
   backend "azurerm" {
     use_azuread_auth = true
@@ -9,11 +8,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.46.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2.4"
+      version = "~> 4.0"
     }
     random = {
       source  = "hashicorp/random"
