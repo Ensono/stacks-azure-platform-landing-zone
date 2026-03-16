@@ -84,26 +84,45 @@ locals {
 
   # Default policy assignments to modify (disables policies for features not deployed)
   # Note: Parameters must be JSON-encoded with { value = ... } format per ALZ module requirements
+  #
+  # Defender plan and sub-feature toggles are driven by var.microsoft_defender_settings.
+  # Boolean toggles are mapped to policy parameter values here.
   default_policy_assignments_to_modify = {
     alz = {
       policy_assignments = {
+        # Microsoft Defender for Cloud
         Deploy-MDFC-Config-H224 = {
           parameters = {
-            ascExportResourceGroupLocation              = jsonencode({ value = var.location })
-            ascExportResourceGroupName                  = jsonencode({ value = var.microsoft_defender_settings.export_resource_group_name })
-            emailSecurityContact                        = jsonencode({ value = var.microsoft_defender_settings.email_security_contact })
-            enableAscForAppServices                     = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForArm                             = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForContainers                      = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForCosmosDbs                       = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForCspm                            = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForKeyVault                        = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForOssDb                           = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForServers                         = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForServersVulnerabilityAssessments = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForSql                             = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForSqlOnVm                         = jsonencode({ value = "DeployIfNotExists" })
-            enableAscForStorage                         = jsonencode({ value = "DeployIfNotExists" })
+            ascExportResourceGroupLocation = jsonencode({ value = var.location })
+            ascExportResourceGroupName     = jsonencode({ value = var.microsoft_defender_settings.export_resource_group_name })
+            emailSecurityContact           = jsonencode({ value = var.microsoft_defender_settings.email_security_contact })
+
+            # Defender plans - true = "DeployIfNotExists", false = "Disabled"
+            enableAscForAI                              = jsonencode({ value = var.microsoft_defender_settings.defender_plans.ai ? "DeployIfNotExists" : "Disabled" })
+            enableAscForAppServices                     = jsonencode({ value = var.microsoft_defender_settings.defender_plans.app_services ? "DeployIfNotExists" : "Disabled" })
+            enableAscForArm                             = jsonencode({ value = var.microsoft_defender_settings.defender_plans.arm ? "DeployIfNotExists" : "Disabled" })
+            enableAscForContainers                      = jsonencode({ value = var.microsoft_defender_settings.defender_plans.containers ? "DeployIfNotExists" : "Disabled" })
+            enableAscForCosmosDbs                       = jsonencode({ value = var.microsoft_defender_settings.defender_plans.cosmos_dbs ? "DeployIfNotExists" : "Disabled" })
+            enableAscForCspm                            = jsonencode({ value = var.microsoft_defender_settings.defender_plans.cspm ? "DeployIfNotExists" : "Disabled" })
+            enableAscForKeyVault                        = jsonencode({ value = var.microsoft_defender_settings.defender_plans.key_vault ? "DeployIfNotExists" : "Disabled" })
+            enableAscForOssDb                           = jsonencode({ value = var.microsoft_defender_settings.defender_plans.oss_db ? "DeployIfNotExists" : "Disabled" })
+            enableAscForServers                         = jsonencode({ value = var.microsoft_defender_settings.defender_plans.servers ? "DeployIfNotExists" : "Disabled" })
+            enableAscForServersVulnerabilityAssessments = jsonencode({ value = var.microsoft_defender_settings.defender_plans.servers_vulnerability_assessments ? "DeployIfNotExists" : "Disabled" })
+            enableAscForSql                             = jsonencode({ value = var.microsoft_defender_settings.defender_plans.sql ? "DeployIfNotExists" : "Disabled" })
+            enableAscForSqlOnVm                         = jsonencode({ value = var.microsoft_defender_settings.defender_plans.sql_on_vm ? "DeployIfNotExists" : "Disabled" })
+            enableAscForStorage                         = jsonencode({ value = var.microsoft_defender_settings.defender_plans.storage ? "DeployIfNotExists" : "Disabled" })
+            enableTvmCheck                              = jsonencode({ value = var.microsoft_defender_settings.defender_plans.tvm_check ? "DeployIfNotExists" : "Disabled" })
+
+            # Sub-features - true = "true", false = "false"
+            ascForAIIsAIPromptEvidenceEnabled                              = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.ai_prompt_evidence) })
+            ascForCspmIsAgentlessDiscoveryForKubernetesEnabled             = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.cspm_agentless_discovery_for_kubernetes) })
+            ascForCspmIsAgentlessVmScanningEnabled                         = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.cspm_agentless_vm_scanning) })
+            ascForCspmIsContainerRegistriesVulnerabilityAssessmentsEnabled = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.cspm_container_registries_vulnerability_assessments) })
+            ascForCspmIsEntraPermissionsManagementEnabled                  = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.cspm_entra_permissions_management) })
+            ascForCspmIsSensitiveDataDiscoveryEnabled                      = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.cspm_sensitive_data_discovery) })
+            ascForServersIsAgentlessVmScanningEnabled                      = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.servers_agentless_vm_scanning) })
+            ascForStorageIsOnUploadMalwareScanningEnabled                  = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.storage_on_upload_malware_scanning) })
+            ascForStorageIsSensitiveDataDiscoveryEnabled                   = jsonencode({ value = tostring(var.microsoft_defender_settings.subfeatures.storage_sensitive_data_discovery) })
           }
         }
       }

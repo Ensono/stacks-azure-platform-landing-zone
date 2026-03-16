@@ -331,14 +331,91 @@ DESCRIPTION
 
 variable "microsoft_defender_settings" {
   type = object({
-    email_security_contact     = optional(string, "security@replace-me.com")
+    email_security_contact     = string
     export_resource_group_name = optional(string, "rg-asc-export")
-  })
-  default     = {}
-  description = <<DESCRIPTION
-(Optional) Microsoft Defender for Cloud configuration.
 
-- `email_security_contact` - Email address for security alerts. Defaults to "security@replace-me.com" - update for production.
-- `export_resource_group_name` - Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
+    defender_plans = optional(object({
+      ai                                = optional(bool, false)
+      app_services                      = optional(bool, false)
+      arm                               = optional(bool, false)
+      containers                        = optional(bool, false)
+      cosmos_dbs                        = optional(bool, false)
+      cspm                              = optional(bool, false)
+      key_vault                         = optional(bool, false)
+      oss_db                            = optional(bool, false)
+      servers                           = optional(bool, false)
+      servers_vulnerability_assessments = optional(bool, false)
+      sql                               = optional(bool, false)
+      sql_on_vm                         = optional(bool, false)
+      storage                           = optional(bool, false)
+      tvm_check                         = optional(bool, false)
+    }), {})
+
+    # Sub-features for specific Defender plans
+    subfeatures = optional(object({
+      ai_prompt_evidence                                  = optional(bool, false)
+      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
+      cspm_agentless_vm_scanning                          = optional(bool, false)
+      cspm_container_registries_vulnerability_assessments = optional(bool, false)
+      cspm_entra_permissions_management                   = optional(bool, false)
+      cspm_sensitive_data_discovery                       = optional(bool, false)
+      servers_agentless_vm_scanning                       = optional(bool, false)
+      storage_on_upload_malware_scanning                  = optional(bool, false)
+      storage_sensitive_data_discovery                    = optional(bool, false)
+    }), {})
+  })
+  description = <<DESCRIPTION
+Microsoft Defender for Cloud configuration.
+
+- `email_security_contact` - (Required) Email address for security alerts.
+- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).
+  Set to true to enable via DeployIfNotExists policy.
+- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.
+  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
+
+Example - enable Defender for Servers with vulnerability assessments:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers                          = true
+      servers_vulnerability_assessments = true
+    }
+  }
+
+Example - enable CSPM with agentless VM scanning:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      cspm = true
+    }
+    subfeatures = {
+      cspm_agentless_vm_scanning = true
+    }
+  }
+
+Example - enable multiple plans:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers      = true
+      app_services = true
+      sql          = true
+      key_vault    = true
+      storage      = true
+    }
+    subfeatures = {
+      storage_on_upload_malware_scanning = true
+    }
+  }
 DESCRIPTION
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.microsoft_defender_settings.email_security_contact))
+    error_message = "email_security_contact must be a valid email address."
+  }
 }
