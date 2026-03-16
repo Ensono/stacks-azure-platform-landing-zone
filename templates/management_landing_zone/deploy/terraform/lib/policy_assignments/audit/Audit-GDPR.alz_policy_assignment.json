@@ -1,0 +1,25 @@
+{
+  "type": "Microsoft.Authorization/policyAssignments",
+  "apiVersion": "2024-04-01",
+  "name": "Audit-GDPR",
+  "location": "${default_location}",
+  "dependsOn": [],
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "properties": {
+    "description": "Comprehensive data protection law regulating personal data processing within the EU.",
+    "displayName": "EU General Data Protection Regulation (GDPR) 2016/679",
+    "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/7326812a-86a4-40c8-af7c-8945de9c4913",
+    "definitionVersion": "1.*.*",
+    "enforcementMode": "Default",
+    "nonComplianceMessages": [
+      {
+        "message": "GDPR compliance requirements {enforcementMode} be met."
+      }
+    ],
+    "parameters": {},
+    "scope": "/providers/Microsoft.Management/managementGroups/placeholder",
+    "notScopes": []
+  }
+}

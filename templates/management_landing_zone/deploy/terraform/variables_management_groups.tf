@@ -380,7 +380,7 @@ Example - enable Defender for Servers with vulnerability assessments:
   microsoft_defender_settings = {
     email_security_contact = "security@example.com"
     defender_plans = {
-      servers                          = true
+      servers                           = true
       servers_vulnerability_assessments = true
     }
   }
