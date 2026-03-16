@@ -1,10 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
 import:
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/shared/contexts.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/linting.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/scanning.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/contexts/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/security/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/infra/terraform.yaml
 
 watchers:
   lint:
@@ -28,9 +27,6 @@ pipelines:
 
   scan:
     - task: scan:terraform:checkov
-
-  documentation:
-    - task: doc:terraform:generate
 
   infrastructure:plan:
     - task: terraform:init

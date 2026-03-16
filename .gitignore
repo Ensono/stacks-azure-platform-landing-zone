@@ -45,5 +45,14 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Junit
-**/results.xml
+# Junit XML test results
+test-results/
+
+# Eirctl
+.eirctl/
+eirctl.env
+
+outputs
+!docs/readme/outputs
+
+.terraform.lock.hcl
