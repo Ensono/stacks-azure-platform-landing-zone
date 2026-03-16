@@ -1,10 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
 import:
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/shared/contexts.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/ado/pipelines.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/security/linting.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/heads/feat/initial-configs/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/contexts/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/security/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/docs/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/github/eirctl.yaml
 
 watchers:
   lint:
@@ -16,37 +17,35 @@ watchers:
     events: [create, write]
     task: lint:terraform:format
 
-# Local Tasks
-tasks:
-  test:management:
-    context: eir
-    description: Run terraform tests for management_landing_zone module
-    dir: templates/management_landing_zone/deploy/terraform
-    command:
-      - |
-        terraform init -backend=false
-        terraform test
-
-  test:connectivity_hub_spoke:
-    context: eir
-    description: Run terraform tests for connectivity_landing_zone_hub_spoke module
-    dir: templates/connectivity_landing_zone_hub_spoke/deploy/terraform
-    command:
-      - |
-        terraform init -backend=false
-        terraform test
-
-  test:connectivity_virtual_wan:
-    context: eir
-    description: Run terraform tests for connectivity_landing_zone_virtual_wan module
-    dir: templates/connectivity_landing_zone_virtual_wan/deploy/terraform
-    command:
-      - |
-        terraform init -backend=false
-        terraform test
-
 pipelines:
+  build:
+    - task: terraform:build:clean
+    - task: terraform:docs:asciidoc
+      depends_on: terraform:build:clean
+    - task: docs:docbook
+      depends_on: terraform:docs:asciidoc
+    - task: docs:markdown
+      depends_on: docs:docbook
+    - task: terraform:build:copy
+      depends_on: docs:markdown
+    - task: terraform:build:package
+      depends_on: terraform:build:copy
+
+  docs:
+    - task: docs:generate
+
+  scan:
+    - task: scan:terraform:checkov
+
   lint:
-    - task: lint:yaml
-    - task: lint:terraform:format
-      depends_on: lint:yaml
+    - task: lint:terraform:validate
+    - task: lint:terraform:tflint
+      depends_on: lint:terraform:validate
+
+  tests:
+    - task: terraform:init:false
+    - task: terraform:tests
+      depends_on: terraform:init:false
+
+  release:
+    - task: github:release
