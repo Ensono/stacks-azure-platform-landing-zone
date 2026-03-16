@@ -11,13 +11,9 @@ variables:
 
   # Eirctl
   - name: eirctl_version
-    value: 0.9.7
-
-  # Tenv
-  # When set to true, will install the specified Terraform version in '.terraform-version' if not installed
+    value: 0.9.11
   - name: TENV_AUTO_INSTALL
     value: true
 
-  # Agent Pool VM Image
   - name: pool_vm_image
     value: ubuntu-24.04
