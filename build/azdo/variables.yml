@@ -17,5 +17,3 @@ variables:
 
   - name: pool_vm_image
     value: ubuntu-24.04
-  - name: is_main
-    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
