@@ -374,7 +374,7 @@ management_resource_settings = {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1, < 2)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.12)
 
 - <a name="requirement_alz"></a> [alz](#requirement\_alz) (0.20.2)
 
@@ -392,6 +392,7 @@ The following resources are used by this module:
 - [azurerm_monitor_scheduled_query_rules_alert_v2.law_query_failures](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_scheduled_query_rules_alert_v2) (resource)
 - [azurerm_monitor_scheduled_query_rules_alert_v2.law_query_runtime](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_scheduled_query_rules_alert_v2) (resource)
 - [terraform_data.monitoring_alerts_require_action_group](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
+- [terraform_data.validate_defender_settings](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
 - [terraform_data.validate_subscriptions](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) (resource)
 - [azapi_client_config.current](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
 
