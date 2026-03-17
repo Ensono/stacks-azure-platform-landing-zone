@@ -18,5 +18,5 @@ management_groups_enabled = true
 
 # Microsoft Defender for Cloud
 microsoft_defender_settings = {
-  email_security_contact = "replace_me@replace_me.com"
+  email_security_contact = "user@example.invalid"
 }

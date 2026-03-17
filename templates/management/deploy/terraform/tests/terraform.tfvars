@@ -14,5 +14,5 @@ management_subscription_id = "00000000-0000-0000-0000-000000000000"
 management_resources_enabled = false
 
 microsoft_defender_settings = {
-  email_security_contact = "test@example.invalid"
+  email_security_contact = "user@example.invalid"
 }
