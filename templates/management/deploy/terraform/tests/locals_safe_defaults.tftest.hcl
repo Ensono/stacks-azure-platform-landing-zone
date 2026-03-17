@@ -1,10 +1,5 @@
-# Test: Management Groups
-# Validates management groups configuration and validation rules
-#
-# Note: Tests with management_groups_enabled=true cannot be tested with mock providers
-# because the ALZ module uses for_each with values that are only known after apply.
-# These tests would require integration testing with a real Azure environment.
-# Only default configuration tests (management_groups_enabled=false) are included here.
+# Test: Safe Defaults
+# Validates locals compute safely when features are disabled, and resource groups toggle correctly.
 
 mock_provider "azurerm" {
   mock_data "azurerm_client_config" {
@@ -30,11 +25,33 @@ mock_provider "azapi" {
   }
 }
 
-mock_provider "modtm" {}
-
-mock_provider "time" {}
-
 mock_provider "alz" {}
+
+# Override AVM modules that depend on azure/modtm provider
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = {
+        name         = "uksouth"
+        display_name = "UK South"
+        geo_code     = "uks"
+      }
+    }
+    regions                             = {}
+    regions_by_display_name             = {}
+    regions_by_geography                = {}
+    regions_by_geography_group          = {}
+    regions_by_name_or_display_name     = {}
+    valid_region_display_names          = []
+    valid_region_names                  = ["uksouth"]
+    valid_region_names_or_display_names = []
+  }
+}
+
+override_module {
+  target = module.resource_groups
+}
 
 # Variables loaded from terraform.tfvars
 
@@ -61,5 +78,38 @@ run "policy_defaults_computed_safely" {
   assert {
     condition     = local.subscription_placement != null
     error_message = "subscription_placement local should not be null."
+  }
+}
+
+# =============================================================================
+# Resource Groups Empty When Disabled
+# =============================================================================
+
+run "resource_groups_empty_when_disabled" {
+  command   = plan
+  state_key = "rg_disabled"
+
+  assert {
+    condition     = length(local.resource_groups) == 0
+    error_message = "resource_groups should be empty when management_resources_enabled is false."
+  }
+}
+
+run "resource_groups_populated_when_enabled" {
+  command   = plan
+  state_key = "rg_enabled"
+
+  variables {
+    management_resources_enabled = true
+  }
+
+  assert {
+    condition     = length(local.resource_groups) == 1
+    error_message = "resource_groups should contain one entry when management_resources_enabled is true."
+  }
+
+  assert {
+    condition     = contains(keys(local.resource_groups), "management")
+    error_message = "resource_groups should contain a 'management' key."
   }
 }
