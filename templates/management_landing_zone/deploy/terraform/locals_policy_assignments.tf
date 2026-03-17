@@ -85,7 +85,7 @@ locals {
   # Default policy assignments to modify (disables policies for features not deployed)
   # Note: Parameters must be JSON-encoded with { value = ... } format per ALZ module requirements
   #
-  # Defender plan and sub-feature toggles are driven by var.microsoft_defender_settings.
+  # Defender plan and sub-feature toggles are driven by var.microsoft_defender_settings in variables_management_groups.tf.
   # Boolean toggles are mapped to policy parameter values here.
   default_policy_assignments_to_modify = {
     alz = {

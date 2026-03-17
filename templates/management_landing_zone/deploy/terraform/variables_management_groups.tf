@@ -375,6 +375,30 @@ Microsoft Defender for Cloud configuration.
 - `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.
   These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
 
+Pricing overview (all plans default to disabled / no cost):
+
+  Plan                              | Pricing Tier                | Billing Model
+  --------------------------------- | --------------------------- | -----------------------------------
+  ai                                | Defender for AI Services    | Per 1K tokens/month
+  app_services                      | Service Layer               | Per App Service instance/hour
+  arm                               | Service Layer               | Per subscription/month
+  containers                        | Cloud Workload Protection   | Per vCore in K8s worker nodes
+  cosmos_dbs                        | Databases                   | Per 100 RU/s/month
+  cspm                              | Defender CSPM (paid)        | Per billable resource (VMs, Storage, DBs, Serverless)
+  key_vault                         | Service Layer               | Per vault/month
+  oss_db                            | Databases                   | Per instance/hour (PostgreSQL, MySQL, MariaDB)
+  servers                           | Cloud Workload Protection   | Per server/hour (P1 or P2)
+  servers_vulnerability_assessments | Cloud Workload Protection   | Included in Servers P2
+  sql                               | Databases                   | Per SQL instance/hour
+  sql_on_vm                         | Databases                   | Per SQL instance/hour
+  storage                           | Cloud Workload Protection   | Per storage account/month + overage
+  tvm_check                         | Cloud Workload Protection   | Sub-feature of Servers
+
+Sub-features are included in their parent plan at no additional cost, except
+`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
+
+Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
+
 Example - enable Defender for Servers with vulnerability assessments:
 
   microsoft_defender_settings = {
