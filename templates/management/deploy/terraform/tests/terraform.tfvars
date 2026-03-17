@@ -1,4 +1,4 @@
-# Test configuration for management_landing_zone
+# Test configuration for management
 # These values are used by terraform test
 #
 # Note: Tests disable management_resources and management_groups by default
