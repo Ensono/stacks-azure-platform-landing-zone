@@ -15,7 +15,7 @@
     "enforcementMode": "Default",
     "nonComplianceMessages": [
       {
-        "message": "ISO 27001:2013 compliance requirements {enforcementMode} be met."
+        "message": "ISO 27001:2013 compliance requirements {enforcementMode} must be met."
       }
     ],
     "parameters": {},

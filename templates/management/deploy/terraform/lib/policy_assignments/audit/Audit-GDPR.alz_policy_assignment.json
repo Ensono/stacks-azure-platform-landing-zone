@@ -15,7 +15,7 @@
     "enforcementMode": "Default",
     "nonComplianceMessages": [
       {
-        "message": "GDPR compliance requirements {enforcementMode} be met."
+        "message": "GDPR compliance requirements {enforcementMode} must be met."
       }
     ],
     "parameters": {},

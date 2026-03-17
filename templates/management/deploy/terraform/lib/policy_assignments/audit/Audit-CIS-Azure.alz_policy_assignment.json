@@ -15,7 +15,7 @@
     "enforcementMode": "Default",
     "nonComplianceMessages": [
       {
-        "message": "CIS Microsoft Azure Foundations Benchmark v2.0.0 compliance requirements {enforcementMode} be met."
+        "message": "CIS Microsoft Azure Foundations Benchmark v2.0.0 compliance requirements {enforcementMode} must be met."
       }
     ],
     "parameters": {},
