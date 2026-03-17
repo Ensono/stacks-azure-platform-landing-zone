@@ -374,7 +374,7 @@ management_resource_settings = {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.12)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1, < 2)
 
 - <a name="requirement_alz"></a> [alz](#requirement\_alz) (0.20.2)
 
@@ -382,16 +382,10 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 4.0)
 
-- <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
-
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.8)
-
 ## Resources
 
 The following resources are used by this module:
 
-- [azurerm_monitor_diagnostic_setting.log_analytics_workspace](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
-- [azurerm_monitor_diagnostic_setting.subscription_activity](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
 - [azurerm_monitor_metric_alert.law_data_ingest](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_metric_alert.law_ingestion_latency](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
 - [azurerm_monitor_metric_alert.law_search_availability](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert) (resource)
@@ -423,6 +417,119 @@ Type: `string`
 Description: Subscription ID for management resources (log analytics, DCRs, storage).
 
 Type: `string`
+
+### <a name="input_microsoft_defender_settings"></a> [microsoft\_defender\_settings](#input\_microsoft\_defender\_settings)
+
+Description: Microsoft Defender for Cloud configuration.
+
+- `email_security_contact` - (Required) Email address for security alerts.
+- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).  
+  Set to true to enable via DeployIfNotExists policy.
+- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.  
+  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
+
+Pricing overview (all plans default to disabled / no cost):
+
+  Plan                              | Pricing Tier                | Billing Model
+  --------------------------------- | --------------------------- | -----------------------------------  
+  ai                                | Defender for AI Services    | Per 1K tokens/month  
+  app\_services                      | Service Layer               | Per App Service instance/hour  
+  arm                               | Service Layer               | Per subscription/month  
+  containers                        | Cloud Workload Protection   | Per vCore in K8s worker nodes  
+  cosmos\_dbs                        | Databases                   | Per 100 RU/s/month  
+  cspm                              | Defender CSPM (paid)        | Per billable resource (VMs, Storage, DBs, Serverless)  
+  key\_vault                         | Service Layer               | Per vault/month  
+  oss\_db                            | Databases                   | Per instance/hour (PostgreSQL, MySQL, MariaDB)  
+  servers                           | Cloud Workload Protection   | Per server/hour (P1 or P2)  
+  servers\_vulnerability\_assessments | Cloud Workload Protection   | Included in Servers P2  
+  sql                               | Databases                   | Per SQL instance/hour  
+  sql\_on\_vm                         | Databases                   | Per SQL instance/hour  
+  storage                           | Cloud Workload Protection   | Per storage account/month + overage  
+  tvm\_check                         | Cloud Workload Protection   | Sub-feature of Servers
+
+Sub-features are included in their parent plan at no additional cost, except
+`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
+
+Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
+
+Example - enable Defender for Servers with vulnerability assessments:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      servers                           = true  
+      servers\_vulnerability\_assessments = true
+    }
+  }
+
+Example - enable CSPM with agentless VM scanning:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      cspm = true
+    }  
+    subfeatures = {  
+      cspm\_agentless\_vm\_scanning = true
+    }
+  }
+
+Example - enable multiple plans:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      servers      = true  
+      app\_services = true  
+      sql          = true  
+      key\_vault    = true  
+      storage      = true
+    }  
+    subfeatures = {  
+      storage\_on\_upload\_malware\_scanning = true
+    }
+  }
+
+Type:
+
+```hcl
+object({
+    email_security_contact     = string
+    export_resource_group_name = optional(string, "rg-asc-export")
+
+    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
+    defender_plans = optional(object({
+      ai                                = optional(bool, false)
+      app_services                      = optional(bool, false)
+      arm                               = optional(bool, false)
+      containers                        = optional(bool, false)
+      cosmos_dbs                        = optional(bool, false)
+      cspm                              = optional(bool, false)
+      key_vault                         = optional(bool, false)
+      oss_db                            = optional(bool, false)
+      servers                           = optional(bool, false)
+      servers_vulnerability_assessments = optional(bool, false)
+      sql                               = optional(bool, false)
+      sql_on_vm                         = optional(bool, false)
+      storage                           = optional(bool, false)
+      tvm_check                         = optional(bool, false)
+    }), {})
+
+    # Sub-features for specific Defender plans
+    subfeatures = optional(object({
+      ai_prompt_evidence                                  = optional(bool, false)
+      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
+      cspm_agentless_vm_scanning                          = optional(bool, false)
+      cspm_container_registries_vulnerability_assessments = optional(bool, false)
+      cspm_entra_permissions_management                   = optional(bool, false)
+      cspm_sensitive_data_discovery                       = optional(bool, false)
+      servers_agentless_vm_scanning                       = optional(bool, false)
+      storage_on_upload_malware_scanning                  = optional(bool, false)
+      storage_sensitive_data_discovery                    = optional(bool, false)
+    }), {})
+  })
+```
 
 ## Optional Inputs
 
@@ -827,24 +934,6 @@ When set to `false`, no management resources will be deployed.
 Type: `bool`
 
 Default: `true`
-
-### <a name="input_microsoft_defender_settings"></a> [microsoft\_defender\_settings](#input\_microsoft\_defender\_settings)
-
-Description: (Optional) Microsoft Defender for Cloud configuration.
-
-- `email_security_contact` - Email address for security alerts. Defaults to "security@replace-me.com" - update for production.
-- `export_resource_group_name` - Resource group name for ASC continuous export. Defaults to "rg-asc-export".
-
-Type:
-
-```hcl
-object({
-    email_security_contact     = optional(string, "security@replace-me.com")
-    export_resource_group_name = optional(string, "rg-asc-export")
-  })
-```
-
-Default: `{}`
 
 ### <a name="input_monitoring_alerts"></a> [monitoring\_alerts](#input\_monitoring\_alerts)
 
