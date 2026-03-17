@@ -1,4 +1,4 @@
-name: 0.0$(Rev:.r)
+name: $(version_semver)
 
 trigger:
   branches:
@@ -12,39 +12,40 @@ pr:
   branches:
     include:
       - main
-  paths:
-    include:
-      - templates/*
 
-# Set the agent pool that stages should be run in
 pool:
   vmImage: $(pool_vm_image)
 
 variables:
   - template: variables.yml
 
-# Configure the stages
 stages:
-  - stage: Prereqs
-    displayName: Prerequisites
+  - stage: Preliminaries
     jobs:
-      - job: build_number
-        displayName: Set Build Number
+      - job: Build_Lint
+        displayName: Set Build Number and Lint
         steps:
-          - template: templates/setup.yaml
+          - template: templates/setup.yml
             parameters:
-              eirctl_version: ${{ variables.eirctl_version }}
+              eirctl_version: $(eirctl_version)
 
           - task: Bash@3
             displayName: Set Build Number
             inputs:
               targetType: inline
               script: |
-                eirctl ado:buildnumber
+                eirctl ado:build:number
 
           - task: Bash@3
-            displayName: Lint Modules
+            displayName: Perform YAML Linting
             inputs:
               targetType: inline
               script: |
-                eirctl lint
+                eirctl lint:yaml
+
+          - task: Bash@3
+            displayName: Perform Terraform Format Check
+            inputs:
+              targetType: inline
+              script: |
+                eirctl lint:terraform:format
