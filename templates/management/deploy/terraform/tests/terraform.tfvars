@@ -12,7 +12,3 @@ management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
 # Override default (true) to disable for unit tests
 management_resources_enabled = false
-
-microsoft_defender_settings = {
-  email_security_contact = "user@example.invalid"
-}

@@ -365,8 +365,10 @@ variable "microsoft_defender_settings" {
       storage_sensitive_data_discovery                    = optional(bool, false)
     }), {})
   })
+  default     = null
   description = <<DESCRIPTION
-Microsoft Defender for Cloud configuration.
+Microsoft Defender for Cloud configuration. Required when `management_groups_enabled = true`.
+Can be omitted when deploying only management resources.
 
 - `email_security_contact` - (Required) Email address for security alerts.
 - `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
@@ -439,7 +441,7 @@ Example - enable multiple plans:
 DESCRIPTION
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.microsoft_defender_settings.email_security_contact))
+    condition     = var.microsoft_defender_settings == null || can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.microsoft_defender_settings.email_security_contact))
     error_message = "email_security_contact must be a valid email address."
   }
 }

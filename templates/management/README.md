@@ -418,119 +418,6 @@ Description: Subscription ID for management resources (log analytics, DCRs, stor
 
 Type: `string`
 
-### <a name="input_microsoft_defender_settings"></a> [microsoft\_defender\_settings](#input\_microsoft\_defender\_settings)
-
-Description: Microsoft Defender for Cloud configuration.
-
-- `email_security_contact` - (Required) Email address for security alerts.
-- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
-- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).  
-  Set to true to enable via DeployIfNotExists policy.
-- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.  
-  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
-
-Pricing overview (all plans default to disabled / no cost):
-
-  Plan                              | Pricing Tier                | Billing Model
-  --------------------------------- | --------------------------- | -----------------------------------  
-  ai                                | Defender for AI Services    | Per 1K tokens/month  
-  app\_services                      | Service Layer               | Per App Service instance/hour  
-  arm                               | Service Layer               | Per subscription/month  
-  containers                        | Cloud Workload Protection   | Per vCore in K8s worker nodes  
-  cosmos\_dbs                        | Databases                   | Per 100 RU/s/month  
-  cspm                              | Defender CSPM (paid)        | Per billable resource (VMs, Storage, DBs, Serverless)  
-  key\_vault                         | Service Layer               | Per vault/month  
-  oss\_db                            | Databases                   | Per instance/hour (PostgreSQL, MySQL, MariaDB)  
-  servers                           | Cloud Workload Protection   | Per server/hour (P1 or P2)  
-  servers\_vulnerability\_assessments | Cloud Workload Protection   | Included in Servers P2  
-  sql                               | Databases                   | Per SQL instance/hour  
-  sql\_on\_vm                         | Databases                   | Per SQL instance/hour  
-  storage                           | Cloud Workload Protection   | Per storage account/month + overage  
-  tvm\_check                         | Cloud Workload Protection   | Sub-feature of Servers
-
-Sub-features are included in their parent plan at no additional cost, except
-`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
-
-Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
-
-Example - enable Defender for Servers with vulnerability assessments:
-
-  microsoft\_defender\_settings = {  
-    email\_security\_contact = "security@example.com"  
-    defender\_plans = {  
-      servers                           = true  
-      servers\_vulnerability\_assessments = true
-    }
-  }
-
-Example - enable CSPM with agentless VM scanning:
-
-  microsoft\_defender\_settings = {  
-    email\_security\_contact = "security@example.com"  
-    defender\_plans = {  
-      cspm = true
-    }  
-    subfeatures = {  
-      cspm\_agentless\_vm\_scanning = true
-    }
-  }
-
-Example - enable multiple plans:
-
-  microsoft\_defender\_settings = {  
-    email\_security\_contact = "security@example.com"  
-    defender\_plans = {  
-      servers      = true  
-      app\_services = true  
-      sql          = true  
-      key\_vault    = true  
-      storage      = true
-    }  
-    subfeatures = {  
-      storage\_on\_upload\_malware\_scanning = true
-    }
-  }
-
-Type:
-
-```hcl
-object({
-    email_security_contact     = string
-    export_resource_group_name = optional(string, "rg-asc-export")
-
-    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
-    defender_plans = optional(object({
-      ai                                = optional(bool, false)
-      app_services                      = optional(bool, false)
-      arm                               = optional(bool, false)
-      containers                        = optional(bool, false)
-      cosmos_dbs                        = optional(bool, false)
-      cspm                              = optional(bool, false)
-      key_vault                         = optional(bool, false)
-      oss_db                            = optional(bool, false)
-      servers                           = optional(bool, false)
-      servers_vulnerability_assessments = optional(bool, false)
-      sql                               = optional(bool, false)
-      sql_on_vm                         = optional(bool, false)
-      storage                           = optional(bool, false)
-      tvm_check                         = optional(bool, false)
-    }), {})
-
-    # Sub-features for specific Defender plans
-    subfeatures = optional(object({
-      ai_prompt_evidence                                  = optional(bool, false)
-      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
-      cspm_agentless_vm_scanning                          = optional(bool, false)
-      cspm_container_registries_vulnerability_assessments = optional(bool, false)
-      cspm_entra_permissions_management                   = optional(bool, false)
-      cspm_sensitive_data_discovery                       = optional(bool, false)
-      servers_agentless_vm_scanning                       = optional(bool, false)
-      storage_on_upload_malware_scanning                  = optional(bool, false)
-      storage_sensitive_data_discovery                    = optional(bool, false)
-    }), {})
-  })
-```
-
 ## Optional Inputs
 
 The following input variables are optional (have default values):
@@ -934,6 +821,122 @@ When set to `false`, no management resources will be deployed.
 Type: `bool`
 
 Default: `true`
+
+### <a name="input_microsoft_defender_settings"></a> [microsoft\_defender\_settings](#input\_microsoft\_defender\_settings)
+
+Description: Microsoft Defender for Cloud configuration. Required when `management_groups_enabled = true`.  
+Can be omitted when deploying only management resources.
+
+- `email_security_contact` - (Required) Email address for security alerts.
+- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).  
+  Set to true to enable via DeployIfNotExists policy.
+- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.  
+  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
+
+Pricing overview (all plans default to disabled / no cost):
+
+  Plan                              | Pricing Tier                | Billing Model
+  --------------------------------- | --------------------------- | -----------------------------------  
+  ai                                | Defender for AI Services    | Per 1K tokens/month  
+  app\_services                      | Service Layer               | Per App Service instance/hour  
+  arm                               | Service Layer               | Per subscription/month  
+  containers                        | Cloud Workload Protection   | Per vCore in K8s worker nodes  
+  cosmos\_dbs                        | Databases                   | Per 100 RU/s/month  
+  cspm                              | Defender CSPM (paid)        | Per billable resource (VMs, Storage, DBs, Serverless)  
+  key\_vault                         | Service Layer               | Per vault/month  
+  oss\_db                            | Databases                   | Per instance/hour (PostgreSQL, MySQL, MariaDB)  
+  servers                           | Cloud Workload Protection   | Per server/hour (P1 or P2)  
+  servers\_vulnerability\_assessments | Cloud Workload Protection   | Included in Servers P2  
+  sql                               | Databases                   | Per SQL instance/hour  
+  sql\_on\_vm                         | Databases                   | Per SQL instance/hour  
+  storage                           | Cloud Workload Protection   | Per storage account/month + overage  
+  tvm\_check                         | Cloud Workload Protection   | Sub-feature of Servers
+
+Sub-features are included in their parent plan at no additional cost, except
+`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
+
+Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
+
+Example - enable Defender for Servers with vulnerability assessments:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      servers                           = true  
+      servers\_vulnerability\_assessments = true
+    }
+  }
+
+Example - enable CSPM with agentless VM scanning:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      cspm = true
+    }  
+    subfeatures = {  
+      cspm\_agentless\_vm\_scanning = true
+    }
+  }
+
+Example - enable multiple plans:
+
+  microsoft\_defender\_settings = {  
+    email\_security\_contact = "security@example.com"  
+    defender\_plans = {  
+      servers      = true  
+      app\_services = true  
+      sql          = true  
+      key\_vault    = true  
+      storage      = true
+    }  
+    subfeatures = {  
+      storage\_on\_upload\_malware\_scanning = true
+    }
+  }
+
+Type:
+
+```hcl
+object({
+    email_security_contact     = string
+    export_resource_group_name = optional(string, "rg-asc-export")
+
+    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
+    defender_plans = optional(object({
+      ai                                = optional(bool, false)
+      app_services                      = optional(bool, false)
+      arm                               = optional(bool, false)
+      containers                        = optional(bool, false)
+      cosmos_dbs                        = optional(bool, false)
+      cspm                              = optional(bool, false)
+      key_vault                         = optional(bool, false)
+      oss_db                            = optional(bool, false)
+      servers                           = optional(bool, false)
+      servers_vulnerability_assessments = optional(bool, false)
+      sql                               = optional(bool, false)
+      sql_on_vm                         = optional(bool, false)
+      storage                           = optional(bool, false)
+      tvm_check                         = optional(bool, false)
+    }), {})
+
+    # Sub-features for specific Defender plans
+    subfeatures = optional(object({
+      ai_prompt_evidence                                  = optional(bool, false)
+      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
+      cspm_agentless_vm_scanning                          = optional(bool, false)
+      cspm_container_registries_vulnerability_assessments = optional(bool, false)
+      cspm_entra_permissions_management                   = optional(bool, false)
+      cspm_sensitive_data_discovery                       = optional(bool, false)
+      servers_agentless_vm_scanning                       = optional(bool, false)
+      storage_on_upload_malware_scanning                  = optional(bool, false)
+      storage_sensitive_data_discovery                    = optional(bool, false)
+    }), {})
+  })
+```
+
+Default: `null`
 
 ### <a name="input_monitoring_alerts"></a> [monitoring\_alerts](#input\_monitoring\_alerts)
 
