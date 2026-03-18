@@ -2,8 +2,8 @@ locals {
   # Standard Ensono NSG rules (without Ensono Management addresses per Jon Walker)
   # Based on stacks-ignite-rft-futures pattern
   common_nsg_rules = {
-    # Inbound Rules
-    NSRC_Platform_AzureLoadBalancer_to_Any = {
+  # Inbound Rules
+  NSRC_Platform_AzureLoadBalancer_to_Any = {
       name                       = "NSRC-Platform-AzureLoadBalancer-to-Any"
       priority                   = 100
       direction                  = "Inbound"
@@ -13,8 +13,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "AzureLoadBalancer"
       destination_address_prefix = "*"
-    }
-    NSRC_RFC1918Priv_10_0_0_0_8_to_Any = {
+  }
+  NSRC_RFC1918Priv_10_0_0_0_8_to_Any = {
       name                       = "NSRC-RFC1918Priv-10.0.0.0_8-to-Any"
       priority                   = 400
       direction                  = "Inbound"
@@ -24,8 +24,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "10.0.0.0/8"
       destination_address_prefix = "*"
-    }
-    NSRC_RFC1918Priv_172_16_0_0_12_to_Any = {
+  }
+  NSRC_RFC1918Priv_172_16_0_0_12_to_Any = {
       name                       = "NSRC-RFC1918Priv-172.16.0.0_12-to-Any"
       priority                   = 500
       direction                  = "Inbound"
@@ -35,8 +35,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "172.16.0.0/12"
       destination_address_prefix = "*"
-    }
-    NSRC_RFC1918Priv_192_168_0_0_16_to_Any = {
+  }
+  NSRC_RFC1918Priv_192_168_0_0_16_to_Any = {
       name                       = "NSRC-RFC1918Priv-192.168.0.0_16-to-Any"
       priority                   = 600
       direction                  = "Inbound"
@@ -46,8 +46,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "192.168.0.0/16"
       destination_address_prefix = "*"
-    }
-    NSRC_Any_to_Any = {
+  }
+  NSRC_Any_to_Any = {
       name                       = "NSRC-Any-to-Any"
       priority                   = 700
       direction                  = "Inbound"
@@ -57,9 +57,9 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "*"
       destination_address_prefix = "*"
-    }
-    # Outbound Rules
-    NSRC_RFC1918Priv_10_0_0_0_8_to_Any_Outbound = {
+  }
+  # Outbound Rules
+  NSRC_RFC1918Priv_10_0_0_0_8_to_Any_Outbound = {
       name                       = "NSRC-RFC1918Priv-10.0.0.0_8-to-Any-Outbound"
       priority                   = 800
       direction                  = "Outbound"
@@ -69,8 +69,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "10.0.0.0/8"
       destination_address_prefix = "*"
-    }
-    NSRC_RFC1918Priv_172_16_0_0_12_to_Any_Outbound = {
+  }
+  NSRC_RFC1918Priv_172_16_0_0_12_to_Any_Outbound = {
       name                       = "NSRC-RFC1918Priv-172.16.0.0_12-to-Any-Outbound"
       priority                   = 900
       direction                  = "Outbound"
@@ -80,8 +80,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "172.16.0.0/12"
       destination_address_prefix = "*"
-    }
-    NSRC_RFC1918Priv_192_168_0_0_16_to_Any_Outbound = {
+  }
+  NSRC_RFC1918Priv_192_168_0_0_16_to_Any_Outbound = {
       name                       = "NSRC-RFC1918Priv-192.168.0.0_16-to-Any-Outbound"
       priority                   = 1000
       direction                  = "Outbound"
@@ -91,8 +91,8 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "192.168.0.0/16"
       destination_address_prefix = "*"
-    }
-    NSRC_Any_to_Any_Outbound = {
+  }
+  NSRC_Any_to_Any_Outbound = {
       name                       = "NSRC-Any-to-Any-Outbound"
       priority                   = 1100
       direction                  = "Outbound"
@@ -102,12 +102,12 @@ locals {
       destination_port_range     = "*"
       source_address_prefix      = "*"
       destination_address_prefix = "*"
-    }
+  }
   }
 
   # Azure Bastion specific NSG rules
   bastion_nsg_rules = {
-    AllowHttpsInbound = {
+  AllowHttpsInbound = {
       name                       = "AllowHttpsInbound"
       priority                   = 120
       direction                  = "Inbound"
@@ -117,8 +117,8 @@ locals {
       destination_port_range     = "443"
       source_address_prefix      = "Internet"
       destination_address_prefix = "*"
-    }
-    AllowGatewayManagerInbound = {
+  }
+  AllowGatewayManagerInbound = {
       name                       = "AllowGatewayManagerInbound"
       priority                   = 130
       direction                  = "Inbound"
@@ -128,8 +128,8 @@ locals {
       destination_port_range     = "443"
       source_address_prefix      = "GatewayManager"
       destination_address_prefix = "*"
-    }
-    AllowAzureLoadBalancerInbound = {
+  }
+  AllowAzureLoadBalancerInbound = {
       name                       = "AllowAzureLoadBalancerInbound"
       priority                   = 140
       direction                  = "Inbound"
@@ -139,8 +139,8 @@ locals {
       destination_port_range     = "443"
       source_address_prefix      = "AzureLoadBalancer"
       destination_address_prefix = "*"
-    }
-    AllowBastionHostCommunicationInbound = {
+  }
+  AllowBastionHostCommunicationInbound = {
       name                       = "AllowBastionHostCommunicationInbound"
       priority                   = 150
       direction                  = "Inbound"
@@ -150,8 +150,8 @@ locals {
       destination_port_range     = "8080"
       source_address_prefix      = "VirtualNetwork"
       destination_address_prefix = "*"
-    }
-    AllowBastionHostCommunicationInbound8080 = {
+  }
+  AllowBastionHostCommunicationInbound8080 = {
       name                       = "AllowBastionHostCommunicationInbound8080"
       priority                   = 151
       direction                  = "Inbound"
@@ -161,8 +161,8 @@ locals {
       destination_port_range     = "8080"
       source_address_prefix      = "VirtualNetwork"
       destination_address_prefix = "*"
-    }
-    AllowBastionHostCommunicationInbound5701 = {
+  }
+  AllowBastionHostCommunicationInbound5701 = {
       name                       = "AllowBastionHostCommunicationInbound5701"
       priority                   = 152
       direction                  = "Inbound"
@@ -172,8 +172,8 @@ locals {
       destination_port_range     = "5701"
       source_address_prefix      = "VirtualNetwork"
       destination_address_prefix = "*"
-    }
-    AllowSshOutbound = {
+  }
+  AllowSshOutbound = {
       name                       = "AllowSshOutbound"
       priority                   = 161
       direction                  = "Outbound"
@@ -183,8 +183,8 @@ locals {
       destination_port_range     = "22"
       source_address_prefix      = "*"
       destination_address_prefix = "*"
-    }
-    AllowRdpOutbound = {
+  }
+  AllowRdpOutbound = {
       name                       = "AllowRdpOutbound"
       priority                   = 162
       direction                  = "Outbound"
@@ -194,8 +194,8 @@ locals {
       destination_port_range     = "3389"
       source_address_prefix      = "*"
       destination_address_prefix = "*"
-    }
-    AllowAzureCloudCommunicationOutbound = {
+  }
+  AllowAzureCloudCommunicationOutbound = {
       name                       = "AllowAzureCloudCommunicationOutbound"
       priority                   = 170
       direction                  = "Outbound"
@@ -205,8 +205,8 @@ locals {
       destination_port_range     = "443"
       source_address_prefix      = "*"
       destination_address_prefix = "AzureCloud"
-    }
-    AllowBastionHostCommunicationOutbound8080 = {
+  }
+  AllowBastionHostCommunicationOutbound8080 = {
       name                       = "AllowBastionHostCommunicationOutbound8080"
       priority                   = 180
       direction                  = "Outbound"
@@ -216,8 +216,8 @@ locals {
       destination_port_range     = "8080"
       source_address_prefix      = "VirtualNetwork"
       destination_address_prefix = "*"
-    }
-    AllowBastionHostCommunicationOutbound5701 = {
+  }
+  AllowBastionHostCommunicationOutbound5701 = {
       name                       = "AllowBastionHostCommunicationOutbound5701"
       priority                   = 181
       direction                  = "Outbound"
@@ -227,8 +227,8 @@ locals {
       destination_port_range     = "5701"
       source_address_prefix      = "VirtualNetwork"
       destination_address_prefix = "*"
-    }
-    AllowGetSessionInformationOutbound = {
+  }
+  AllowGetSessionInformationOutbound = {
       name                       = "AllowGetSessionInformationOutbound"
       priority                   = 190
       direction                  = "Outbound"
@@ -238,7 +238,7 @@ locals {
       destination_port_range     = "80"
       source_address_prefix      = "*"
       destination_address_prefix = "Internet"
-    }
+  }
   }
 
   # Merge common NSG rules with any additional rules and bastion rules

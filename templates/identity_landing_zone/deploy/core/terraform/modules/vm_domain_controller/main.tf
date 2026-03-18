@@ -12,11 +12,11 @@ module "domain_controller" {
 
   # Admin credentials - uses temp password (replaced via Azure CLI after creation)
   account_credentials = {
-    admin_credentials = {
+  admin_credentials = {
       username                           = var.admin_username
       password                           = var.admin_temp_password
       generate_admin_password_or_ssh_key = false
-    }
+  }
   }
 
   # Zone configuration - use zones if supported, otherwise availability set
@@ -25,46 +25,46 @@ module "domain_controller" {
 
   # Network interface configuration - Using HLD-compliant naming
   network_interfaces = {
-    for nic_key, nic_val in each.value.network_interfaces : nic_key => {
+  for nic_key, nic_val in each.value.network_interfaces : nic_key => {
       name = var.vm_extend_name_map[each.key].nic[nic_key].name
       ip_configurations = {
-        for ip_key, ip_cfg in nic_val.ip_configurations : ip_key => {
+  for ip_key, ip_cfg in nic_val.ip_configurations : ip_key => {
           name                          = "${nic_key}-${ip_key}"
           private_ip_address            = ip_cfg.private_ip_address
           private_ip_address_allocation = ip_cfg.private_ip_address_allocation
           # Use the explicitly provided subnet ID if available; fallback to default subnet
           private_ip_subnet_resource_id = coalesce(ip_cfg.private_ip_subnet_resource_id, var.subnet_resource_id)
-        }
+  }
       }
-    }
+  }
   }
 
   # OS disk configuration - Using HLD-compliant naming
   os_disk = {
-    name                 = var.vm_extend_name_map[each.key].os_disk.name
-    caching              = var.os_disk_config.caching
-    disk_size_gb         = var.os_disk_config.disk_size_gb
-    storage_account_type = var.os_disk_config.storage_account_type
+  name                 = var.vm_extend_name_map[each.key].os_disk.name
+  caching              = var.os_disk_config.caching
+  disk_size_gb         = var.os_disk_config.disk_size_gb
+  storage_account_type = var.os_disk_config.storage_account_type
   }
 
   # Source image configuration
   source_image_reference = {
-    publisher = var.os_image.publisher
-    offer     = var.os_image.offer
-    sku       = var.os_image.sku
-    version   = var.os_image.version
+  publisher = var.os_image.publisher
+  offer     = var.os_image.offer
+  sku       = var.os_image.sku
+  version   = var.os_image.version
   }
 
   # Data disk configuration - Using HLD-compliant naming
   data_disk_managed_disks = {
-    for disk_key, disk_val in try(each.value.data_disks, {}) : disk_key => {
+  for disk_key, disk_val in try(each.value.data_disks, {}) : disk_key => {
       name                       = var.vm_extend_name_map[each.key].data_disks[disk_key].name
       storage_account_type       = disk_val.storage_account_type
       lun                        = disk_val.lun
       caching                    = disk_val.caching
       disk_size_gb               = disk_val.disk_size_gb
       encryption_at_host_enabled = true
-    }
+  }
   }
 
   # Resource group and tags
@@ -91,6 +91,6 @@ module "domain_controller" {
   # System-assigned managed identity required for Azure Monitor Agent
   # See: https://registry.terraform.io/modules/Azure/avm-res-compute-virtualmachine/azurerm/latest
   managed_identities = {
-    system_assigned = true
+  system_assigned = true
   }
 }
