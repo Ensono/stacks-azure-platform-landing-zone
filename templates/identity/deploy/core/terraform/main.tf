@@ -20,11 +20,11 @@ module "naming" {
   unique-seed = random_string.random_seed.result
 
   suffix = [
-  substr(var.company_name, 0, 3),
-  local.selected_region.geo_code,
-  var.environment,
-  each.key,
-  "001"
+    substr(var.company_name, 0, 3),
+    local.selected_region.geo_code,
+    var.environment,
+    each.key,
+    "001"
   ]
 }
 
@@ -46,8 +46,8 @@ module "resource_groups" {
   tags     = local.resource_tags
 
   lock = var.azure_resource_group_management_lock_level != "" ? {
-  kind = var.azure_resource_group_management_lock_level
-  name = "resource-group-level"
+    kind = var.azure_resource_group_management_lock_level
+    name = "resource-group-level"
   } : null
 }
 
@@ -114,10 +114,10 @@ resource "azurerm_virtual_network_dns_servers" "vnet_dns" {
   dns_servers        = local.identity_vnet_dns_servers
 
   lifecycle {
-  precondition {
+    precondition {
       condition     = length(local.identity_vnet_dns_servers) > 0
       error_message = "ADR #0113 requires identity_vnet_dns_servers to resolve to at least one DNS proxy IP. Configure identity_vnet_dns_servers or provide connectivity remote state outputs."
-  }
+    }
   }
 
   depends_on = [module.vm_domain_controller, module.network]
@@ -127,10 +127,10 @@ resource "terraform_data" "adds_dns_forwarder_guardrail" {
   input = local.adds_dns_forwarders
 
   lifecycle {
-  precondition {
+    precondition {
       condition     = length(local.adds_dns_forwarders) > 0
       error_message = "ADR #0113 requires ADDS DNS forwarders for onward resolution. Configure adds_dns_forwarders or ensure identity_vnet_dns_servers is populated."
-  }
+    }
   }
 }
 
@@ -145,7 +145,7 @@ resource "azurerm_virtual_machine_extension" "adds_dns_forwarders" {
   auto_upgrade_minor_version = true
 
   settings = jsonencode({
-  commandToExecute = "powershell -ExecutionPolicy Bypass -Command \"$forwarders = @(${join(",", formatlist("'%s'", local.adds_dns_forwarders))}); if (Get-Command Add-DnsServerForwarder -ErrorAction SilentlyContinue) { Add-DnsServerForwarder -IPAddress $forwarders -UseRootHint `$false -ErrorAction SilentlyContinue | Out-Null }\""
+    commandToExecute = "powershell -ExecutionPolicy Bypass -Command \"$forwarders = @(${join(",", formatlist("'%s'", local.adds_dns_forwarders))}); if (Get-Command Add-DnsServerForwarder -ErrorAction SilentlyContinue) { Add-DnsServerForwarder -IPAddress $forwarders -UseRootHint `$false -ErrorAction SilentlyContinue | Out-Null }\""
   })
 
   depends_on = [module.vm_domain_controller, terraform_data.adds_dns_forwarder_guardrail]

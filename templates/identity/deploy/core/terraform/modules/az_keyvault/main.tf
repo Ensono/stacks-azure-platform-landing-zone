@@ -25,21 +25,21 @@ module "key_vault" {
 
   # Disable trusted Azure services bypass - private endpoint only
   network_acls = {
-  bypass         = "None"
-  default_action = "Deny"
+    bypass         = "None"
+    default_action = "Deny"
   }
 
   wait_for_rbac_before_secret_operations = {
-  create = "60s"
+    create = "60s"
   }
 
   # RBAC for deployment identity
   role_assignments = {
-  deployment_identity = {
+    deployment_identity = {
       role_definition_id_or_name = "Key Vault Secrets Officer"
       principal_id               = var.deployment_principal_id
       principal_type             = "ServicePrincipal"
-  }
+    }
   }
 
   # DNS zone group is managed by Azure Policy (DINE) at management group level
@@ -48,13 +48,13 @@ module "key_vault" {
 
   # Private endpoint for Key Vault
   private_endpoints = {
-  vault = {
+    vault = {
       name                            = "pep-${var.key_vault_name}"
       subnet_resource_id              = var.private_endpoint_subnet_id
       private_service_connection_name = "psc-${var.key_vault_name}"
       network_interface_name          = "nic-${var.key_vault_name}"
       tags                            = var.tags
-  }
+    }
   }
 
   tags = var.tags
@@ -69,7 +69,7 @@ resource "time_sleep" "wait_for_dns_policy" {
   depends_on = [module.key_vault]
 
   triggers = {
-  private_endpoint_id = module.key_vault.private_endpoints["vault"].id
+    private_endpoint_id = module.key_vault.private_endpoints["vault"].id
   }
 
   # Wait for Azure Policy to detect PE and create DNS zone group
