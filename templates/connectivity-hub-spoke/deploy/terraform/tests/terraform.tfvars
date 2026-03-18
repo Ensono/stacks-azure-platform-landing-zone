@@ -1,4 +1,4 @@
-# Common test variables for connectivity_landing_zone_hub_spoke tests
+# Common test variables for connectivity-hub-spoke tests
 # These defaults provide a minimal valid configuration for unit testing
 
 company_name                 = "ens"
