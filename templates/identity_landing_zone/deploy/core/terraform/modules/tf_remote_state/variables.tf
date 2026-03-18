@@ -1,10 +1,10 @@
 variable "remote_state_configs" {
   description = "Map of remote state configurations by region/environment"
   type = map(object({
-    storage_account_name = string
-    container_name       = string
-    key                  = string
-    use_azuread_auth     = bool
+  storage_account_name = string
+  container_name       = string
+  key                  = string
+  use_azuread_auth     = bool
   }))
 }
 

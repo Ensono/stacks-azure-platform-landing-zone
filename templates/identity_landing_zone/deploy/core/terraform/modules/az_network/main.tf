@@ -25,6 +25,6 @@ resource "azurerm_virtual_hub_connection" "hub_connection" {
   internet_security_enabled = true
 
   depends_on = [
-    module.spoke
+  module.spoke
   ]
 }
