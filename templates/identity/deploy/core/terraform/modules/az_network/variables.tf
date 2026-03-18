@@ -22,28 +22,28 @@ variable "vnet_address_space" {
 variable "vnet_subnets" {
   description = "A map of subnets to create."
   type = map(object({
-  name                                          = string
-  address_prefixes                              = list(string)
-  nsg_rule_names                                = list(string)
-  route_names                                   = optional(list(string), [])
-  default_outbound_access_enabled               = optional(bool, false)
-  private_endpoint_network_policies             = optional(string, "Disabled")
-  private_link_service_network_policies_enabled = optional(bool, true)
+    name                                          = string
+    address_prefixes                              = list(string)
+    nsg_rule_names                                = list(string)
+    route_names                                   = optional(list(string), [])
+    default_outbound_access_enabled               = optional(bool, false)
+    private_endpoint_network_policies             = optional(string, "Disabled")
+    private_link_service_network_policies_enabled = optional(bool, true)
   }))
 }
 
 variable "vnet_nsg_rules" {
   description = "A map of NSG rules to create."
   type = map(object({
-  name                       = string
-  priority                   = number
-  direction                  = string
-  access                     = string
-  protocol                   = string
-  source_port_range          = string
-  destination_port_range     = string
-  source_address_prefix      = string
-  destination_address_prefix = string
+    name                       = string
+    priority                   = number
+    direction                  = string
+    access                     = string
+    protocol                   = string
+    source_port_range          = string
+    destination_port_range     = string
+    source_address_prefix      = string
+    destination_address_prefix = string
   }))
   default = {}
 }
