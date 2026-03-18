@@ -25,11 +25,23 @@ resource "terraform_data" "validate_subscriptions" {
   }
 }
 
+# Validate required settings when management groups are enabled
+resource "terraform_data" "validate_defender_settings" {
+  count = var.management_groups_enabled ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.microsoft_defender_settings != null
+      error_message = "microsoft_defender_settings is required when management_groups_enabled = true."
+    }
+  }
+}
+
 module "management_groups" {
   source  = "Azure/avm-ptn-alz/azurerm"
   version = "0.18.0"
 
-  depends_on = [terraform_data.validate_subscriptions]
+  depends_on = [terraform_data.validate_defender_settings, terraform_data.validate_subscriptions]
   count      = var.management_groups_enabled ? 1 : 0
 
   # Required attributes

@@ -8,8 +8,6 @@ provider "alz" {
 }
 
 provider "azapi" {
-  enable_preflight = true
-
   skip_provider_registration = true
   subscription_id            = var.management_subscription_id
 }

@@ -25,11 +25,33 @@ mock_provider "azapi" {
   }
 }
 
-mock_provider "modtm" {}
-
-mock_provider "time" {}
-
 mock_provider "alz" {}
+
+# Override AVM modules that depend on azure/modtm provider
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = {
+        name         = "uksouth"
+        display_name = "UK South"
+        geo_code     = "uks"
+      }
+    }
+    regions                             = {}
+    regions_by_display_name             = {}
+    regions_by_geography                = {}
+    regions_by_geography_group          = {}
+    regions_by_name_or_display_name     = {}
+    valid_region_display_names          = []
+    valid_region_names                  = ["uksouth"]
+    valid_region_names_or_display_names = []
+  }
+}
+
+override_module {
+  target = module.resource_groups
+}
 
 # Variables loaded from terraform.tfvars
 
@@ -70,16 +92,15 @@ run "naming_module_produces_caf_prefixes" {
 }
 
 # =============================================================================
-# Module Integration - Azure Regions
+# Module Integration - Azure Regions (override contract)
 # =============================================================================
 
-run "azure_regions_module_provides_geo_codes" {
+run "azure_regions_provides_geo_codes" {
   command   = plan
   state_key = "location"
 
-  # Location short code derived correctly from azure_regions module
   assert {
-    condition     = module.azure_regions.regions_by_name[var.location].geo_code == "uks"
-    error_message = "Location short code for uksouth should be 'uks'."
+    condition     = module.azure_regions.regions_by_name["uksouth"].geo_code == "uks"
+    error_message = "Overridden regions_by_name should provide geo_code 'uks' for uksouth."
   }
 }

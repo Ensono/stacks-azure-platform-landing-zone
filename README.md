@@ -6,7 +6,7 @@ This repository contains starter modules for deploying Azure Platform Landing Zo
 
 | Module | Description |
 | ------ | ----------- |
-| [Management Landing Zone](templates/management_landing_zone/) | Management groups, policies, Log Analytics, and Data Collection Rules |
+| [Management Landing Zone](templates/management/) | Management groups, policies, Log Analytics, and Data Collection Rules |
 | [Connectivity Hub-Spoke](templates/connectivity_landing_zone_hub_spoke/) | Hub-and-spoke network topology with Azure Firewall, Bastion, and DNS |
 | [Connectivity Virtual WAN](templates/connectivity_landing_zone_virtual_wan/) | Virtual WAN topology with secured hubs, Bastion, and DNS |
 

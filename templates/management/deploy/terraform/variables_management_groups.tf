@@ -331,14 +331,117 @@ DESCRIPTION
 
 variable "microsoft_defender_settings" {
   type = object({
-    email_security_contact     = optional(string, "security@replace-me.com")
+    email_security_contact     = string
     export_resource_group_name = optional(string, "rg-asc-export")
-  })
-  default     = {}
-  description = <<DESCRIPTION
-(Optional) Microsoft Defender for Cloud configuration.
 
-- `email_security_contact` - Email address for security alerts. Defaults to "security@replace-me.com" - update for production.
-- `export_resource_group_name` - Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
+    defender_plans = optional(object({
+      ai                                = optional(bool, false)
+      app_services                      = optional(bool, false)
+      arm                               = optional(bool, false)
+      containers                        = optional(bool, false)
+      cosmos_dbs                        = optional(bool, false)
+      cspm                              = optional(bool, false)
+      key_vault                         = optional(bool, false)
+      oss_db                            = optional(bool, false)
+      servers                           = optional(bool, false)
+      servers_vulnerability_assessments = optional(bool, false)
+      sql                               = optional(bool, false)
+      sql_on_vm                         = optional(bool, false)
+      storage                           = optional(bool, false)
+      tvm_check                         = optional(bool, false)
+    }), {})
+
+    # Sub-features for specific Defender plans
+    subfeatures = optional(object({
+      ai_prompt_evidence                                  = optional(bool, false)
+      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
+      cspm_agentless_vm_scanning                          = optional(bool, false)
+      cspm_container_registries_vulnerability_assessments = optional(bool, false)
+      cspm_entra_permissions_management                   = optional(bool, false)
+      cspm_sensitive_data_discovery                       = optional(bool, false)
+      servers_agentless_vm_scanning                       = optional(bool, false)
+      storage_on_upload_malware_scanning                  = optional(bool, false)
+      storage_sensitive_data_discovery                    = optional(bool, false)
+    }), {})
+  })
+  default     = null
+  description = <<DESCRIPTION
+Microsoft Defender for Cloud configuration. Required when `management_groups_enabled = true`.
+Can be omitted when deploying only management resources.
+
+- `email_security_contact` - (Required) Email address for security alerts.
+- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).
+  Set to true to enable via DeployIfNotExists policy.
+- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.
+  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
+
+Pricing overview (all plans default to disabled / no cost):
+
+  Plan                              | Pricing Tier                | Billing Model
+  --------------------------------- | --------------------------- | -----------------------------------
+  ai                                | Defender for AI Services    | Per 1K tokens/month
+  app_services                      | Service Layer               | Per App Service instance/hour
+  arm                               | Service Layer               | Per subscription/month
+  containers                        | Cloud Workload Protection   | Per vCore in K8s worker nodes
+  cosmos_dbs                        | Databases                   | Per 100 RU/s/month
+  cspm                              | Defender CSPM (paid)        | Per billable resource (VMs, Storage, DBs, Serverless)
+  key_vault                         | Service Layer               | Per vault/month
+  oss_db                            | Databases                   | Per instance/hour (PostgreSQL, MySQL, MariaDB)
+  servers                           | Cloud Workload Protection   | Per server/hour (P1 or P2)
+  servers_vulnerability_assessments | Cloud Workload Protection   | Included in Servers P2
+  sql                               | Databases                   | Per SQL instance/hour
+  sql_on_vm                         | Databases                   | Per SQL instance/hour
+  storage                           | Cloud Workload Protection   | Per storage account/month + overage
+  tvm_check                         | Cloud Workload Protection   | Sub-feature of Servers
+
+Sub-features are included in their parent plan at no additional cost, except
+`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
+
+Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
+
+Example - enable Defender for Servers with vulnerability assessments:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers                           = true
+      servers_vulnerability_assessments = true
+    }
+  }
+
+Example - enable CSPM with agentless VM scanning:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      cspm = true
+    }
+    subfeatures = {
+      cspm_agentless_vm_scanning = true
+    }
+  }
+
+Example - enable multiple plans:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers      = true
+      app_services = true
+      sql          = true
+      key_vault    = true
+      storage      = true
+    }
+    subfeatures = {
+      storage_on_upload_malware_scanning = true
+    }
+  }
 DESCRIPTION
+
+  validation {
+    condition     = var.microsoft_defender_settings == null || can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.microsoft_defender_settings.email_security_contact))
+    error_message = "email_security_contact must be a valid email address."
+  }
 }
