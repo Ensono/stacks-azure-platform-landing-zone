@@ -50,10 +50,11 @@ terraform.rc
 
 .terraform.lock.hcl
 
-# Junit
-**/results.xml
+# Junit XML test results
+test-results/
 
 # Eirctl
+.eirctl/
 eirctl.env
 
 # Azure Landing Zones Library

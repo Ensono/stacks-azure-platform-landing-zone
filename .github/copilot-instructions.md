@@ -26,7 +26,7 @@ When generating code for this repository:
 
 This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are three primary templates:
 
-- **Management Landing Zone** (`templates/management_landing_zone/`) - Deploys management groups, policies, and management resources
+- **Management Landing Zone** (`templates/management/`) - Deploys management groups, policies, and management resources
 - **Connectivity Landing Zone Hub-Spoke** (`templates/connectivity_landing_zone_hub_spoke/`) - Deploys hub-and-spoke network topology
 - **Connectivity Landing Zone Virtual WAN** (`templates/connectivity_landing_zone_virtual_wan/`) - Deploys Virtual WAN network topology
 
@@ -76,7 +76,7 @@ resource_groups → virtual_wan
 
 ### Key Design Patterns
 
-- **Conditional modules via `count`** (management_landing_zone): Root modules use `count = var.*_enabled ? 1 : 0`. Access outputs with `module.name[0].output` and wrap in `try(..., null)` for safety
+- **Conditional modules via `count`** (management): Root modules use `count = var.*_enabled ? 1 : 0`. Access outputs with `module.name[0].output` and wrap in `try(..., null)` for safety
 - **Always-on modules** (connectivity modules): The connectivity modules always deploy; individual features (firewall, bastion, etc.) are toggled via tfvars settings
 - **Template string replacements**: Use `$${variable_name}` syntax in tfvars for dynamic values (e.g., `$${starter_location_01}`, `$${subscription_id_connectivity}`)
 - **Multi-region support**: Connectivity modules support multiple hubs via `starter_locations` list and per-region settings in tfvars
@@ -269,7 +269,7 @@ When modifying connectivity modules, ensure **hub_spoke** and **virtual_wan** re
 
 ### Task Runner (eirctl)
 
-Run from the template directory (e.g., `templates/management_landing_zone/` or `templates/connectivity_landing_zone_hub_spoke/`):
+Run from the template directory (e.g., `templates/management/` or `templates/connectivity_landing_zone_hub_spoke/`):
 
 ```bash
 eirctl lint              # YAML lint → terraform fmt → validate → tflint
@@ -354,7 +354,7 @@ run "test_case_name" {
 
 ## ALZ Library Structure
 
-Located at `deploy/terraform/lib/` (management_landing_zone only):
+Located at `deploy/terraform/lib/` (management only):
 
 - `architecture_definitions/` - Management group hierarchy (e.g., `alz_custom.alz_architecture_definition.yaml`)
 - `archetype_definitions/` - Policy overrides per management group (e.g., `root_custom.alz_archetype_override.yaml`)
