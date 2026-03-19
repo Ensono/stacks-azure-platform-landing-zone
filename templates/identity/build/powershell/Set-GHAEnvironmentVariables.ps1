@@ -27,7 +27,7 @@ Install-PowerShellModules -moduleNames ("powershell-yaml") | Out-Null
 foreach ($template in $variableTemplates) {
 
 	$templateFile = ("{0}/{1}" -f $variableDirectory, $template)
-	Write-Information -MessageData ("`nSetting enviroment variables from '{0}'" -f $templateFile)
+	Write-Information -MessageData ("`nSetting environment variables from '{0}'" -f $templateFile)
 	$variables = (Get-Content -Path $templateFile | ConvertFrom-Yaml)
 
 	$terraformPrefix = "TF_VAR_"
