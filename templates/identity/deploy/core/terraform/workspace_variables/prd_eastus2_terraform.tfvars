@@ -1,6 +1,6 @@
 identity_vnet_dns_servers = []
 adds_dns_forwarders       = []
-vnet_address_space = ["172.25.4.0/23"]
+vnet_address_space        = ["172.25.4.0/23"]
 
 vnet_subnets = {
   subn-activedirectory-1 = {

@@ -2,8 +2,8 @@
 # These defaults are intentionally empty to avoid invalid placeholder values
 # rejected by variables.tf. Override per-environment as needed.
 identity_vnet_dns_servers = []
-adds_dns_forwarders      = []
-vnet_address_space = ["172.26.4.0/23"]
+adds_dns_forwarders       = []
+vnet_address_space        = ["172.26.4.0/23"]
 
 vnet_subnets = {
   subn-activedirectory-1 = {
