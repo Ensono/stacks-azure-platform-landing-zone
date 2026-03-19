@@ -11,7 +11,7 @@ output "vnet_name" {
 }
 
 output "vnet_id" {
-  description = "The ID of the hub virtual network."
+  description = "The ID of the spoke virtual network."
   value       = module.spoke.vnet_resource_id
   sensitive   = false
 }
