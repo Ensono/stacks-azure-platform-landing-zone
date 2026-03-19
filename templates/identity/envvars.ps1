@@ -59,12 +59,12 @@ foreach ($template in $variable_templates) {
             # Handle TF_VAR_ prefixed variables
             if ($originalName.StartsWith("TF_VAR_")) {
                 # Set the TF_VAR_ version for Terraform
-                $tfVarName = $originalName.Replace("-", "_").ToUpper()
+                $tfVarName = "TF_VAR_" + $originalName.Substring(7).Replace("-", "_")
                 Set-Item -Path "env:$tfVarName" -Value $value
                 Write-Host "  $tfVarName = $value" -ForegroundColor Green
 
                 # Also set the non-prefixed version for general use
-                $shortName = $originalName.Replace("TF_VAR_", "").Replace("-", "_").ToUpper()
+                $shortName = $originalName.Substring(7).Replace("-", "_").ToUpper()
                 Set-Item -Path "env:$shortName" -Value $value
                 Write-Host "  $shortName = $value" -ForegroundColor Yellow
             } else {

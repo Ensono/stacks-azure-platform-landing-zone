@@ -94,10 +94,9 @@ resource "terraform_data" "vm_password_update" {
 }
 
 # Ensure DNS is ready before creating secrets
-# The dns_wait_id creates a data dependency on the time_sleep in the module
-locals {
-  # This creates an implicit dependency - secrets won't start until dns_wait completes
-  kv_resource_id_after_dns = module.key_vault.dns_wait_id != "" ? module.key_vault.resource_id : module.key_vault.resource_id
+# The input reference creates an explicit dependency on module.key_vault.dns_wait_id
+resource "terraform_data" "key_vault_dns_ready" {
+  input = module.key_vault.dns_wait_id
 }
 
 # Store password in Key Vault using value_wo (write-only - value never in state)
@@ -106,7 +105,7 @@ resource "azurerm_key_vault_secret" "vm_admin_password" {
   count = length(var.vms) > 0 ? 1 : 0
 
   name            = "vm-admin-password"
-  key_vault_id    = local.kv_resource_id_after_dns
+  key_vault_id    = module.key_vault.resource_id
   content_type    = "password"
   expiration_date = timeadd(timestamp(), "2160h") # 90 days - Azure Policy max validity
 
@@ -124,6 +123,7 @@ resource "azurerm_key_vault_secret" "vm_admin_password" {
 
   depends_on = [
     terraform_data.vm_password_update, # Ensure VM is updated BEFORE Key Vault
+    terraform_data.key_vault_dns_ready,
     module.key_vault
   ]
 }
@@ -133,7 +133,7 @@ resource "azurerm_key_vault_secret" "vm_admin_username" {
   count = length(var.vms) > 0 ? 1 : 0
 
   name            = "vm-admin-username"
-  key_vault_id    = local.kv_resource_id_after_dns
+  key_vault_id    = module.key_vault.resource_id
   value           = var.vm_admin_username
   content_type    = "username"
   expiration_date = timeadd(timestamp(), "2160h") # 90 days - Azure Policy max validity
@@ -142,5 +142,8 @@ resource "azurerm_key_vault_secret" "vm_admin_username" {
     ignore_changes = [tags, expiration_date]
   }
 
-  depends_on = [module.key_vault]
+  depends_on = [
+    terraform_data.key_vault_dns_ready,
+    module.key_vault
+  ]
 }

@@ -62,7 +62,7 @@ output "vm_details" {
     vm_key => {
       name           = module.domain_controller[vm_key].name
       resource_id    = module.domain_controller[vm_key].resource_id
-      location       = var.region
+      location       = var.resource_group_location
       sku_size       = var.vms[vm_key].sku_size
       zone           = local.region_supports_zones ? try(var.vms[vm_key].zone, null) : null
       admin_username = module.domain_controller[vm_key].admin_username

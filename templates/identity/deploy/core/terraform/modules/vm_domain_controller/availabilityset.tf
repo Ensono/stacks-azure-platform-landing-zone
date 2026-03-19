@@ -1,6 +1,6 @@
 resource "azurerm_availability_set" "domain_controller_aset" {
   # Dynamically create exactly one availability set only if the region has no zones
-  count = var.region.zones == 0 ? 1 : 0
+  count = length(var.region.zones) == 0 ? 1 : 0
 
   name                         = var.availability_set_name
   location                     = var.resource_group_location
