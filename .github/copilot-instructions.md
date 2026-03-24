@@ -24,11 +24,11 @@ When generating code for this repository:
 
 ## Project Overview
 
-This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are three primary templates:
+This repository provides starter modules for deploying Azure Landing Zones using **Azure Verified Modules (AVM)**. There are three primary modules:
 
-- **Management Landing Zone** (`templates/management/`) - Deploys management groups, policies, and management resources
-- **Connectivity Landing Zone Hub-Spoke** (`templates/connectivity-hub-spoke/`) - Deploys hub-and-spoke network topology
-- **Connectivity Landing Zone Virtual WAN** (`templates/connectivity-virtual-wan/`) - Deploys Virtual WAN network topology
+- **Management Landing Zone** (`src/management/`) - Deploys management groups, policies, and management resources
+- **Connectivity Landing Zone Hub-Spoke** (`src/connectivity-hub-spoke/`) - Deploys hub-and-spoke network topology
+- **Connectivity Landing Zone Virtual WAN** (`src/connectivity-virtual-wan/`) - Deploys Virtual WAN network topology
 
 These modules are imported into landing zone repositories created by the bootstrap module. CI/CD pipelines are managed by the bootstrap, not in this repo.
 
@@ -269,7 +269,7 @@ When modifying connectivity modules, ensure **hub_spoke** and **virtual_wan** re
 
 ### Task Runner (eirctl)
 
-Run from the template directory (e.g., `templates/management/` or `templates/connectivity-hub-spoke/`):
+Run from the module directory (e.g., `src/management/` or `src/connectivity-hub-spoke/`):
 
 ```bash
 eirctl lint              # YAML lint → terraform fmt → validate → tflint

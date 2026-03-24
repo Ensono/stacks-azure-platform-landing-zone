@@ -6,7 +6,7 @@ trigger:
       - main
   paths:
     include:
-      - templates/*
+      - src/*
 
 pr:
   branches:
