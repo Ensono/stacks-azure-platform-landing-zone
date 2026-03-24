@@ -1,0 +1,14 @@
+== Support and Resources
+
+=== Internal Resources
+
+- **Ensono Stacks Documentation** - Main stacks documentation
+- **eirctl Documentation** - Build tool reference
+- **Team Wiki** - Internal best practices
+
+=== External Resources
+
+- https://registry.terraform.io/modules/Azure/naming/azurerm[Azure Naming Module]
+- https://registry.terraform.io/modules/Azure/avm-utl-regions/azurerm[Azure Regions Utility]
+- https://terraform-docs.io/[terraform-docs]
+- https://asciidoctor.org/[Asciidoctor]

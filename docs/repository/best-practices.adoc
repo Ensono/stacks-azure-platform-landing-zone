@@ -1,0 +1,53 @@
+== Best Practices
+
+=== Code Style
+
+- Use `terraform fmt` before committing
+- Add descriptions to all variables and outputs
+- Comment complex local transformations
+- Keep lines under 120 characters
+
+=== Documentation
+
+- Update API docs by rebuilding (don't edit `tfdocs.adoc` manually)
+- Keep module docs focused on usage
+- Keep repository docs focused on development
+- Use examples liberally
+- Document breaking changes prominently
+
+=== Testing
+
+- Test with multiple projects in `var.project`
+- Test with different regions
+- Test with different workspace names
+- Verify name lengths for Azure resource limits
+- Test environment file generation
+
+=== Git Workflow
+
+[source,bash]
+----
+# Create feature branch
+git checkout -b feature/new-capability
+
+# Make changes and test
+# ...
+
+# Commit with conventional commits
+git commit -m "feat(naming): add support for new resource type"
+git commit -m "docs: update usage examples"
+git commit -m "fix(regions): correct geography filter"
+
+# Push and create PR
+git push origin feature/new-capability
+----
+
+=== Commit Message Convention
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring
+- `test:` - Test updates
+- `build:` - Build system changes
+- `chore:` - Maintenance tasks

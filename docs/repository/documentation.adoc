@@ -1,0 +1,76 @@
+== Documentation System
+
+=== Two Documentation Sets
+
+This repository maintains **two separate documentation sets**:
+
+==== 1. Repository Documentation
+
+- **Location:** `docs/repository/index.adoc` (and included files)
+- **Audience:** Developers working on this repository
+- **Purpose:** Build system, development workflow, contribution guidelines
+- **Distribution:** Not included in the module package
+
+==== 2. Module Documentation
+
+- **Location:** `docs/readme/<module_name>/index.adoc` (and included files)
+- **Audience:** Users consuming the Terraform module
+- **Purpose:** Module usage, API reference, examples
+- **Distribution:** Packaged as `README.md` in the zip file
+
+=== Documentation Workflow
+
+[source]
+----
+1. Edit AsciiDoc source files
+   ├── docs/repository/*.adoc (repository guide)
+   └── docs/readme/<module_name>/index.adoc (module guide)
+
+2. terraform-docs generates API docs
+   └── docs/readme/<module_name>/tfdocs.adoc
+
+3. AsciiDoc → DocBook → Markdown conversion
+   └── outputs/module/README.md
+
+4. Package with module
+   └── outputs/<module_name>-<version>.zip
+----
+
+=== Editing Documentation
+
+==== Module Documentation
+
+[source,bash]
+----
+# Edit the module documentation
+vim docs/readme/<module_name>/index.adoc
+
+# The index.adoc includes tfdocs.adoc which is auto-generated
+# Build to regenerate
+eirctl build
+----
+
+==== API Documentation
+
+API documentation is **auto-generated** from Terraform code using `terraform-docs`:
+
+- Configuration: `.terraform-docs.yml`
+- Output: `docs/readme/<module_name>/tfdocs.adoc`
+- Format: AsciiDoc tables
+- Includes: Requirements, Providers, Modules, Resources, Inputs, Outputs
+
+To update API docs:
+
+1. Modify Terraform files in `src/<module_name>/deploy/terraform/`
+2. Run `eirctl run terraform:docs:asciidoc`
+
+==== Repository Documentation
+
+[source,bash]
+----
+# Edit repository documentation
+vim docs/repository/*.adoc
+
+# These files are NOT included in the module package
+# They're for repository development only
+----

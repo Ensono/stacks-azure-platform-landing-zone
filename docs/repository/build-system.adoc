@@ -1,0 +1,121 @@
+== Build System
+
+=== Overview
+
+The repository uses **eirctl** (Ensono Infrastructure CLI) as its build orchestration tool. The build system:
+
+1. Generates Terraform module documentation
+2. Converts AsciiDoc documentation to Markdown
+3. Assembles the distributable module
+4. Creates a zip package of the module
+
+=== Build Pipeline
+
+The build pipeline is defined in `eirctl.yaml`:
+
+[source,yaml]
+----
+pipelines:
+  build:
+    - task: terraform:build:clean
+    - task: terraform:docs:asciidoc
+      depends_on: terraform:build:clean
+    - task: docs:docbook
+      depends_on: terraform:docs:asciidoc
+    - task: docs:markdown
+      depends_on: docs:docbook
+    - task: terraform:build:copy
+      depends_on: docs:markdown
+    - task: terraform:build:package
+      depends_on: terraform:build:copy
+----
+
+==== Pipeline Tasks
+
+The below tasks are defined in shared task configuration files:
+
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.14/shared/infra/terraform.yaml[Terraform Tasks]
+
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.14/shared/docs/eirctl.yaml[Documentation Tasks]
+
+[cols="1,3"]
+|===
+|Task |Description
+
+|`terraform:build:clean`
+|Removes the `outputs/` directory and recreates `outputs/module/`
+
+|`terraform:docs:asciidoc`
+|Runs `terraform-docs` to generate module documentation from Terraform source code into `docs/readme/<module_name>/tfdocs.adoc`
+
+|`docs:docbook`
+|Converts `docs/readme/<module_name>/index.adoc` to DocBook XML format at `outputs/tmp/README.xml`
+
+|`docs:markdown`
+|Converts DocBook README XML to GitHub-flavored Markdown at `outputs/module/README.md`
+
+|`terraform:build:copy`
+|Copies the terraform module into `outputs/module/` (excludes tests, .terraform, .terraform.lock.hcl)
+
+|`terraform:build:package`
+|Creates a zip package for the terraform module from `outputs/module/`
+|===
+
+=== Running the Build
+
+[source,bash]
+----
+# Run the complete build pipeline
+eirctl build
+
+# Run individual tasks
+eirctl run terraform:docs:asciidoc
+eirctl run docs:markdown
+----
+
+=== Build Contexts
+
+The build uses containerized contexts defined in a https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.14/shared/contexts/eirctl.yaml[shared contexts file]:
+
+[cols="1,2,3"]
+|===
+|Context |Container |Purpose
+
+|`asciidoc`
+|`ensono/eir-asciidoctor`
+|Documentation conversion (asciidoctor, pandoc)
+
+|`infra`
+|`ensono/eir-infrastructure`
+|Terraform tooling (terraform-docs)
+
+|`powershell`
+|`ensono/eir-foundation-powershell`
+|PowerShell tasks (clean, copy, package)
+|===
+
+=== Build Output
+
+After running `eirctl build`, the following are created in `outputs/`:
+
+[cols="1,3"]
+|===
+|Path |Contents
+
+|`outputs/module/`
+|Complete module with all `.tf` files and `README.md`
+
+|`outputs/module/README.md`
+|Module documentation converted to Markdown from AsciiDoc
+
+|`outputs/tmp/README.xml`
+|Intermediate DocBook XML (for conversion)
+
+|`outputs/<module_name>-<version>.zip`
+|Distributable package containing the complete module
+|===
+
+[IMPORTANT]
+====
+The `outputs/` directory is gitignored and should not be committed to version control.
+====

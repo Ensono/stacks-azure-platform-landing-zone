@@ -1,0 +1,21 @@
+== Contributing
+
+=== Pull Request Process
+
+1. **Fork or branch** - Create a feature branch
+2. **Make changes** - Follow code style and conventions
+3. **Update docs** - Both API and usage documentation
+4. **Build** - Run `eirctl build` successfully
+5. **Test** - Verify with test infrastructure
+6. **Commit** - Use conventional commit messages
+7. **PR** - Submit pull request with description
+
+=== Code Review Checklist
+
+- [ ] Terraform code is formatted (`terraform fmt`)
+- [ ] Variables have descriptions
+- [ ] Changes are documented
+- [ ] Build succeeds (`eirctl build`)
+- [ ] Breaking changes are noted
+- [ ] Examples are updated if needed
+- [ ] Tests pass (if applicable)

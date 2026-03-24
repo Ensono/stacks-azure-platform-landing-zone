@@ -1,0 +1,59 @@
+{
+  "title": "Stacks Azure Platform Landing Zone Modules - {{ BUILDNUMBER }}",
+  "output": "{{ basepath }}/outputs/docs/{{ format }}",
+  "trunkBranch": "main",
+  "path": "{{ basepath }}/docs/repository/index.adoc",
+  "formats": ["pdf", "docx"],
+  "libs": {
+    "asciidoc": [
+      "asciidoctor-diagram",
+      "asciidoctor-mathematical",
+      "/usr/local/ensono/lib/glob-include-processor.rb"
+    ]
+  },
+  "attributes": {
+    "asciidoctor": [
+      "base_doc_dir=/eirctl/docs/repository",
+      "imagesdir=''",
+      "mermaid-puppeteer-config=/etc/puppeteer.json"
+    ]
+  },
+  "pdf": {
+    "attributes": {
+      "asciidoctor": [
+        "pdf-theme={{ basepath }}/docs/repository/conf/styles/theme.yml",
+        "pdf-fontsdir=\"{{ basepath }}/docs/repository/conf/styles/fonts;GEM_FONTS_DIR\"",
+        "allow-uri-read",
+        "java=/usr/bin/java",
+        "graphvizdot=/usr/bin/dot",
+        "convert=/usr/bin/convert",
+        "identify=/usr/bin/identify",
+        "mathematical-format=svg",
+        "/eirctl/docs/repository/lib/generate-banner-image.rb",
+        "/eirctl/docs/repository/lib/source-code-label.rb",
+        "/eirctl/docs/repository/lib/custom-title-page.rb",
+        "/eirctl/docs/repository/lib/padded_counter.rb"
+      ]
+    }
+  },
+  "html": {
+    "attributes": {
+      "asciidoctor": [
+        "stylesheet={{ basepath }}/repository/conf/html/style.css",
+        "allow-uri-read",
+        "toc=left",
+        "java=/usr/bin/java",
+        "graphvizdot=/usr/bin/dot",
+        "stackscli_version={{ BUILDNUMBER }}"
+      ]
+    }
+  },
+  "docx": {
+    "attributes": {
+      "asciidoctor": ["icons=image", "iconsdir=images", "icon-set=fa"],
+      "pandoc": [
+        "--reference-doc={{ basepath }}/docs/repository/conf/word/reference.docx"
+      ]
+    }
+  }
+}

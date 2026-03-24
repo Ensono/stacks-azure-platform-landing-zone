@@ -1,0 +1,214 @@
+== Development Workflow
+
+=== Prerequisites
+
+- **eirctl** - Ensono Infrastructure CLI installed
+- **Docker** - For running containerized build tasks
+- **Git** - Version control
+
+=== Making Changes
+
+==== 1. Modify Terraform Code
+
+[source,bash]
+----
+# Edit source files
+vim src/<module_name>/deploy/terraform/naming.tf
+
+# Validate syntax
+terraform fmt src/<module_name>/deploy/terraform/
+terraform validate
+----
+
+==== 2. Update Documentation
+
+[source,bash]
+----
+# If you changed variables/outputs, API docs auto-update
+# If you need to update usage guide:
+vim docs/readme/<module_name>/index.adoc
+----
+
+==== 3. Build and Test
+
+[source,bash]
+----
+# Build the module
+eirctl build
+
+# Check the output
+ls -la outputs/module/
+cat outputs/module/README.md
+
+# Test by extracting and using the module
+unzip outputs/<module_name>-<version>.zip -d test/
+cd test/
+terraform init
+terraform plan
+----
+
+==== 4. Commit Changes
+
+[source,bash]
+----
+git add src/ docs/
+git commit -m "feat: description of changes"
+git push
+----
+
+=== Adding New Features
+
+==== Adding a New Variable
+
+Variables are split into multiple files for organisation (e.g., `variables.tf`, `variables_regions.tf`):
+
+[source,hcl]
+----
+# 1. Add to src/<module_name>/deploy/terraform/variables_*.tf
+variable "new_feature" {
+  type        = string
+  default     = "default_value"
+  description = <<DESCRIPTION
+Detailed description of what this variable does.
+DESCRIPTION
+}
+
+# 2. Use in src/<module_name>/deploy/terraform/locals_naming.tf or src/<module_name>/deploy/terraform/naming.tf
+# 3. Build to update API docs
+eirctl build
+
+# 4. Update usage examples in docs/readme/<module_name>/index.adoc if needed
+----
+
+==== Adding Extended Resource Types
+
+To add CAF naming prefixes for Azure resources not in the base naming module:
+
+[source,hcl]
+----
+# Edit src/<module_name>/deploy/terraform/locals_naming.tf - naming_extended
+caf_prefixes = {
+  # ... existing entries ...
+  new_prefix = "np"
+}
+
+naming_extended = {
+  for key, instance in local.naming_instances : key => merge(
+    module.naming[key],
+    {
+      # ... existing entries ...
+
+      new_resource_type = {
+        name = replace(module.naming[key].resource_group.name, "/^rg-/", "${local.caf_prefixes.new_prefix}-")
+      }
+    }
+  )
+}
+----
+
+==== Adding Output Values
+
+[source,hcl]
+----
+# Add to src/<module_name>/deploy/terraform/outputs.tf
+output "new_output" {
+  description = "Description of the output"
+  value       = local.some_computed_value
+}
+
+# Build to update API docs
+eirctl build
+----
+
+=== Testing Changes
+
+==== Local Testing
+
+[source,bash]
+----
+# Create a test directory
+mkdir -p test/consumer
+
+# Create a test configuration
+cat > test/consumer/main.tf <<EOF
+module "foundation" {
+  source = "../../outputs/module"
+
+  company_name = "TestCo"
+  location     = "uksouth"
+  project      = ["test"]
+  stage_name   = "foundation"
+  environment  = "dev"
+}
+
+output "test_names" {
+  value = module.foundation.names
+}
+EOF
+
+# Initialize and plan
+cd test/consumer
+terraform init
+terraform plan
+----
+
+==== Workspace Testing
+
+[source,bash]
+----
+# Test with different workspaces
+terraform workspace new dev
+terraform plan
+
+terraform workspace new prod
+terraform plan
+
+# Verify naming differences
+----
+
+=== Version Management
+
+==== Module Dependencies
+
+The modules use pinned versions for external dependencies:
+
+[source,hcl]
+----
+# src/<module_name>/deploy/terraform/naming.tf
+module "naming" {
+  source  = "Azure/naming/azurerm"
+  version = "0.4.3"
+}
+
+# src/<module_name>/deploy/terraform/regions.tf
+module "azure_regions" {
+  source  = "Azure/avm-utl-regions/azurerm"
+  version = "0.9.3"
+}
+----
+
+[IMPORTANT]
+====
+When updating module versions:
+
+1. Test thoroughly with multiple projects
+2. Check for breaking changes
+3. Update documentation
+4. Consider the impact on consuming infrastructure
+====
+
+==== Release Process
+
+[source,bash]
+----
+# 1. Update version references if needed
+# 2. Build the module
+eirctl build
+
+# 3. Tag the release
+git tag -a v1.2.3 -m "Release version 1.2.3"
+git push origin v1.2.3
+
+# 4. Distribute the zip file
+cp outputs/<module_name>-<version>.zip releases/v1.2.3/
+----
