@@ -23,6 +23,7 @@
       "asciidoctor": [
         "pdf-theme={{ basepath }}/docs/repository/conf/styles/theme.yml",
         "pdf-fontsdir=\"{{ basepath }}/docs/repository/conf/styles/fonts;GEM_FONTS_DIR\"",
+        "icons!",
         "allow-uri-read",
         "java=/usr/bin/java",
         "graphvizdot=/usr/bin/dot",
