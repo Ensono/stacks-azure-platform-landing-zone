@@ -1,0 +1,71 @@
+parameters:
+  - name: module_name
+    type: string
+  - name: display_name
+    type: string
+  - name: eirctl_version
+    type: string
+  - name: module_changed
+    type: string
+
+jobs:
+  - job: validate_${{ replace(parameters.module_name, '-', '_') }}
+    displayName: "Validate ${{ parameters.display_name }} Module"
+    condition: eq(variables['${{ parameters.module_changed }}'], 'true')
+    variables:
+      TF_FILE_LOCATION: "src/${{ parameters.module_name }}/deploy/terraform"
+    steps:
+      - template: setup.yml
+        parameters:
+          eirctl_version: ${{ parameters.eirctl_version }}
+
+      - task: Bash@3
+        displayName: Run Terraform Linting Checks
+        inputs:
+          targetType: inline
+          script: eirctl lint
+
+      - task: PublishTestResults@2
+        displayName: Publish TFLint Results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: '**/test-results/tflint-results.xml'
+          searchFolder: $(Build.SourcesDirectory)
+          testRunTitle: 'TFLint - ${{ parameters.display_name }}'
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+
+      - task: Bash@3
+        displayName: Run Checkov Scan
+        inputs:
+          targetType: inline
+          script: eirctl scan
+
+      - task: PublishTestResults@2
+        displayName: Publish Checkov Scan Results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: '**/test-results/checkov-results.xml'
+          searchFolder: $(Build.SourcesDirectory)
+          testRunTitle: 'Checkov Scan - ${{ parameters.display_name }}'
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+
+      - task: Bash@3
+        displayName: Run Terraform Unit Tests
+        inputs:
+          targetType: inline
+          script: eirctl tests
+
+      - task: PublishTestResults@2
+        displayName: Publish Terraform Test Results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: '**/test-results/terraform-test-results.xml'
+          searchFolder: $(Build.SourcesDirectory)
+          testRunTitle: 'Terraform Tests - ${{ parameters.display_name }}'
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
