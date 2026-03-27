@@ -7,22 +7,21 @@
 [source,bash]
 ----
 # Check Terraform syntax
-terraform fmt -check src/
-terraform validate
+eirctl lint:terraform:format
 
 # Run terraform-docs directly
-eirctl run terraform:docs
+eirctl run terraform:docs:asciidoc
 ----
 
-==== Asciidoctor conversion fails
+==== AsciiDoc conversion fails
 
 [source,bash]
 ----
 # Validate AsciiDoc syntax
-asciidoctor -v docs/readme/index.adoc
+asciidoctor -v docs/readme/<module>/index.adoc
 
 # Check for missing includes
-grep "^include::" docs/readme/index.adoc
+grep "^include::" docs/readme/<module>/index.adoc
 ----
 
 ==== Docker context issues
@@ -47,24 +46,9 @@ docker pull ensono/eir-foundation-powershell
 
 [source,bash]
 ----
-# Ensure you edited docs/readme/index.adoc, not outputs/module/README.md
+# Ensure you edited docs/readme/<module>/index.adoc, not outputs/module/README.md
 # The README.md is generated, not edited directly
 
 # Rebuild
-eirctl run build:clean
 eirctl build
-----
-
-==== Module not updating in consumer projects
-
-[source,bash]
-----
-# In the consumer project:
-rm -rf .terraform/
-terraform init -upgrade
-
-# Or specify exact module path
-module "foundation" {
-  source = "../stacks-foundation-azure/outputs/module"
-}
 ----

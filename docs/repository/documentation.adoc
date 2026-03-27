@@ -13,7 +13,7 @@ This repository maintains **two separate documentation sets**:
 
 ==== 2. Module Documentation
 
-- **Location:** `docs/readme/<module_name>/index.adoc` (and included files)
+- **Location:** `docs/readme/<module>/index.adoc` (and included files)
 - **Audience:** Users consuming the Terraform module
 - **Purpose:** Module usage, API reference, examples
 - **Distribution:** Packaged as `README.md` in the zip file
@@ -24,16 +24,16 @@ This repository maintains **two separate documentation sets**:
 ----
 1. Edit AsciiDoc source files
    ├── docs/repository/*.adoc (repository guide)
-   └── docs/readme/<module_name>/index.adoc (module guide)
+   └── docs/readme/<module>/index.adoc (module guide)
 
 2. terraform-docs generates API docs
-   └── docs/readme/<module_name>/tfdocs.adoc
+   └── docs/readme/<module>/tfdocs.adoc
 
 3. AsciiDoc → DocBook → Markdown conversion
    └── outputs/module/README.md
 
 4. Package with module
-   └── outputs/<module_name>-<version>.zip
+   └── outputs/<module>-<version>.zip
 ----
 
 === Editing Documentation
@@ -43,7 +43,7 @@ This repository maintains **two separate documentation sets**:
 [source,bash]
 ----
 # Edit the module documentation
-vim docs/readme/<module_name>/index.adoc
+vim docs/readme/<module>/index.adoc
 
 # The index.adoc includes tfdocs.adoc which is auto-generated
 # Build to regenerate
@@ -55,13 +55,13 @@ eirctl build
 API documentation is **auto-generated** from Terraform code using `terraform-docs`:
 
 - Configuration: `.terraform-docs.yml`
-- Output: `docs/readme/<module_name>/tfdocs.adoc`
+- Output: `docs/readme/<module>/tfdocs.adoc`
 - Format: AsciiDoc tables
 - Includes: Requirements, Providers, Modules, Resources, Inputs, Outputs
 
 To update API docs:
 
-1. Modify Terraform files in `src/<module_name>/deploy/terraform/`
+1. Modify Terraform files in `src/<module>/deploy/terraform/`
 2. Run `eirctl run terraform:docs:asciidoc`
 
 ==== Repository Documentation

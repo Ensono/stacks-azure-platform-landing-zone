@@ -6,46 +6,13 @@ File: `.terraform-docs.yml`
 
 [source,yaml]
 ----
-formatter: "asciidoc"
-
-output:
-  file: "../docs/readme/tfdocs.adoc"
-  mode: inject
-
-settings:
-  anchor: true
-  color: true
-  default: true
-  required: true
-  sensitive: true
-  type: true
+include::../../.terraform-docs.yml[]
 ----
 
-=== eirctl Task Configuration
+=== eirctl Task Configurations
 
-File: `build/eirctl/tasks.yaml`
+Tasks are defined in shared task configuration files:
 
-Key tasks:
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.17/shared/infra/terraform.yaml[Terraform Tasks]
 
-[source,yaml]
-----
-terraform:docs:
-  context: infra
-  command:
-    - terraform-docs -c .terraform-docs.yml src/
-
-docs:docbook:
-  context: asciidoc
-  command:
-    - asciidoctor -b docbook -o outputs/tmp/README.xml docs/readme/index.adoc
-
-docs:markdown:
-  context: asciidoc
-  command:
-    - pandoc -f docbook -t gfm -o outputs/module/README.md outputs/tmp/README.xml
-
-build:copy:
-  context: powershell
-  command:
-    - Copy-Item -Path src/* -Destination outputs/module/ -Recurse -Force -Exclude tests,.terraform,.terraform.lock.hcl
-----
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.17/shared/docs/eirctl.yaml[Documentation Tasks]

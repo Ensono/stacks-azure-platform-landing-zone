@@ -12,7 +12,7 @@
 
 === Code Review Checklist
 
-- [ ] Terraform code is formatted (`terraform fmt`)
+- [ ] Terraform code is formatted (`eirctl lint`)
 - [ ] Variables have descriptions
 - [ ] Changes are documented
 - [ ] Build succeeds (`eirctl build`)

@@ -2,7 +2,7 @@
 
 === Code Style
 
-- Use `terraform fmt` before committing
+- Use `eirctl lint` before committing
 - Add descriptions to all variables and outputs
 - Comment complex local transformations
 - Keep lines under 120 characters

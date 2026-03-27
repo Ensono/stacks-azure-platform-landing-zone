@@ -7,7 +7,7 @@
 
 == Overview
 
-This repository contains the **Stacks Azure Platform Landing Zone Modules** - foundational modules that provide an opinionated approach for deploying and managing the core platform capabilities of an https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/#azure-landing-zone-architecture[Azure landing zone architecture] using Terraform.
+This repository contains the **Stacks Azure Platform Landing Zone Modules** - foundational modules that provide an opinionated approach for deploying and managing the core platform capabilities of an https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/#azure-landing-zone-architecture[Azure landing zone architecture] using Azure Verified Modules for Terraform.
 
 This guide covers how to work with **this repository**, including the build system, development workflow, and contribution guidelines.
 

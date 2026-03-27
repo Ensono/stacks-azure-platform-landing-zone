@@ -8,7 +8,6 @@
 
 === External Resources
 
-- https://registry.terraform.io/modules/Azure/naming/azurerm[Azure Naming Module]
-- https://registry.terraform.io/modules/Azure/avm-utl-regions/azurerm[Azure Regions Utility]
+- https://azure.github.io/Azure-Landing-Zones/terraform/#what-is-the-new-approach[Azure Landing Zones Modules]
 - https://terraform-docs.io/[terraform-docs]
 - https://asciidoctor.org/[Asciidoctor]

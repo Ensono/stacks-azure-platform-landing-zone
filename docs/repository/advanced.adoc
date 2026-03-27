@@ -2,47 +2,23 @@
 
 === Custom Build Tasks
 
-Add custom tasks to `build/eirctl/tasks.yaml`:
+Add custom tasks to a module's `eirctl.yaml` file (e.g., `src/management/eirctl.yaml`):
 
 [source,yaml]
 ----
-tasks:
-  custom:validate:
-    description: Validate Terraform and documentation
-    context: infra
-    command: |
-      terraform fmt -check src/
-      terraform validate
+include::../../src/management/eirctl.yaml[tag=tasks]
 ----
 
 === Extending the Module
 
-The module is designed to be extended. Common extension points:
+The modules are designed to be extended. Common extension points:
 
-1. **Extended naming** - Add more resource types in `locals.tf`
+1. **Extended naming** - Add more resource types in `locals_naming.tf`
 2. **Additional outputs** - Expose more computed values
-3. **Template files** - Add new template formats
-4. **Region filters** - Enhance region selection logic
 
-=== Integration with CI/CD
+=== Integration with CI/CD (Azure DevOps)
 
 [source,yaml]
 ----
-# Example GitHub Actions workflow
-name: Build Module
-on: [push]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build module
-        run: |
-          eirctl build
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: module-package
-          path: outputs/stacks-foundation-azure.zip
+include::../../build/azdo/pipeline.yml[]
 ----
