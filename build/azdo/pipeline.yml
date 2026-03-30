@@ -2,26 +2,10 @@
 name: $(version_semver)
 
 parameters:
-  - name: pre_release
-    displayName: Create a Pre-Release from a Feature Branch
-    type: boolean
-    default: false
-
   - name: generate_documentation
     displayName: Generate Documentation
     type: boolean
     default: true
-
-  - name: modules
-    displayName: Modules to Publish
-    type: object
-    default:
-      - name: management
-        display_name: Management
-      - name: connectivity-hub-spoke
-        display_name: Connectivity (Hub & Spoke)
-      - name: connectivity-virtual-wan
-        display_name: Connectivity (Virtual WAN)
 
 trigger:
   branches:
@@ -73,89 +57,10 @@ stages:
               script: |
                 eirctl lint:terraform:format
 
-      - job: Detect_Changes
-        displayName: Detect Changed Modules
-        steps:
-          - checkout: self
-            fetchDepth: 0
-
-          - task: Bash@3
-            name: diff_base
-            displayName: Determine Diff Base
-            inputs:
-              targetType: inline
-              script: |
-                if [[ "$(Build.Reason)" == "PullRequest" ]]; then
-                  BASE_SHA="origin/$(System.PullRequest.TargetBranch)"
-                else
-                  # Query the last successful CI build to diff against, ensuring no commits are missed
-                  # between pipeline runs (e.g. when multiple PRs merge before the pipeline processes them)
-                  LAST_SUCCESS_SHA=$(curl -s -H "Authorization: Bearer $(System.AccessToken)" \
-                    "$(System.CollectionUri)$(System.TeamProject)/_apis/build/builds?definitions=$(System.DefinitionId)&resultFilter=succeeded&statusFilter=completed&branchName=refs/heads/main&\$top=1&api-version=7.1" \
-                    | jq -r '.value[0].sourceVersion // empty')
-
-                  if [[ -n "$LAST_SUCCESS_SHA" ]] && git cat-file -e "$LAST_SUCCESS_SHA" 2>/dev/null; then
-                    echo "Using last successful build commit: $LAST_SUCCESS_SHA"
-                    BASE_SHA="$LAST_SUCCESS_SHA"
-                  else
-                    echo "Could not determine last successful build commit, falling back to HEAD~1"
-                    BASE_SHA="HEAD~1"
-                  fi
-                fi
-
-                echo "Diff base: $BASE_SHA"
-                echo "##vso[task.setvariable variable=BASE_SHA;isOutput=true]$BASE_SHA"
-
-                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null || echo "")
-
-                if [[ -z "$CHANGED_FILES" ]]; then
-                  echo "No changed files detected"
-                else
-                  echo "Changed files:"
-                  echo "$CHANGED_FILES"
-                fi
-
-          - ${{ each module in parameters.modules }}:
-              - task: Bash@3
-                name: check_${{ replace(module.name, '-', '_') }}
-                displayName: "Check changes for ${{ module.display_name }}"
-                inputs:
-                  targetType: inline
-                  script: |
-                    BASE_SHA="$(diff_base.BASE_SHA)"
-                    CHANGED_FILES=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null || echo "")
-
-                    if [[ -z "$CHANGED_FILES" ]]; then
-                      echo "No changed files detected, marking module as changed"
-                      echo "##vso[task.setvariable variable=changed;isOutput=true]true"
-                    elif echo "$CHANGED_FILES" | grep -q "^src/${{ module.name }}/"; then
-                      echo "Module ${{ module.name }} has changes"
-                      echo "##vso[task.setvariable variable=changed;isOutput=true]true"
-                    else
-                      echo "Module ${{ module.name }} has no changes"
-                      echo "##vso[task.setvariable variable=changed;isOutput=true]false"
-                    fi
-
-  - stage: Validate
-    displayName: Validate Modules
-    dependsOn:
-      - Preliminaries
-    variables:
-      ${{ each module in parameters.modules }}:
-        ${{ replace(module.name, '-', '_') }}_changed: $[ stageDependencies.Preliminaries.Detect_Changes.outputs['check_${{ replace(module.name, '-', '_') }}.changed'] ]
-    jobs:
-      - ${{ each module in parameters.modules }}:
-          - template: templates/module_validation.yml
-            parameters:
-              module_name: ${{ module.name }}
-              display_name: ${{ module.display_name }}
-              eirctl_version: $(eirctl_version)
-              module_changed: ${{ replace(module.name, '-', '_') }}_changed
-
   - ${{ if eq(parameters.generate_documentation, true) }}:
       - stage: Documentation
         dependsOn:
-          - Validate
+          - Preliminaries
         jobs:
           - job: Generate_Documentation
             displayName: Generate Documentation
