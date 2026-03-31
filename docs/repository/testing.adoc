@@ -1,0 +1,35 @@
+== Unit Testing
+
+The repository includes comprehensive unit tests for each module using Terraform's native https://developer.hashicorp.com/terraform/language/tests[test] framework (available in Terraform 1.6.0+).
+
+=== Running Tests
+
+[NOTE]
+====
+The below examples will use the `management` module, but the same principles apply to any module in `src/`.
+====
+
+[source,bash]
+----
+# Run all tests
+cd src/management
+eirctl tests
+
+# Run specific test file
+export TF_TEST_FILTER=tests/subscription_placement.tftest.hcl
+eirctl tests
+----
+
+=== Test Structure
+
+Tests for each module are located in `src/<module>/deploy/terraform/tests/`. Each test file has a `.tftest.hcl` extension and contains one or more test cases defined using the `test` block syntax.
+
+=== Test Implementation Details
+
+All tests use `command = plan` to allow test authors to validate logical operations and custom conditions within the modules in a process analogous to unit testing.
+
+https://developer.hashicorp.com/terraform/language/tests/mocking[Mock providers] are used to allow you to test parts of the modules without creating infrastructure or requiring credentials.
+
+=== Test Coverage Matrix
+
+Terraform's native test framework does not currently provide built-in code coverage reports.

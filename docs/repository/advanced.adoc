@@ -1,0 +1,24 @@
+== Advanced Topics
+
+=== Custom Build Tasks
+
+Add custom tasks to a module's `eirctl.yaml` file (e.g., `src/management/eirctl.yaml`):
+
+[source,yaml]
+----
+include::../../src/management/eirctl.yaml[tag=tasks]
+----
+
+=== Extending the Module
+
+The modules are designed to be extended. Common extension points:
+
+1. **Extended naming** - Add more resource types in `locals_naming.tf`
+2. **Additional outputs** - Expose more computed values
+
+=== Integration with CI/CD (Azure DevOps)
+
+[source,yaml]
+----
+include::../../build/azdo/pipeline.yml[]
+----

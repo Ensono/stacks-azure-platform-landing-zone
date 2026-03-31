@@ -1,0 +1,13 @@
+== Support and Resources
+
+=== Internal Resources
+
+- **Ensono Stacks Documentation** - Main stacks documentation
+- **eirctl Documentation** - Build tool reference
+- **Team Wiki** - Internal best practices
+
+=== External Resources
+
+- https://azure.github.io/Azure-Landing-Zones/terraform/#what-is-the-new-approach[Azure Landing Zones Modules]
+- https://terraform-docs.io/[terraform-docs]
+- https://asciidoctor.org/[Asciidoctor]

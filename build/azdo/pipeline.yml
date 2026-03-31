@@ -1,4 +1,11 @@
+# Set the name which will define the build number
 name: $(version_semver)
+
+parameters:
+  - name: generate_documentation
+    displayName: Generate Documentation
+    type: boolean
+    default: true
 
 trigger:
   branches:
@@ -6,7 +13,7 @@ trigger:
       - main
   paths:
     include:
-      - templates/*
+      - src/*
 
 pr:
   branches:
@@ -49,3 +56,31 @@ stages:
               targetType: inline
               script: |
                 eirctl lint:terraform:format
+
+  - ${{ if eq(parameters.generate_documentation, true) }}:
+      - stage: Documentation
+        dependsOn:
+          - Preliminaries
+        jobs:
+          - job: Generate_Documentation
+            displayName: Generate Documentation
+            steps:
+              - template: templates/setup.yml
+                parameters:
+                  eirctl_version: $(eirctl_version)
+
+              - task: Bash@3
+                displayName: Generate Repository Documentation
+                inputs:
+                  targetType: inline
+                  script: |
+                    eirctl docs
+                env:
+                  BUILDNUMBER: $(Build.BuildNumber)
+
+              # Upload the documentation as a pipeline artifact
+              - task: PublishPipelineArtifact@1
+                displayName: Publish Repository Documentation
+                inputs:
+                  targetPath: $(Build.SourcesDirectory)/outputs/docs
+                  artifact: docs

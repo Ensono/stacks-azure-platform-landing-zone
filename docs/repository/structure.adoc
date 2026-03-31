@@ -1,0 +1,76 @@
+== Repository Structure
+
+[source]
+----
+stacks-azure-platform-landing-zone/
+├── .github/                            # GitHub configuration
+│   ├── ISSUE_TEMPLATE/                 # Issue templates
+│   ├── instructions/                   # Copilot instruction files
+│   │   ├── terraform-azure.instructions.md
+│   │   └── terraform.instructions.md
+│   ├── copilot-instructions.md         # GitHub Copilot context
+│   ├── dependabot.yml                  # Dependency scanning
+│   └── pull_request_template.md        # PR template
+├── build/                              # Build system configuration
+│   └── azdo/                           # Azure DevOps pipeline
+│       ├── templates/                  # Pipeline templates
+│       │   └── setup.yml               # Setup steps
+│       ├── pipeline.yml                # Pipeline definition
+│       └── variables.yml               # Pipeline variables
+├── docs/                               # Documentation
+│   └── repository/                     # Repository documentation (modular)
+│       ├── index.adoc                  # Main repository guide
+│       └── *.adoc                      # Individual section files
+├── src/                                # Landing zone modules
+│   ├── connectivity-hub-spoke/         # Connectivity hub-and-spoke landing zone module
+│   │   ├── deploy/terraform/           # Terraform configuration
+│   │   │   ├── examples/               # Example tfvars
+│   │   │   ├── tests/                  # Unit tests (.tftest.hcl)
+│   │   │   ├── hub_and_spoke_vnet.tf   # Hub networking (AVM)
+│   │   │   ├── main.tf                 # Resource groups module
+│   │   │   ├── *_alerts.tf             # Metric alerts by resource
+│   │   │   ├── *_diagnostics.tf        # Diagnostic settings by resource
+│   │   │   ├── flow_logs_storage.tf    # Flow log storage account
+│   │   │   ├── locals_*.tf             # Local values
+│   │   │   ├── naming.tf               # Azure naming module
+│   │   │   ├── outputs.tf              # Module outputs
+│   │   │   ├── providers.tf            # Provider configuration
+│   │   │   ├── variables*.tf           # Input variables
+│   │   │   └── versions.tf             # Terraform and provider versions
+│   │   ├── _header.md                  # terraform-docs header
+│   │   ├── eirctl.yaml                 # Module-level task runner config
+│   │   └── README.md                   # Module documentation
+│   ├── connectivity-virtual-wan/       # Connectivity virtual WAN landing zone module
+│   │   ├── deploy/terraform/           # Terraform configuration (mirrors hub-spoke)
+│   │   ├── _header.md
+│   │   ├── eirctl.yaml
+│   │   └── README.md
+│   └── management/                     # Management landing zone module
+│       ├── deploy/terraform/           # Terraform configuration
+│       │   ├── examples/               # Example tfvars
+│       │   ├── lib/                    # ALZ library (archetypes, policies)
+│       │   ├── tests/                  # Unit tests (.tftest.hcl)
+│       │   ├── main.tf                 # Resource groups module
+│       │   ├── management_groups.tf    # Management group hierarchy
+│       │   ├── management_resources.tf # Log Analytics, DCRs, identities
+│       │   ├── monitoring_alerts.tf    # Monitoring metric alerts
+│       │   ├── locals_*.tf             # Local values
+│       │   ├── naming.tf               # Azure naming module
+│       │   ├── outputs.tf              # Module outputs
+│       │   ├── providers.tf            # Provider configuration
+│       │   ├── variables*.tf           # Input variables
+│       │   └── versions.tf             # Terraform and provider versions
+│       ├── _header.md                  # terraform-docs header
+│       ├── eirctl.yaml                 # Module-level task runner config
+│       └── README.md                   # Module documentation
+├── .checkov.yaml                       # Checkov configuration file
+├── .gitignore
+├── .pre-commit-config.yaml             # Pre-commit hooks
+├── .terraform-docs.yml                 # terraform-docs configuration
+├── .terraform-version                  # Required Terraform version
+├── .tflint.hcl                         # TFLint configuration file
+├── eirctl.yaml                         # Root task runner config
+├── LICENSE
+├── README.md                           # Repository README
+└── yamllint.conf                       # YAML lint configuration
+----

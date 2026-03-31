@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
 import:
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/contexts/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/ado/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/security/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/docs/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/infra/terraform.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/github/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/contexts/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/ado/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/security/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/docs/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/github/eirctl.yaml
 
 watchers:
   lint:
@@ -19,6 +19,7 @@ watchers:
     task: lint:terraform:format
 
 pipelines:
+  # tag::build[]
   build:
     - task: terraform:build:clean
     - task: terraform:docs:asciidoc
@@ -27,10 +28,13 @@ pipelines:
       depends_on: terraform:docs:asciidoc
     - task: docs:markdown
       depends_on: docs:docbook
-    - task: terraform:build:copy
+    - task: terraform:docs:asciidoc:readme
       depends_on: docs:markdown
+    - task: terraform:build:copy
+      depends_on: terraform:docs:asciidoc:readme
     - task: terraform:build:package
       depends_on: terraform:build:copy
+  # end::build[]
 
   docs:
     - task: docs:generate
