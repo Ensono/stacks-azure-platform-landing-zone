@@ -39,7 +39,7 @@
   "html": {
     "attributes": {
       "asciidoctor": [
-        "stylesheet={{ basepath }}/repository/conf/html/style.css",
+        "stylesheet={{ basepath }}/docs/repository/conf/html/style.css",
         "allow-uri-read",
         "toc=left",
         "java=/usr/bin/java",
