@@ -1,0 +1,18 @@
+== Build Configuration
+
+=== terraform-docs Configuration
+
+File: `.terraform-docs.yml`
+
+[source,yaml]
+----
+include::../../.terraform-docs.yml[]
+----
+
+=== eirctl Task Configurations
+
+Tasks are defined in shared task configuration files:
+
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.17/shared/infra/terraform.yaml[Terraform Tasks]
+
+https://github.com/Ensono/stacks-eirctl-configurations/blob/v0.1.17/shared/docs/eirctl.yaml[Documentation Tasks]

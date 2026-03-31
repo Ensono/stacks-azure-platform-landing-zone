@@ -1,0 +1,282 @@
+== Development Workflow
+
+=== Prerequisites
+
+==== Tooling
+
+- **eirctl** - Ensono Infrastructure CLI https://github.com/Ensono/eirctl[installed].
+- **eirctl.env** file - Environment variables for eirctl in the root of the module directory.
+- **Docker** - For running containerized build tasks
+- **Git** - Version control
+
+[IMPORTANT]
+====
+The `eirctl.env` file is gitignored and should not be committed to version control.
+====
+
+==== Azure Subscriptions and Permissions
+
+[NOTE]
+====
+This is only required if you have a sandbox Azure subscription and want to test the modules by deploying them. It is not required for development or contributing.
+====
+
+===== 1. Management Group (Optional)
+
+You will need to choose the parent management group for your Platform landing zone structure to sit under. This could be the `Tenant Root Group`, or a new management group you create under there if preferred.
+
+[NOTE]
+====
+The `management` module creates a child management group called `Azure Landing Zones` under the `Tenant Root Group` by default.
+====
+
+===== 2. Azure Subscriptions
+
+You will need at least one Azure subscription to deploy the modules for testing. You can use an existing subscription or create a new one.
+
+Take note of the subscription id of each subscription as you will need them later.
+
+===== 3. Azure Authentication and Permissions
+
+You will need a Service Principal with the following permissions:
+
+- `Owner` on your chosen parent management group. `Owner` is required because this account grants permissions to the identities that run the management group deployment. Those identities are granted only the permissions they need.
+
+- `Owner` on each of your subscriptions.
+
+=== Making Changes
+
+[NOTE]
+====
+The below examples will use the `management` module, but the same principles apply to any module in `src/`.
+====
+
+==== 1. Create Module Environment Variables File
+
+This should be called `eirctl.env` and placed in the root of the module directory (e.g., `src/management/eirctl.env`):
+
+[source,bash]
+----
+# When set to true, will install the specified Terraform version in '.terraform-version' if not installed
+TENV_AUTO_INSTALL=true
+TF_FILE_LOCATION=deploy/terraform
+----
+
+==== 2. Modify Terraform Code
+
+Edit the relevant files in `src/management/deploy/terraform/`, update the tests, then run the below in the root of the module directory (e.g., `src/management/`):
+
+[source,bash]
+----
+# Lint and Validate
+eirctl lint
+
+# Run Checkov Scan
+eirctl scan
+
+# Run Unit Tests
+eirctl tests
+----
+
+==== 3. Update Documentation
+
+[source,bash]
+----
+# If you changed variables/outputs, API docs auto-update
+# If you need to update usage guide:
+vim docs/readme/<module>/index.adoc
+----
+
+==== 4. Create Repository Environment Variables File
+
+Run `cd ../../` to go to the root of the repository, then create an `eirctl.env` file with the following content:
+
+[source,bash]
+----
+# When set to true, will install the specified Terraform version in '.terraform-version' if not installed
+TENV_AUTO_INSTALL=true
+BUILDNUMBER=0.0.1
+BUILD_BUILDNUMBER=0.0.1
+
+TF_FILE_LOCATION=src/management/deploy/terraform
+TF_MODULE_NAME=management
+ADOC_INDEX_FILE=docs/readme/${TF_MODULE_NAME}/index.adoc
+----
+
+==== 5. Build and Test
+
+[source,bash]
+----
+# Build the module
+eirctl build
+
+# Check the output
+unzip outputs/management-0.0.1.zip
+
+# Test by extracting and using the module
+unzip outputs/management-0.0.1.zip -d test/
+cd test/
+
+# Create an eirctl.env file in the root of the extracted module directory
+
+# Run terraform plan to verify the module works as expected
+eirctl infrastructure:plan
+----
+
+Use the below example `eirctl.env` file for testing if you have your own Azure subscription:
+
+[source,bash]
+----
+# When set to true, will install the specified Terraform version in '.terraform-version' if not installed
+TENV_AUTO_INSTALL=true
+TF_FILE_LOCATION=deploy/terraform
+TF_BACKEND_INIT=storage_account_name=<storage_account_name>,container_name=tfstate,key=management.tfstate
+ENVIRONMENT_NAME=sandbox
+
+# Terraform inputs
+# These will also be mapped to environment variables in uppercase with 'TF_VAR_' removed. For example: 'COMPANY_NAME'
+TF_VAR_company_name=ensono
+TF_VAR_location=uksouth
+
+TF_VAR_management_subscription_id=00000000-0000-0000-0000-000000000000
+TF_VAR_skip_subscription_placement=true
+
+# Azure
+ARM_TENANT_ID=00000000-0000-0000-0000-000000000000
+ARM_SUBSCRIPTION_ID=00000000-0000-0000-0000-000000000000
+
+# Service Principal Authentication
+ARM_CLIENT_ID=00000000-0000-0000-0000-000000000000
+ARM_CLIENT_SECRET=<client_secret>
+----
+
+==== 5. Commit Changes
+
+[source,bash]
+----
+git add src/ docs/
+git commit -m "feat: description of changes"
+git push
+----
+
+=== Adding New Features
+
+[NOTE]
+====
+The below examples will use the `management` module, but the same principles apply to any module in `src/`.
+====
+
+==== Adding a New Variable
+
+Variables are split into multiple files for organisation (e.g., `variables.tf`, `variables_regions.tf`):
+
+[source,hcl]
+----
+# 1. Add to src/management/deploy/terraform/variables_*.tf
+variable "new_feature" {
+  type        = string
+  default     = "default_value"
+  description = <<DESCRIPTION
+Detailed description of what this variable does.
+DESCRIPTION
+}
+
+# 2. Use in src/management/deploy/terraform/*.tf
+# 3. Build to update API docs
+eirctl build
+
+# 4. Update usage examples in docs/readme/management/index.adoc if needed
+----
+
+==== Adding Extended Resource Types
+
+To add CAF naming prefixes for Azure resources not covered in the base naming module:
+
+[source,hcl]
+----
+# Edit src/management/deploy/terraform/locals_naming.tf - naming_extended
+caf_prefixes = {
+  # ... existing entries ...
+  new_prefix = "np"
+}
+
+naming_extended = {
+  for key, instance in local.naming_instances : key => merge(
+    module.naming[key],
+    {
+      # ... existing entries ...
+
+      new_resource_type = {
+        name = replace(module.naming[key].resource_group.name, "/^rg-/", "${local.caf_prefixes.new_prefix}-")
+      }
+    }
+  )
+}
+----
+
+==== Adding Output Values
+
+[source,hcl]
+----
+# Add to src/management/deploy/terraform/outputs.tf
+output "new_output" {
+  description = "Description of the output"
+  value       = local.some_computed_value
+}
+
+# Build to update API docs
+eirctl build
+----
+
+=== Testing Changes
+
+==== Local and Workspace Testing
+
+Follow the same steps as in the "Build and Test" section of the development workflow.
+
+=== Version Management
+
+==== Module Dependencies
+
+The modules use pinned versions for external dependencies:
+
+[source,hcl]
+----
+# src/management/deploy/terraform/naming.tf
+module "naming" {
+  source  = "Azure/naming/azurerm"
+  version = "0.4.3"
+}
+
+# src/management/deploy/terraform/regions.tf
+module "azure_regions" {
+  source  = "Azure/avm-utl-regions/azurerm"
+  version = "0.9.3"
+}
+----
+
+[IMPORTANT]
+====
+When updating module versions:
+
+1. Test thoroughly with multiple projects
+2. Check for breaking changes
+3. Update documentation
+4. Consider the impact on consuming infrastructure
+====
+
+==== Release Process
+
+[source,bash]
+----
+# 1. Update version references if needed
+# 2. Build the module
+eirctl build
+
+# 3. Tag the release
+git tag -a v0.0.1 -m "Release version 0.0.1"
+git push origin v0.0.1
+
+# 4. Distribute the zip file
+cp outputs/management-0.0.1.zip releases/v0.0.1/
+----

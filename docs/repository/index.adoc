@@ -1,0 +1,45 @@
+= Stacks Azure Platform Landing Zone Repository Guide
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:last-update-label!:
+
+== Overview
+
+This repository contains the **Stacks Azure Platform Landing Zone Modules** - foundational modules that provide an opinionated approach for deploying and managing the core platform capabilities of an https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/#azure-landing-zone-architecture[Azure landing zone architecture] using Azure Verified Modules for Terraform.
+
+This guide covers how to work with **this repository**, including the build system, development workflow, and contribution guidelines.
+
+[NOTE]
+====
+For documentation on **using the modules** in your Azure landing zone implementations, see the module READMEs that are packaged with each distribution.
+====
+
+include::structure.adoc[]
+
+include::build-system.adoc[]
+
+include::documentation.adoc[]
+
+include::development.adoc[]
+
+include::testing.adoc[]
+
+include::build-config.adoc[]
+
+include::troubleshooting.adoc[]
+
+include::best-practices.adoc[]
+
+include::contributing.adoc[]
+
+include::advanced.adoc[]
+
+include::support.adoc[]
+
+== License
+
+Copyright (c) 2026 Ensono
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
