@@ -1,4 +1,5 @@
 require 'rmagick'
+require 'base64'
 
 include Asciidoctor
 
