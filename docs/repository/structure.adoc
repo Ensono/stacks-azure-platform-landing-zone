@@ -18,7 +18,6 @@ stacks-azure-platform-landing-zone/
 │       ├── pipeline.yml                # Pipeline definition
 │       └── variables.yml               # Pipeline variables
 ├── docs/                               # Documentation
-│   ├── REPOSITORY.adoc                 # Legacy single-file repo guide
 │   └── repository/                     # Repository documentation (modular)
 │       ├── index.adoc                  # Main repository guide
 │       └── *.adoc                      # Individual section files
