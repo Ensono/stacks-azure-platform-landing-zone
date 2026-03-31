@@ -1,6 +1,6 @@
 # Stacks Azure Platform Landing Zone
 
-This repository contains the **Stacks Azure Platform Landing Zone Modules** - foundational modules that provide an opinionated approach for deploying and managing the core platform capabilities of an [Azure landing zone architecture](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/#azure-landing-zone-architecture) using Azure Verified Modules for Terraform.
+This repository contains foundational modules that provide an opinionated approach for deploying and managing the core platform capabilities of an [Azure landing zone architecture](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/#azure-landing-zone-architecture) using Azure Verified Modules for Terraform.
 
 ## Documentation
 
@@ -16,7 +16,7 @@ A PDF version can be generated locally by running:
 eirctl docs
 ```
 
-The file can then be located in `outputs/docs/pdf`.
+The guide can then be located in `outputs/docs/pdf`.
 
 >[!NOTE]
 > This file is also published as a GitHub release asset.
