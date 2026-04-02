@@ -1,10 +1,10 @@
 # Multi-Region Deployment
-# See ../../_header.md for more configuration examples.
+# See ../../README.md for more configuration examples.
 #
 # Required environment variable:
 #   TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
 
-company_name = "ensono"
+company = "ensono"
 
 hubs = {
   uksouth = {}

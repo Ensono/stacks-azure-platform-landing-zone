@@ -1,0 +1,30 @@
+[[quickstart]]
+== Quick Start
+
+Minimal single-region deployment:
+
+[source,hcl]
+----
+company                      = "ensono"
+connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+
+hubs = {
+  uksouth = {}
+}
+----
+
+=== Deployment Order
+
+. Deploy Management Landing Zone first (provides Log Analytics workspace)
+. Deploy this module with `management_remote_state` pointing to the management state
+
+=== Required Environment Variable
+
+[source,bash]
+----
+export ARM_SUBSCRIPTION_ID="<connectivity-subscription-id>"
+----

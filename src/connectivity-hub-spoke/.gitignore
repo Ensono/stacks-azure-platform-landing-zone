@@ -24,7 +24,6 @@ crash.log
 # to change depending on the environment.
 #
 # *.tfvars
-**/terraform.tfvars
 !*_*.tfvars
 !**/examples/**/*.tfvars
 !**/tests/**/*.tfvars
@@ -48,10 +47,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-.terraform.lock.hcl
-
-# Junit
-**/results.xml
+# Junit XML test results
+test-results/
 
 # Eirctl
+.eirctl/
 eirctl.env

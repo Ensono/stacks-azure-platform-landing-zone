@@ -1,0 +1,22 @@
+[[features]]
+== Features
+
+|===
+| Feature | Default | Description
+
+| Virtual WAN | ✅ | Standard SKU Virtual WAN
+| Virtual Hubs | ✅ | One per region with /23 address prefix
+| Azure Firewall | ✅ | Standard SKU (configurable: Basic/Standard/Premium)
+| Firewall DNS Proxy | ✅ | Enables FQDN filtering and DNS query logging
+| Firewall Diagnostics | ✅ | All log categories sent to Log Analytics
+| Sidecar Virtual Network | ✅ | For Bastion, DNS Resolver, and additional services
+| Private DNS Zones | ✅ | For Azure Private Link services
+| Private DNS Resolver | ❌ | For hybrid DNS resolution
+| Azure Bastion | ❌ | Secure VM access (in sidecar VNet)
+| VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN
+| ExpressRoute Gateway | ❌ | ExpressRoute connectivity
+| DDoS Protection Plan | ❌ | Shared across all hubs
+| Flow Logs Storage | ✅ | Per-hub storage account for NSG/VNet flow logs
+| Azure Monitor Private Link | ✅ | AMPLS for secure monitoring connectivity
+| Metric Alerts | ✅ | Firewall, gateway, and virtual hub health alerts
+|===

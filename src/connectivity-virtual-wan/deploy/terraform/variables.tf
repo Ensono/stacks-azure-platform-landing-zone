@@ -1,4 +1,4 @@
-variable "company_name" {
+variable "company" {
   type        = string
   description = "Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'ensono' becomes 'ens')."
 }

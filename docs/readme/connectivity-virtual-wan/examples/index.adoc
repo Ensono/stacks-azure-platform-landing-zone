@@ -1,0 +1,183 @@
+[[examples]]
+== Configuration Examples
+
+=== Multi-Region Deployment
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = {}
+}
+----
+
+IP addresses are calculated automatically (sorted alphabetically):
+
+|===
+| Region | Hub Address Space | Virtual Hub Prefix
+
+| uksouth | `10.0.0.0/16` | `10.0.0.0/23`
+| ukwest | `10.1.0.0/16` | `10.1.0.0/23`
+|===
+
+=== Cost Optimisation for Non-Production
+
+Use Firewall Basic SKU for dev/test environments:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Basic"  # ~£180/month vs Standard ~£720/month
+    }
+  }
+}
+----
+
+|===
+| Firewall SKU | Monthly Cost | Use Case
+
+| Basic | ~£180 | Dev/Test, low throughput
+| Standard | ~£720 | Production, threat intelligence
+| Premium | ~£800 | TLS inspection, IDPS signatures
+|===
+
+WARNING: Firewall Basic SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
+
+=== Enable Optional Features
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      bastion              = true
+      vpn_gateway          = true
+      expressroute_gateway = true
+      private_dns_resolver = true
+    }
+  }
+}
+----
+
+=== Custom IP Addressing
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    address_space = "172.16.0.0/16"
+    sidecar_subnets = {
+      bastion_address_prefix              = "172.16.4.0/26"
+      gateway_address_prefix              = "172.16.4.64/27"
+      private_dns_resolver_address_prefix = "172.16.4.96/28"
+    }
+  }
+}
+----
+
+=== Custom Resource Names
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    name_overrides = {
+      resource_group          = "rg-vwan-hub-prod"
+      virtual_hub             = "vhub-prod-uks"
+      sidecar_virtual_network = "vnet-sidecar-prod"
+      firewall                = "fw-hub-prod"
+    }
+  }
+}
+----
+
+=== DDoS Protection Plan
+
+DDoS Protection Plan is disabled by default due to significant cost (~£2,200/month flat fee).
+
+[source,hcl]
+----
+ddos_protection_plan = {
+  enabled = true
+}
+----
+
+=== Disable a Hub Temporarily
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = { enabled = false }
+}
+----
+
+=== Production Configuration
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Standard"
+      bastion      = true
+      vpn_gateway  = true
+    }
+  }
+}
+
+management_remote_state = {
+  enabled              = true
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+=== Cost Estimation
+
+Estimated monthly costs per hub (UK South, January 2025):
+
+|===
+| Resource | Default | Monthly Cost (GBP) | Notes
+
+| Virtual Hub | ✅ | ~£210 | Base hub cost
+| Azure Firewall Standard | ✅ | ~£720 | Hub firewall
+| Azure Firewall Basic | ❌ | ~£180 | Dev/test alternative
+| VPN Gateway | ❌ | ~£140 | Scale unit 1
+| ExpressRoute Gateway | ❌ | ~£140 | Scale unit 1
+| Azure Bastion Standard | ❌ | ~£140 | 2 scale units
+| DDoS Protection Plan | ❌ | ~£2,200 | Shared across subscription
+| Log Analytics | - | Variable | ~£2/GB/month ingestion
+| **Minimum (Hub + Firewall)** | | **~£930** |
+| **Full Production** | | **~£1,210** | Hub + Firewall + VPN + Bastion
+|===
+
+TIP: Virtual WAN costs more than hub-spoke due to the managed hub infrastructure, but provides simplified routing and better scalability for large deployments.
+
+=== Comparison: Virtual WAN vs Hub-Spoke
+
+|===
+| Aspect | Virtual WAN | Hub-Spoke
+
+| Management | Fully managed hub | Self-managed VNet
+| Routing | Automatic any-to-any | Manual route tables
+| Cost | Higher base cost | Lower base cost
+| Scalability | Better for large networks | Good for small-medium
+| Hybrid | Built-in VPN/ER integration | Manual gateway setup
+| Complexity | Lower operational | Higher operational
+|===
+
+**Choose Virtual WAN when:**
+
+* You have 50+ spoke VNets
+* You need global transit routing
+* You want simplified VPN/ExpressRoute management
+* Operational simplicity is more important than cost
+
+**Choose Hub-Spoke when:**
+
+* You have fewer spoke VNets
+* Cost optimisation is critical
+* You need granular routing control
+* You have existing hub-spoke infrastructure

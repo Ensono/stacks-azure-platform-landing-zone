@@ -1,0 +1,50 @@
+[[advanced]]
+== Advanced Configuration
+
+=== Flow Logs Storage
+
+Each hub region deploys a storage account for NSG and VNet flow logs. The storage account name is globally unique, generated using the naming module's `name_unique` suffix.
+
+To use an externally created storage account, configure the storage account resource ID in the hub settings.
+
+=== Azure Monitor Private Link Scope (AMPLS)
+
+AMPLS is enabled by default and creates a private endpoint in the sidecar VNet's `snet-private-endpoints` subnet. This secures connectivity between monitoring agents and Log Analytics.
+
+Requirements:
+
+* Log Analytics workspace ID (from management remote state or direct input)
+* `sidecar_virtual_network` feature enabled (default)
+
+To disable AMPLS:
+
+[source,hcl]
+----
+azure_monitor_private_link = {
+  enabled = false
+}
+----
+
+=== Custom DNS Servers
+
+Configure custom upstream DNS servers for the firewall DNS proxy:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    dns = {
+      servers = ["10.0.0.4", "10.0.0.5"]
+    }
+    features = {
+      firewall_dns_proxy = true
+    }
+  }
+}
+----
+
+When DNS servers are specified and DNS proxy is enabled, the firewall forwards DNS queries to the specified servers instead of Azure DNS.
+
+=== Network Watcher
+
+Network Watcher is deployed per region when enabled. It provides network diagnostic capabilities including connection monitor, packet capture, and flow logs.

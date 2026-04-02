@@ -1,0 +1,90 @@
+[[advanced]]
+== Advanced Configuration
+
+=== Flow Logs Storage
+
+VNet flow logs require a storage account in the **same region** as the monitored VNet. This module can create per-region storage accounts automatically.
+
+==== Create Storage Per Hub Region (Recommended)
+
+[source,hcl]
+----
+flow_logs = {
+  enabled = true
+  storage = {
+    create                   = true
+    account_tier             = "Standard"
+    account_replication_type = "GRS"   # LRS for dev/test
+    retention_days           = 30      # Blob lifecycle retention
+    public_network_access    = false
+  }
+  retention_days            = 90     # Flow logs retention (min 90 for compliance)
+  traffic_analytics_enabled = true
+}
+----
+
+==== Use External Storage Accounts
+
+If you have existing storage accounts, provide the ID per region:
+
+[source,hcl]
+----
+flow_logs = {
+  enabled = true
+  storage = {
+    create                      = false
+    external_storage_account_id = "/subscriptions/.../storageAccounts/existing-storage"
+  }
+}
+----
+
+WARNING: The `external_storage_account_id` option only supports a single storage account. For multi-region deployments, use `storage.create = true` to create per-region storage accounts.
+
+IMPORTANT: Azure requires flow logs storage accounts to be in the **same region** as the monitored VNet. This module creates one storage account per hub region in the connectivity subscription when `flow_logs.storage.create = true`.
+
+=== Azure Monitor Private Link Scope
+
+AMPLS is **enabled by default** to provide private connectivity to Log Analytics.
+
+Using remote state (recommended):
+
+[source,hcl]
+----
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+Or provide workspace ID directly:
+
+[source,hcl]
+----
+azure_monitor_private_link = {
+  log_analytics_workspace_id = "/subscriptions/.../providers/Microsoft.OperationalInsights/workspaces/log-analytics"
+}
+----
+
+To disable AMPLS:
+
+[source,hcl]
+----
+azure_monitor_private_link = {
+  enabled = false
+}
+----
+
+=== Custom DNS Servers
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    dns = {
+      servers = ["10.0.0.4", "10.0.0.5"]  # Custom upstream DNS
+    }
+    features = {
+      firewall_dns_proxy = true  # Default, shown for clarity
+    }
+  }
+}
+----

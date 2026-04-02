@@ -1,0 +1,404 @@
+<!-- BEGIN_TF_DOCS -->
+== Requirements
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Version
+|[[requirement_terraform]] <<requirement_terraform,terraform>> |~> 1.12
+|[[requirement_azapi]] <<requirement_azapi,azapi>> |~> 2.0
+|[[requirement_azurerm]] <<requirement_azurerm,azurerm>> |~> 4.0
+|[[requirement_local]] <<requirement_local,local>> |~> 2.5
+|[[requirement_modtm]] <<requirement_modtm,modtm>> |~> 0.3
+|[[requirement_random]] <<requirement_random,random>> |~> 3.8
+|===
+
+== Providers
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Version
+|[[provider_azurerm]] <<provider_azurerm,azurerm>> |~> 4.0
+|[[provider_random]] <<provider_random,random>> |~> 3.8
+|[[provider_terraform]] <<provider_terraform,terraform>> |n/a
+|===
+
+== Modules
+
+[cols="a,a,a",options="header,autowidth"]
+|===
+|Name |Source |Version
+|[[module_azure_regions]] <<module_azure_regions,azure_regions>> |Azure/avm-utl-regions/azurerm |0.9.3
+|[[module_flow_logs_storage]] <<module_flow_logs_storage,flow_logs_storage>> |Azure/avm-res-storage-storageaccount/azurerm |0.6.7
+|[[module_naming]] <<module_naming,naming>> |Azure/naming/azurerm |0.4.3
+|[[module_nsg_private_endpoints]] <<module_nsg_private_endpoints,nsg_private_endpoints>> |Azure/avm-res-network-networksecuritygroup/azurerm |0.5.1
+|[[module_resource_groups]] <<module_resource_groups,resource_groups>> |Azure/avm-res-resources-resourcegroup/azurerm |0.2.1
+|[[module_virtual_wan]] <<module_virtual_wan,virtual_wan>> |Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm |0.13.5
+|===
+
+== Resources
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Type
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting[azurerm_monitor_diagnostic_setting.bastion] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting[azurerm_monitor_diagnostic_setting.expressroute_gateway] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting[azurerm_monitor_diagnostic_setting.firewall] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting[azurerm_monitor_diagnostic_setting.vpn_gateway] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.expressroute_bits_received] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.expressroute_cpu] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.firewall_health] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.firewall_snat_exhaustion] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.firewall_throughput] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.virtual_hub_bgp_peer] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.virtual_hub_routing_capacity] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.vpn_bgp_peer_status] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.vpn_tunnel_bandwidth] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scope[azurerm_monitor_private_link_scope.this] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_private_link_scoped_service[azurerm_monitor_private_link_scoped_service.log_analytics] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher[azurerm_network_watcher.this] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_watcher_flow_log[azurerm_network_watcher_flow_log.sidecar_vnet] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint[azurerm_private_endpoint.ampls] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_management_policy[azurerm_storage_management_policy.flow_logs] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association[azurerm_subnet_network_security_group_association.private_endpoints] |resource
+|https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string[random_string.random_seed] |resource
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data[terraform_data.validate_ampls_requirements] |resource
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data[terraform_data.validate_flow_logs_requirements] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config[azurerm_client_config.current] |data source
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/data-sources/remote_state[terraform_remote_state.management] |data source
+|===
+
+== Inputs
+
+[cols="a,a,a,a,a",options="header,autowidth"]
+|===
+|Name |Description |Type |Default |Required
+|[[input_company]] <<input_company,company>>
+|Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'ensono' becomes 'ens').
+|`string`
+|n/a
+|yes
+
+|[[input_connectivity_subscription_id]] <<input_connectivity_subscription_id,connectivity_subscription_id>>
+|Subscription ID for connectivity resources (virtual WAN, hubs, firewalls).
+|`string`
+|n/a
+|yes
+
+|[[input_hubs]] <<input_hubs,hubs>>
+|Virtual hub configurations keyed by Azure region name.
+|
+
+[source]
+----
+map(object({
+    enabled       = optional(bool, true)
+    address_space = optional(string)
+
+    features = optional(object({
+      firewall                   = optional(bool, true)
+      firewall_sku               = optional(string, "Standard")
+      firewall_dns_proxy         = optional(bool, true)
+      firewall_threat_intel_mode = optional(string, "Alert")
+      bastion                    = optional(bool, false)
+      vpn_gateway                = optional(bool, false)
+      expressroute_gateway       = optional(bool, false)
+      private_dns_zones          = optional(bool, true)
+      private_dns_resolver       = optional(bool, false)
+      sidecar_virtual_network    = optional(bool, true)
+      availability_zones         = optional(list(number))
+    }), {})
+
+    hub = optional(object({
+      sku                                    = optional(string)
+      hub_routing_preference                 = optional(string, "ExpressRoute")
+      virtual_router_auto_scale_min_capacity = optional(number, 2)
+    }), {})
+
+    sidecar_subnets = optional(object({
+      bastion_address_prefix              = optional(string)
+      gateway_address_prefix              = optional(string)
+      private_dns_resolver_address_prefix = optional(string)
+      private_endpoints_address_prefix    = optional(string)
+    }), {})
+
+    dns = optional(object({
+      auto_registration_zone_name = optional(string)
+      servers                     = optional(list(string))
+    }), {})
+
+    name_overrides = optional(object({
+      resource_group          = optional(string)
+      virtual_hub             = optional(string)
+      sidecar_virtual_network = optional(string)
+      firewall                = optional(string)
+      firewall_policy         = optional(string)
+      bastion                 = optional(string)
+      vpn_gateway             = optional(string)
+      expressroute_gateway    = optional(string)
+      private_dns_resolver    = optional(string)
+    }), {})
+
+    tags = optional(map(string), {})
+  }))
+----
+
+|n/a
+|yes
+
+|[[input_azure_monitor_private_link]] <<input_azure_monitor_private_link,azure_monitor_private_link>>
+|Azure Monitor Private Link Scope configuration for private connectivity to Log Analytics.
+|
+
+[source]
+----
+object({
+    enabled                    = optional(bool, true)
+    log_analytics_workspace_id = optional(string)
+    ingestion_access_mode      = optional(string, "PrivateOnly")
+    query_access_mode          = optional(string, "PrivateOnly")
+    name                       = optional(string)
+  })
+----
+
+|`{}`
+|no
+
+|[[input_ddos_protection_plan]] <<input_ddos_protection_plan,ddos_protection_plan>>
+|DDoS Protection Plan configuration. Disabled by default due to significant cost (~£2,200/month).
+
+- `enabled` - (Optional) Enable DDoS Protection Plan. Default: `false`.
+
+|
+
+[source]
+----
+object({
+    enabled = optional(bool, false)
+  })
+----
+
+|`{}`
+|no
+
+|[[input_enable_avm_telemetry]] <<input_enable_avm_telemetry,enable_avm_telemetry>>
+|Enable telemetry collection for Azure Verified Modules. See https://aka.ms/avm/telemetryinfo.
+|`bool`
+|`false`
+|no
+
+|[[input_flow_logs]] <<input_flow_logs,flow_logs>>
+|    Flow logs configuration for network traffic analysis on sidecar VNets. Disabled by default.
+
+    Note: Virtual WAN hub traffic is managed by Microsoft and not visible via VNet flow logs.
+    Flow logs for Virtual WAN capture traffic in the sidecar virtual networks (Bastion, DNS Resolver, etc.).
+
+    Per Microsoft documentation, the storage account MUST be in the same region as the VNet.
+    This module creates a storage account per hub region to ensure compliance.
+
+    When enabled, creates:
+    - Storage account per hub region
+    - VNet flow logs for each sidecar virtual network
+
+    Storage options:
+    - create: Set to true (default) to create storage accounts
+    - external_storage_account_id: If create=false, provide an existing storage account ID
+      (must be in same region as sidecar VNet)
+
+    Optional:
+    - Traffic Analytics (requires Log Analytics workspace via management_remote_state)
+
+    Cost considerations:
+    - Storage: ~£0.02/GB stored (~£15-50/month depending on traffic volume)
+    - Traffic Analytics: Additional Log Analytics ingestion costs
+
+    Note: Retention defaults to 90 days to meet security compliance requirements (CKV_AZURE_12).
+
+|
+
+[source]
+----
+object({
+    enabled                   = optional(bool, false)
+    retention_days            = optional(number, 90)
+    traffic_analytics_enabled = optional(bool, false)
+    storage = optional(object({
+      create                      = optional(bool, true)
+      external_storage_account_id = optional(string, null)
+      access_tier                 = optional(string, "Hot")
+      account_kind                = optional(string, "StorageV2")
+      account_replication_type    = optional(string, "GRS")
+      account_tier                = optional(string, "Standard") # Premium not supported
+      min_tls_version             = optional(string, "TLS1_2")
+      public_network_access       = optional(bool, false)
+      shared_access_key_enabled   = optional(bool, true)
+      retention_days              = optional(number, 30) # Blob lifecycle
+      network_rules = optional(object({
+        ip_rules                   = optional(list(string), [])
+        virtual_network_subnet_ids = optional(list(string), [])
+      }), {})
+    }), {})
+  })
+----
+
+|`{}`
+|no
+
+|[[input_hub_network_address_prefix]] <<input_hub_network_address_prefix,hub_network_address_prefix>>
+|Base address space for hub networks. Each hub receives a /16.
+|`string`
+|`"10.0.0.0/8"`
+|no
+
+|[[input_management_remote_state]] <<input_management_remote_state,management_remote_state>>
+|Configuration for reading management landing zone state to get Log Analytics workspace ID.
+
+- `enabled` - (Optional) Enable remote state lookup. Default: `true`.
+- `backend` - (Optional) Backend type. Default: `azurerm`.
+- `storage_account_name` - (Required when enabled) Storage account name for state.
+- `container_name` - (Optional) Blob container name. Default: `tfstate`.
+- `key` - (Optional) State file key. Default: `management.tfstate`.
+- `workspace` - (Optional) Terraform workspace. Default: current workspace.
+- `use_azuread_auth` - (Optional) Use Entra ID auth. Default: `true`.
+
+|
+
+[source]
+----
+object({
+    enabled              = optional(bool, true)
+    backend              = optional(string, "azurerm")
+    workspace            = optional(string)
+    storage_account_name = optional(string)
+    container_name       = optional(string, "tfstate")
+    key                  = optional(string, "management.tfstate")
+    use_azuread_auth     = optional(bool, true)
+  })
+----
+
+|`{}`
+|no
+
+|[[input_network_watcher]] <<input_network_watcher,network_watcher>>
+|Network Watcher configuration. Network Watcher is free and provides network diagnostics capabilities.
+|
+
+[source]
+----
+object({
+    enabled = optional(bool, true)
+  })
+----
+
+|`{}`
+|no
+
+|[[input_private_endpoints_nsg]] <<input_private_endpoints_nsg,private_endpoints_nsg>>
+|Configuration for the Network Security Group on the private endpoints subnet in the sidecar VNet.
+
+NSG provides:
+- Centralized access control for private endpoints
+- Visibility through NSG flow logs
+- Compliance auditing capability
+
+Microsoft recommends using NSG on private endpoint subnets to control and log access.
+See: https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network
+
+- `enabled` - (Optional) Deploy NSG on private endpoints subnet. Defaults to `true`.
+
+Note: When `enabled = true`, an NSG with default rules is created:
+- AllowVNetInbound (priority 100): Allow traffic from VirtualNetwork
+- DenyInternetInbound (priority 4096): Deny traffic from Internet
+
+The NSG is only deployed when:
+- `enabled = true`
+- Sidecar VNet is enabled for the hub
+- AMPLS is enabled (which creates the private endpoints subnet)
+
+|
+
+[source]
+----
+object({
+    enabled = optional(bool, true)
+  })
+----
+
+|
+
+[source]
+----
+{
+  "enabled": true
+}
+----
+
+|no
+
+|[[input_region_geography]] <<input_region_geography,region_geography>>
+|Filter available regions by geography. Common values: 'United Kingdom', 'Europe', 'United States', 'Asia Pacific'. Set to null for all geographies.
+|`string`
+|`null`
+|no
+
+|[[input_region_recommended_filter]] <<input_region_recommended_filter,region_recommended_filter>>
+|Filter by Microsoft-recommended regions. Set to true for recommended only, false for non-recommended only, or null (default) for all regions.
+|`bool`
+|`null`
+|no
+
+|[[input_resource_group_lock_enabled]] <<input_resource_group_lock_enabled,resource_group_lock_enabled>>
+|Enable CanNotDelete locks on all resource groups. Set to false before running terraform destroy.
+|`bool`
+|`true`
+|no
+
+|[[input_tags]] <<input_tags,tags>>
+|Tags applied to all resources.
+|`map(string)`
+|`{}`
+|no
+
+|===
+
+== Outputs
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Description
+|[[output_ampls_private_endpoint_ids]] <<output_ampls_private_endpoint_ids,ampls_private_endpoint_ids>> |AMPLS private endpoint IDs, keyed by region.
+|[[output_azure_monitor_private_link_scope_id]] <<output_azure_monitor_private_link_scope_id,azure_monitor_private_link_scope_id>> |Azure Monitor Private Link Scope resource ID.
+|[[output_azure_monitor_private_link_scope_name]] <<output_azure_monitor_private_link_scope_name,azure_monitor_private_link_scope_name>> |Azure Monitor Private Link Scope name.
+|[[output_bastion_diagnostic_setting_ids]] <<output_bastion_diagnostic_setting_ids,bastion_diagnostic_setting_ids>> |Diagnostic setting IDs for Bastion hosts, keyed by region.
+|[[output_bastion_host_dns_names]] <<output_bastion_host_dns_names,bastion_host_dns_names>> |Bastion DNS names, keyed by region.
+|[[output_bastion_host_public_ip_addresses]] <<output_bastion_host_public_ip_addresses,bastion_host_public_ip_addresses>> |Bastion public IPs, keyed by region.
+|[[output_bastion_host_resource_ids]] <<output_bastion_host_resource_ids,bastion_host_resource_ids>> |Bastion host resource IDs, keyed by region.
+|[[output_dns_server_ip_addresses]] <<output_dns_server_ip_addresses,dns_server_ip_addresses>> |DNS server IPs (firewall private IP when DNS Proxy enabled, or DNS Resolver IPs).
+|[[output_express_route_gateway_resource_ids]] <<output_express_route_gateway_resource_ids,express_route_gateway_resource_ids>> |ExpressRoute gateway resource IDs, keyed by region.
+|[[output_firewall_alert_ids]] <<output_firewall_alert_ids,firewall_alert_ids>> |Firewall metric alert IDs, keyed by region and alert type.
+|[[output_firewall_diagnostic_setting_ids]] <<output_firewall_diagnostic_setting_ids,firewall_diagnostic_setting_ids>> |Diagnostic setting IDs for firewall.
+|[[output_firewall_policy_resource_ids]] <<output_firewall_policy_resource_ids,firewall_policy_resource_ids>> |Azure Firewall Policy resource IDs, keyed by region.
+|[[output_firewall_private_ip_addresses]] <<output_firewall_private_ip_addresses,firewall_private_ip_addresses>> |Firewall private IPs for routing, keyed by region.
+|[[output_firewall_public_ip_addresses]] <<output_firewall_public_ip_addresses,firewall_public_ip_addresses>> |Firewall public IPs, keyed by region.
+|[[output_firewall_resource_ids]] <<output_firewall_resource_ids,firewall_resource_ids>> |Azure Firewall resource IDs, keyed by region.
+|[[output_firewall_resource_names]] <<output_firewall_resource_names,firewall_resource_names>> |Azure Firewall names, keyed by region.
+|[[output_flow_log_ids]] <<output_flow_log_ids,flow_log_ids>> |VNet flow log IDs for sidecar virtual networks, keyed by region.
+|[[output_flow_logs_storage_account_ids]] <<output_flow_logs_storage_account_ids,flow_logs_storage_account_ids>> |Flow logs storage account IDs, keyed by region.
+|[[output_flow_logs_storage_account_names]] <<output_flow_logs_storage_account_names,flow_logs_storage_account_names>> |Flow logs storage account names, keyed by region.
+|[[output_gateway_alert_ids]] <<output_gateway_alert_ids,gateway_alert_ids>> |Gateway metric alert IDs, keyed by region and alert type.
+|[[output_gateway_diagnostic_setting_ids]] <<output_gateway_diagnostic_setting_ids,gateway_diagnostic_setting_ids>> |Diagnostic setting IDs for VPN and ExpressRoute gateways, keyed by type and region.
+|[[output_hub_address_spaces]] <<output_hub_address_spaces,hub_address_spaces>> |Address space per hub.
+|[[output_hub_regions]] <<output_hub_regions,hub_regions>> |Regions where virtual hubs are deployed.
+|[[output_network_watcher_ids]] <<output_network_watcher_ids,network_watcher_ids>> |Network Watcher resource IDs, keyed by region.
+|[[output_primary_hub_region]] <<output_primary_hub_region,primary_hub_region>> |Primary hub region (first alphabetically).
+|[[output_private_dns_resolver_resource_ids]] <<output_private_dns_resolver_resource_ids,private_dns_resolver_resource_ids>> |Private DNS resolver resource IDs, keyed by region.
+|[[output_private_endpoints_nsg_ids]] <<output_private_endpoints_nsg_ids,private_endpoints_nsg_ids>> |Private endpoints NSG resource IDs, keyed by region.
+|[[output_resource_group_ids]] <<output_resource_group_ids,resource_group_ids>> |Resource group IDs.
+|[[output_resource_group_names]] <<output_resource_group_names,resource_group_names>> |Resource group names.
+|[[output_sidecar_virtual_network_resource_ids]] <<output_sidecar_virtual_network_resource_ids,sidecar_virtual_network_resource_ids>> |Sidecar virtual network resource IDs, keyed by region.
+|[[output_virtual_hub_alert_ids]] <<output_virtual_hub_alert_ids,virtual_hub_alert_ids>> |Virtual Hub metric alert IDs, keyed by region and alert type.
+|[[output_virtual_hub_resource_ids]] <<output_virtual_hub_resource_ids,virtual_hub_resource_ids>> |The resource IDs of the virtual hubs, keyed by region.
+|[[output_virtual_hub_resource_names]] <<output_virtual_hub_resource_names,virtual_hub_resource_names>> |The names of the virtual hubs, keyed by region.
+|[[output_virtual_wan_name]] <<output_virtual_wan_name,virtual_wan_name>> |The name of the virtual WAN.
+|[[output_virtual_wan_resource_id]] <<output_virtual_wan_resource_id,virtual_wan_resource_id>> |The resource ID of the virtual WAN.
+|===
+<!-- END_TF_DOCS -->

@@ -1,0 +1,53 @@
+[[troubleshooting]]
+== Troubleshooting
+
+=== Common Issues
+
+==== AMPLS validation fails
+
+----
+Error: AMPLS requires log_analytics_workspace_id
+----
+
+**Cause**: Azure Monitor Private Link Scope is enabled (default) but no Log Analytics workspace ID is available.
+
+**Fix**: Either configure `management_remote_state` or provide the ID directly. To disable AMPLS:
+
+[source,hcl]
+----
+azure_monitor_private_link = {
+  enabled = false
+}
+----
+
+==== Terraform destroy fails with locked resource groups
+
+**Cause**: Resource groups have `CanNotDelete` locks enabled by default.
+
+**Fix**: Disable locks before destroying:
+
+[source,hcl]
+----
+resource_group_lock_enabled = false
+----
+
+==== Sidecar VNet connection fails
+
+**Cause**: The sidecar VNet must be in the same region as the virtual hub it connects to.
+
+**Fix**: Ensure the sidecar VNet configuration matches the hub region. The module handles this automatically — check for manual `address_space` overrides that may conflict.
+
+==== Virtual Hub provisioning timeout
+
+**Cause**: Virtual Hub deployment can take 20-30 minutes. Large deployments with multiple gateways may take longer.
+
+**Fix**: Increase Terraform timeouts if needed. The AVM module sets appropriate defaults.
+
+=== Testing
+
+Unit tests validate configuration logic without deploying infrastructure. Tests use mock providers to run offline.
+
+[source,bash]
+----
+terraform test
+----

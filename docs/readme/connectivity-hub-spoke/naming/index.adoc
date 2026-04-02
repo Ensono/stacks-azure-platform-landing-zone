@@ -1,0 +1,26 @@
+[[naming]]
+== Resource Naming
+
+Resources follow the Cloud Adoption Framework (CAF) naming convention using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming module].
+
+The naming suffix is composed of: `{company_3char}-{geo_code}-{workspace}-{component}-001`
+
+For example, with `company = "ensono"` deploying to `uksouth` in the `default` workspace:
+
+|===
+| Resource | Generated Name
+
+| Resource Group | `rg-ens-uks-default-hub-001`
+| Virtual Network | `vnet-ens-uks-default-hub-001`
+| Firewall | `afw-ens-uks-default-hub-001`
+| Firewall Policy | `afwp-ens-uks-default-hub-001`
+| Route Table (firewall) | `rt-ens-uks-default-hub-fw-001`
+| Route Table (user) | `rt-ens-uks-default-hub-std-001`
+| Bastion Host | `bas-ens-uks-default-hub-001`
+| VPN Gateway | `vgw-ens-uks-default-hub-vpn-001`
+| ExpressRoute Gateway | `vgw-ens-uks-default-hub-er-001`
+| DNS Resolver | `dnspr-ens-uks-default-hub-dns-001`
+| Storage Account (flow logs) | `stensuksdefaulthubfl001` (globally unique)
+|===
+
+All names can be overridden per hub using the `name_overrides` object. See <<examples>> for details.

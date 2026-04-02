@@ -1,0 +1,76 @@
+[[overview]]
+== Overview
+
+This module deploys hub virtual networks using Azure Verified Modules (AVM). It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
+
+=== What This Module Deploys
+
+. **Hub Virtual Networks** — Per-region hub VNets with Azure Firewall, DNS, and platform services
+. **Network Security** — Firewall policies, route tables, NSGs, and DDoS protection
+. **Hybrid Connectivity** (optional) — VPN and ExpressRoute gateways
+. **Monitoring** — Diagnostic settings, metric alerts, and Azure Monitor Private Link Scope
+
+=== Architecture
+
+[source,mermaid]
+----
+flowchart TB
+    subgraph Internet
+        PIP["Public IPs"]
+    end
+
+    subgraph Hub["Hub VNet (per region)"]
+        direction TB
+
+        subgraph FW["Azure Firewall"]
+            FWSubnet["AzureFirewallSubnet /26"]
+            FWMgmt["AzureFirewallManagementSubnet /26"]
+        end
+
+        subgraph Gateway["Gateways (optional)"]
+            GWSubnet["GatewaySubnet /27"]
+            VPN["VPN Gateway"]
+            ER["ExpressRoute"]
+        end
+
+        subgraph DNS["Private DNS"]
+            Resolver["DNS Resolver /28"]
+            Zones["Private DNS Zones"]
+        end
+
+        subgraph Services["Platform Services"]
+            Bastion["AzureBastionSubnet /26"]
+            PE["snet-private-endpoints /26"]
+            AMPLS["AMPLS Private Endpoint"]
+        end
+    end
+
+    subgraph Spokes["Spoke VNets"]
+        Spoke1["App Landing Zone 1"]
+        Spoke2["App Landing Zone 2"]
+    end
+
+    subgraph Management["Management Landing Zone"]
+        LogAnalytics["Log Analytics"]
+    end
+
+    PIP --> FW
+    FW --> Spokes
+    Spokes -.-> |"VNet Peering"| Hub
+    Gateway --> |"Hybrid"| OnPrem["On-Premises"]
+    DNS --> Spokes
+    AMPLS --> LogAnalytics
+    PE --> Zones
+----
+
+=== Module Chain
+
+----
+resource_groups → hub_and_spoke_vnet
+----
+
+=== Prerequisites
+
+* An Azure subscription designated as the **connectivity subscription**
+* Terraform ~> 1.12, AzureRM ~> 4.0, AzAPI ~> 2.0
+* Management module deployed first (for Log Analytics integration via remote state)

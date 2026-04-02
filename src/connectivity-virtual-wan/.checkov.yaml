@@ -3,4 +3,3 @@ evaluate-variables: false
 skip-check:
   - CKV_TF_1
   - CKV_TF_2
-  - CKV_AZURE_12 # Flow log retention enforced via variable validation (min 90 days)

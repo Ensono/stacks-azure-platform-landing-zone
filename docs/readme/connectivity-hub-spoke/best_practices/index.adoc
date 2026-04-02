@@ -1,0 +1,99 @@
+[[best-practices]]
+== Best Practices
+
+=== Firewall DNS Proxy
+
+DNS Proxy is **enabled by default** on the firewall policy, as recommended by https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security[Microsoft's Well-Architected Framework].
+
+DNS Proxy provides:
+
+* **FQDN filtering** — Required for network rules that filter by FQDN (not just IP)
+* **DNS query logging** — All DNS queries are logged to Log Analytics
+* **Consistent resolution** — All spoke workloads resolve DNS through the firewall
+
+When enabled, spoke VNets should configure their DNS servers to point to the firewall private IP (available via `firewall_private_ip_addresses` output).
+
+To disable DNS Proxy:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_dns_proxy = false
+    }
+  }
+}
+----
+
+TIP: DNS Proxy is essential for FQDN-based network rules. Without it, firewall network rules can only filter by IP address.
+
+=== Private Endpoints NSG
+
+A Network Security Group is deployed on the private endpoints subnet by default, as recommended by https://learn.microsoft.com/en-us/azure/architecture/networking/guide/private-link-hub-spoke-network[Microsoft's hub-spoke architecture guidance].
+
+The NSG provides:
+
+* **Visibility** — NSG flow logs for auditing and compliance
+* **Access control** — Centralised place to control traffic to private endpoints
+* **Defence in depth** — Additional security layer alongside Azure Firewall
+
+Default rules:
+
+|===
+| Rule | Priority | Direction | Action | Source | Destination
+
+| AllowVNetInbound | 100 | Inbound | Allow | VirtualNetwork | VirtualNetwork
+| DenyInternetInbound | 4096 | Inbound | Deny | Internet | Any
+|===
+
+NOTE: When using Azure Firewall, the NSG provides additional visibility and logging. Traffic is already controlled by the firewall, but the NSG enables NSG flow logs for the private endpoints subnet.
+
+=== Availability Zones
+
+Availability zones are **auto-detected** based on region support. Regions like `uksouth` that support zones will automatically deploy zone-redundant resources (99.99% SLA), while regions like `ukwest` without zone support will deploy without zones (99.95% SLA).
+
+To explicitly override (e.g., disable zones for cost savings in dev/test):
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      availability_zones = null  # Disable zones even in supported region
+    }
+  }
+}
+----
+
+NOTE: Zone-redundant deployments incur cross-zone data transfer charges (~£0.01/GB).
+
+=== Production Configuration
+
+For production workloads, enable flow logs for network visibility:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Standard"
+    }
+  }
+}
+
+flow_logs = {
+  enabled        = true
+  retention_days = 90
+  storage = {
+    create = true
+  }
+  traffic_analytics_enabled = true
+}
+
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+NOTE: Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID.

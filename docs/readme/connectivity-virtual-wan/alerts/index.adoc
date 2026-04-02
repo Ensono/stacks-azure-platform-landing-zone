@@ -1,0 +1,43 @@
+[[alerts]]
+== Metric Alerts
+
+Metric alerts are deployed when a Log Analytics workspace ID is available (via management remote state or direct configuration). Alerts target firewalls, gateways, and virtual hubs.
+
+=== Firewall Alerts
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Health degradation | 1 (Critical) | `FirewallHealth` | < 100%
+| SNAT port exhaustion | 2 (Warning) | `SNATPortUtilization` | > 80%
+| High throughput | 2 (Warning) | `Throughput` | > 2.5 Gbps
+|===
+
+=== VPN Gateway Alerts
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Tunnel bandwidth drop | 2 (Warning) | `TunnelAverageBandwidth` | < 1 bps
+| BGP peer status | 1 (Critical) | `BgpPeerStatus` | < 1
+|===
+
+=== ExpressRoute Gateway Alerts
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Traffic drop | 2 (Warning) | `ErGatewayConnectionBitsInPerSecond` | < 1 bps
+| CPU utilisation | 2 (Warning) | `ExpressRouteGatewayCpuUtilization` | > 80%
+|===
+
+=== Virtual Hub Alerts
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Data processed | 2 (Warning) | `VirtualHubDataProcessed` | > 500 GB
+| BGP peer status | 1 (Critical) | `BgpPeerStatus` | < 1
+|===
+
+NOTE: Virtual Hub alerts are unique to the Virtual WAN module. The hub-spoke module does not have equivalent alerts as the hub VNet is not a managed resource.

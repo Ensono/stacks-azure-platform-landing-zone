@@ -1,0 +1,71 @@
+[[best-practices]]
+== Best Practices
+
+=== Firewall DNS Proxy
+
+DNS Proxy is enabled by default on the firewall policy, as recommended by https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security[Microsoft's Well-Architected Framework].
+
+DNS Proxy provides:
+
+* **FQDN filtering** — Required for network rules that filter by FQDN (not just IP)
+* **DNS query logging** — All DNS queries are logged to Log Analytics
+* **Consistent resolution** — All spoke workloads resolve DNS through the firewall
+
+To disable:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_dns_proxy = false
+    }
+  }
+}
+----
+
+=== Availability Zones
+
+The module automatically detects availability zone support per region using the Azure Regions module. Firewalls and bastion hosts are deployed zone-redundantly when the region supports it.
+
+To override zone configuration:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      availability_zones = ["1", "2", "3"]
+    }
+  }
+}
+----
+
+=== Production Configuration
+
+For production workloads, enable monitoring integration, bastion access, and VPN connectivity:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Standard"
+      bastion      = true
+      vpn_gateway  = true
+    }
+  }
+}
+
+management_remote_state = {
+  enabled              = true
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+=== Virtual WAN Considerations
+
+* Virtual WAN Standard SKU is required for firewall integration and ExpressRoute gateways
+* Virtual Hub routing is fully managed — no manual route tables or UDRs needed
+* Sidecar VNet resources (Bastion, DNS Resolver) connect via VNet connection to the virtual hub
+* DDoS protection applies to sidecar VNets (virtual hubs are managed and inherently protected)

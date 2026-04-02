@@ -67,7 +67,7 @@ eirctl infrastructure:apply
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company_name` | Company identifier (first 3 chars used in names) | `"ensono"` |
+| `company` | Company identifier (first 3 chars used in names) | `"ensono"` |
 | `hubs` | Single hub configuration | `{ uksouth = {} }` |
 
 ### Required Environment Variables

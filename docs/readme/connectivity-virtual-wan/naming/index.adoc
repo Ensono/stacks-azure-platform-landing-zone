@@ -1,0 +1,30 @@
+[[naming]]
+== Resource Naming
+
+All resources use https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming[CAF naming conventions] via the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure/naming] module. Names can be overridden per hub using `name_overrides`.
+
+=== Generated Names
+
+With `company = "ensono"` and region `uksouth`:
+
+|===
+| Resource | Generated Name | Name Override Key
+
+| Resource Group | `rg-hub-uksouth` | `resource_group`
+| Virtual WAN | `vwan-hub-uksouth` | -
+| Virtual Hub | `vhub-hub-uksouth` | `virtual_hub`
+| Sidecar VNet | `vnet-hub-uksouth` | `sidecar_virtual_network`
+| Firewall | `afw-hub-uksouth` | `firewall`
+| Firewall Policy | `afwp-hub-uksouth` | `firewall_policy`
+| Bastion Host | `bas-hub-bas-uksouth` | `bastion`
+| VPN Gateway | `vwan-hub-vpn-uksouth` | `vpn_gateway`
+| ExpressRoute Gateway | `vwan-hub-er-uksouth` | `expressroute_gateway`
+| DNS Resolver | `dnspr-hub-dns-uksouth` | `private_dns_resolver`
+| Flow Logs Storage | `st<unique>hubfluksouth` | -
+|===
+
+=== Naming Pattern
+
+Names follow the pattern: `{caf_prefix}-{company}-{component}-{region}`
+
+The module uses `substr(var.company, 0, 5)` to limit the company prefix length, ensuring resource names stay within Azure limits.

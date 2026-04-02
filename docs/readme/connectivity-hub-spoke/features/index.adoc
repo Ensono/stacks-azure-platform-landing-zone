@@ -1,0 +1,26 @@
+[[features]]
+== Features
+
+|===
+| Feature | Default | Description
+
+| Hub Virtual Networks | ✅ | With mesh peering for multi-region
+| Azure Firewall | ✅ | Standard SKU (configurable: Basic/Standard/Premium)
+| Firewall DNS Proxy | ✅ | Enables FQDN filtering and DNS query logging
+| Firewall Health Alerts | ✅ | Alerts for health, SNAT exhaustion, and throughput
+| Firewall Diagnostics | ✅ | All log categories sent to Log Analytics
+| Network Watcher | ✅ | Free network diagnostics (Connection Monitor, Packet Capture)
+| Private Endpoints NSG | ✅ | NSG for visibility and access control
+| Private DNS Zones | ✅ | For Azure Private Link services
+| Private DNS Resolver | ❌ | For hybrid DNS resolution
+| Azure Monitor Private Link | ✅ | Private connectivity to Log Analytics
+| Flow Logs | ❌ | VNet flow logs with per-region storage (storage costs apply)
+| Azure Bastion | ❌ | Secure VM access
+| VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN
+| VPN Gateway Diagnostics | ✅ | Tunnel, route, and IKE diagnostics (when gateway enabled)
+| ExpressRoute Gateway | ❌ | ExpressRoute connectivity
+| ExpressRoute Diagnostics | ✅ | Gateway and route diagnostics (when gateway enabled)
+| DDoS Protection Plan | ❌ | Shared across all hubs
+|===
+
+Diagnostics and alerts are automatically enabled when the management module integration provides a Log Analytics workspace ID. See <<alerts>> and <<best-practices>>.

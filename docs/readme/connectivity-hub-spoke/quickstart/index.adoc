@@ -1,0 +1,50 @@
+[[quickstart]]
+== Quick Start
+
+Deploy a single-region hub network with minimal configuration.
+
+=== Minimal Deployment
+
+[source,hcl]
+----
+company                      = "ensono"
+connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
+
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+
+hubs = {
+  uksouth = {}
+}
+----
+
+This provisions:
+
+* A **Hub Virtual Network** with a `/22` address space (from `10.0.0.0/8`)
+* **Azure Firewall** (Standard SKU) with DNS Proxy enabled
+* **Route tables** for firewall and user subnets
+* **Private DNS Zones** for Azure Private Link services
+* **Private Endpoints NSG** for access control and flow logging
+* **Network Watcher** for diagnostics
+* **Azure Monitor Private Link Scope** (AMPLS) for private Log Analytics connectivity
+* **Firewall diagnostics and alerts** (when Log Analytics workspace is available)
+
+=== Deployment Order
+
+When deploying the full platform, the connectivity module is deployed **after** management:
+
+----
+1. Management Module
+2. Connectivity Module   ← you are here
+3. Application Landing Zones
+----
+
+=== Required Environment Variable
+
+The connectivity subscription ID can also be passed as an environment variable:
+
+[source,bash]
+----
+export TF_VAR_connectivity_subscription_id="00000000-0000-0000-0000-000000000000"
+----
