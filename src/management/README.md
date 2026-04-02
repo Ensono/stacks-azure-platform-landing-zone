@@ -24,24 +24,26 @@ The module comprises two conditionally-enabled module chains:
 
 ### Architecture
 
-    flowchart TB
-        subgraph Management["Management Subscription"]
-            direction TB
+``` mermaid
+flowchart TB
+    subgraph Management["Management Subscription"]
+        direction TB
 
-            subgraph Resources["Management Resource Group"]
-                LAW["Log Analytics Workspace"]
-                DCR["Data Collection Rules"]
-                UAI["User Assigned Identity (AMA)"]
-            end
-
-            subgraph Optional["Management Groups (Optional)"]
-                MG["Management Group Hierarchy"]
-                Policy["Azure Policies"]
-            end
+        subgraph Resources["Management Resource Group"]
+            LAW["Log Analytics Workspace"]
+            DCR["Data Collection Rules"]
+            UAI["User Assigned Identity (AMA)"]
         end
 
-        LAW --> DCR
-        DCR --> UAI
+        subgraph Optional["Management Groups (Optional)"]
+            MG["Management Group Hierarchy"]
+            Policy["Azure Policies"]
+        end
+    end
+
+    LAW --> DCR
+    DCR --> UAI
+```
 
 ### Module Chain
 
@@ -130,46 +132,48 @@ deployed **first**:
 When `management_groups_enabled = true`, the module deploys the standard
 Azure Landing Zone management group architecture:
 
-    flowchart TB
-        Tenant["Tenant Root Group"]
-        ALZ["Azure Landing Zones<br/><i>root policies</i>"]
+``` mermaid
+flowchart TB
+    Tenant["Tenant Root Group"]
+    ALZ["Azure Landing Zones<br/><i>root policies</i>"]
 
-        Platform["Platform"]
-        LandingZones["Landing Zones"]
-        Sandbox["Sandbox"]
-        Decommissioned["Decommissioned"]
+    Platform["Platform"]
+    LandingZones["Landing Zones"]
+    Sandbox["Sandbox"]
+    Decommissioned["Decommissioned"]
 
-        Management["Management<br/><i>management subscription</i>"]
-        Connectivity["Connectivity<br/><i>connectivity subscription</i>"]
-        Identity["Identity<br/><i>identity subscription</i>"]
-        Security["Security<br/><i>security subscription</i>"]
+    Management["Management<br/><i>management subscription</i>"]
+    Connectivity["Connectivity<br/><i>connectivity subscription</i>"]
+    Identity["Identity<br/><i>identity subscription</i>"]
+    Security["Security<br/><i>security subscription</i>"]
 
-        Corp["Corp<br/><i>private workloads</i>"]
-        Online["Online<br/><i>public workloads</i>"]
+    Corp["Corp<br/><i>private workloads</i>"]
+    Online["Online<br/><i>public workloads</i>"]
 
-        Tenant --> ALZ
-        ALZ --> Platform
-        ALZ --> LandingZones
-        ALZ --> Sandbox
-        ALZ --> Decommissioned
+    Tenant --> ALZ
+    ALZ --> Platform
+    ALZ --> LandingZones
+    ALZ --> Sandbox
+    ALZ --> Decommissioned
 
-        Platform --> Management
-        Platform --> Connectivity
-        Platform --> Identity
-        Platform --> Security
+    Platform --> Management
+    Platform --> Connectivity
+    Platform --> Identity
+    Platform --> Security
 
-        LandingZones --> Corp
-        LandingZones --> Online
+    LandingZones --> Corp
+    LandingZones --> Online
 
-        style ALZ fill:#0078d4,color:#fff
-        style Platform fill:#5c2d91,color:#fff
-        style LandingZones fill:#008272,color:#fff
-        style Management fill:#5c2d91,color:#fff
-        style Connectivity fill:#5c2d91,color:#fff
-        style Identity fill:#5c2d91,color:#fff
-        style Security fill:#5c2d91,color:#fff
-        style Corp fill:#008272,color:#fff
-        style Online fill:#008272,color:#fff
+    style ALZ fill:#0078d4,color:#fff
+    style Platform fill:#5c2d91,color:#fff
+    style LandingZones fill:#008272,color:#fff
+    style Management fill:#5c2d91,color:#fff
+    style Connectivity fill:#5c2d91,color:#fff
+    style Identity fill:#5c2d91,color:#fff
+    style Security fill:#5c2d91,color:#fff
+    style Corp fill:#008272,color:#fff
+    style Online fill:#008272,color:#fff
+```
 
 <div class="note">
 

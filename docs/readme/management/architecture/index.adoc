@@ -5,7 +5,7 @@
 
 When `management_groups_enabled = true`, the module deploys the standard Azure Landing Zone management group architecture:
 
-[mermaid]
+[source,mermaid]
 ----
 flowchart TB
     Tenant["Tenant Root Group"]

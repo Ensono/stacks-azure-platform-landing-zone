@@ -15,7 +15,7 @@ The module comprises two conditionally-enabled module chains:
 
 === Architecture
 
-[mermaid]
+[source,mermaid]
 ----
 flowchart TB
     subgraph Management["Management Subscription"]
