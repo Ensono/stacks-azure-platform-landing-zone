@@ -1,0 +1,43 @@
+= Stacks Azure Platform Landing Zone - Management
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:last-update-label!:
+
+include::overview/index.adoc[]
+
+include::features/index.adoc[]
+
+include::quickstart/index.adoc[]
+
+include::architecture/index.adoc[]
+
+include::examples/index.adoc[]
+
+include::naming/index.adoc[]
+
+include::integration/index.adoc[]
+
+include::alerts/index.adoc[]
+
+include::best_practices/index.adoc[]
+
+include::advanced/index.adoc[]
+
+include::troubleshooting/index.adoc[]
+
+[[api-reference]]
+== API Reference
+
+include::tfdocs.adoc[]
+
+== Support
+
+For issues, questions, or contributions related to this module, please contact the Ensono Stacks team.
+
+== License
+
+Copyright (c) 2026 Ensono
+
+This project is licensed under the MIT License.

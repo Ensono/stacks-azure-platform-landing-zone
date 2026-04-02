@@ -28,8 +28,8 @@ eirctl infrastructure:apply
 
 | Variable | Description |
 | -------- | ----------- |
-| `company_name` | Company prefix for resource naming (e.g., "ensono") |
-| `location` | Azure region (e.g., "uksouth") |
+| `company` | Company prefix for resource naming (e.g., "ensono") |
+| `region` | Azure region (e.g., "uksouth") |
 | `management_subscription_id` | Subscription ID to deploy resources |
 
 ## Optional Variables

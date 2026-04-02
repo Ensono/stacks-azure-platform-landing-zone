@@ -46,7 +46,7 @@ module "management_groups" {
 
   # Required attributes
   architecture_name  = try(var.management_group_settings.architecture_name, "alz_custom")
-  location           = coalesce(try(var.management_group_settings.location, null), var.location)
+  location           = coalesce(try(var.management_group_settings.location, null), var.region)
   parent_resource_id = local.parent_management_group_id
 
   # Computed attributes

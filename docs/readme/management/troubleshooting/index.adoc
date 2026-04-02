@@ -1,0 +1,45 @@
+[[troubleshooting]]
+== Troubleshooting
+
+=== Common Issues
+
+==== AMPLS / Private Connectivity
+
+**Symptom**: Log Analytics Workspace rejects ingestion or queries after deployment.
+
+**Cause**: The workspace is configured with `internet_ingestion_enabled = false` and `internet_query_enabled = false` by default (see <<architecture,Architecture>> for details). Without AMPLS (deployed by the connectivity module), there is no network path.
+
+**Resolution**: Either deploy the connectivity module to create AMPLS, or enable public access for development:
+
+[source,hcl]
+----
+management_resource_settings = {
+  log_analytics_workspace_internet_ingestion_enabled   = true
+  log_analytics_workspace_internet_query_enabled       = true
+  log_analytics_workspace_local_authentication_enabled = true
+}
+----
+
+==== Management Group Permissions
+
+**Symptom**: `AuthorizationFailed` errors when deploying management groups.
+
+**Cause**: The deploying identity requires `Management Group Contributor` at the Tenant Root level and `Owner` in each subscription.
+
+**Resolution**: Ensure the service principal or user has the required permissions. For automated deployments, configure the identity with Tenant Root-level access.
+
+==== Subscription Placement Validation
+
+**Symptom**: Terraform validation fails when management groups are enabled but connectivity or identity subscription IDs are not provided.
+
+**Cause**: The module validates that all required subscriptions are provided when management groups are enabled.
+
+**Resolution**: Either provide all required subscription IDs or set `skip_subscription_placement = true` for development/testing with a single subscription. See the <<examples,Development / Testing>> example.
+
+==== ALZ Policy Assignment Failures
+
+**Symptom**: Policy assignment fails with "unknown values" or "depends_on" errors.
+
+**Cause**: Resource names must be deterministic and known at plan time for ALZ policy assignments.
+
+**Resolution**: Ensure the naming module produces deterministic names. Avoid using `random` or computed values in resource names that are referenced by policy assignments. See <<naming,Resource Naming>> for naming conventions.

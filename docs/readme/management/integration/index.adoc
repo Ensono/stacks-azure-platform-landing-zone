@@ -1,0 +1,66 @@
+[[integration]]
+== Integration
+
+This module is the foundation of the Azure Platform Landing Zone.
+Its outputs are consumed by all downstream landing zone modules via Terraform remote state.
+
+=== Outputs for Downstream Modules
+
+[cols="3,4",options="header"]
+|===
+| Output | Consumed By
+
+| `log_analytics_workspace_id`
+| Connectivity (AMPLS, diagnostics), Identity (VM diagnostics), Security (Sentinel)
+
+| `log_analytics_workspace_name`
+| Security (Sentinel enablement)
+
+| `log_analytics_workspace_guid`
+| Connectivity (Traffic Analytics)
+|===
+
+=== Module Dependency Chain
+
+----
+Management (this module)
+  ├── Connectivity Hub-Spoke  (consumes LAW ID + GUID)
+  ├── Connectivity Virtual WAN (consumes LAW ID + GUID)
+  ├── Identity                (consumes LAW ID)
+  └── Security                (consumes LAW ID + name)
+----
+
+=== Connectivity Module Integration
+
+The connectivity module uses these outputs for:
+
+* **AMPLS** — Links the Log Analytics Workspace to a private network
+* **Diagnostic settings** — Sends firewall, bastion, and gateway logs to the workspace
+* **Traffic Analytics** — Uses the workspace GUID for network flow analytics
+
+=== Identity Module Integration
+
+The identity module reads management outputs for:
+
+* **VM diagnostics** — Sends domain controller logs and metrics to the workspace via `log_analytics_workspace_id`
+
+=== Security Module Integration
+
+The security module reads management outputs for:
+
+* **Microsoft Sentinel** — Enables Sentinel on the Log Analytics Workspace
+* **Diagnostic settings** — Sends Key Vault and security resource logs to the workspace
+
+=== Downstream Module Configuration
+
+Downstream modules consume management outputs via Terraform remote state.
+Configure the following in the connectivity, identity, or security module's `terraform.tfvars`:
+
+[source,hcl]
+----
+management_remote_state = {
+  storage_account_name = "<tfstate-storage-account>"
+}
+----
+
+NOTE: The `management_remote_state` variable is defined in the downstream modules, not in the management module. See the connectivity module documentation for full configuration options.

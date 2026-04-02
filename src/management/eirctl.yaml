@@ -6,16 +6,6 @@ import:
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/infra/terraform.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/git/eirctl.yaml
 
-watchers:
-  lint:
-    watch: ["*.yml"]
-    events: [create, write]
-    task: lint:yaml
-  terraform:
-    watch: ["*.tf", "*.tfvars"]
-    events: [create, write]
-    task: lint:terraform:format
-
 # Local Tasks
 # tag::tasks[]
 tasks:

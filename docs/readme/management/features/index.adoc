@@ -1,0 +1,41 @@
+[[features]]
+== Features
+
+The following table summarises the features available in this module and their default state.
+
+[cols="2,1,4",options="header"]
+|===
+| Feature | Default | Description
+
+| Log Analytics Workspace
+| ✅ Enabled
+| Central logging hub for all Azure resources. Private-only by default with Entra ID authentication.
+
+| Data Collection Rules
+| ✅ Enabled
+| Change Tracking and VM Insights enabled by default. Defender for SQL is optional.
+
+| Azure Monitor Agent Identity
+| ✅ Enabled
+| User-assigned managed identity for policy-driven AMA deployment.
+
+| Resource Group Locks
+| ✅ Enabled
+| `CanNotDelete` locks on resource groups to prevent accidental deletion.
+
+| Log Analytics Diagnostics
+| ✅ Enabled
+| Self-monitoring diagnostic settings (Audit, SummaryLogs, AllMetrics).
+
+| Subscription Activity Logs
+| ✅ Enabled
+| Routes Activity Logs (Administrative, Security, Policy, ServiceHealth, ResourceHealth, Alert, Recommendation) into Log Analytics.
+
+| Health Monitoring Alerts
+| ❌ Disabled
+| Ingestion latency, search availability, query failures/runtime, and data ingestion guardrails. Requires an Action Group.
+
+| Management Groups
+| ❌ Disabled
+| ALZ management group hierarchy with Azure Policy assignments and Microsoft Defender for Cloud enablement.
+|===

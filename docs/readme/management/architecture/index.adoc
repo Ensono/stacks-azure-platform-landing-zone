@@ -1,0 +1,99 @@
+[[architecture]]
+== Architecture
+
+=== Management Group Hierarchy
+
+When `management_groups_enabled = true`, the module deploys the standard Azure Landing Zone management group architecture:
+
+[mermaid]
+----
+flowchart TB
+    Tenant["Tenant Root Group"]
+    ALZ["Azure Landing Zones<br/><i>root policies</i>"]
+
+    Platform["Platform"]
+    LandingZones["Landing Zones"]
+    Sandbox["Sandbox"]
+    Decommissioned["Decommissioned"]
+
+    Management["Management<br/><i>management subscription</i>"]
+    Connectivity["Connectivity<br/><i>connectivity subscription</i>"]
+    Identity["Identity<br/><i>identity subscription</i>"]
+    Security["Security<br/><i>security subscription</i>"]
+
+    Corp["Corp<br/><i>private workloads</i>"]
+    Online["Online<br/><i>public workloads</i>"]
+
+    Tenant --> ALZ
+    ALZ --> Platform
+    ALZ --> LandingZones
+    ALZ --> Sandbox
+    ALZ --> Decommissioned
+
+    Platform --> Management
+    Platform --> Connectivity
+    Platform --> Identity
+    Platform --> Security
+
+    LandingZones --> Corp
+    LandingZones --> Online
+
+    style ALZ fill:#0078d4,color:#fff
+    style Platform fill:#5c2d91,color:#fff
+    style LandingZones fill:#008272,color:#fff
+    style Management fill:#5c2d91,color:#fff
+    style Connectivity fill:#5c2d91,color:#fff
+    style Identity fill:#5c2d91,color:#fff
+    style Security fill:#5c2d91,color:#fff
+    style Corp fill:#008272,color:#fff
+    style Online fill:#008272,color:#fff
+----
+
+NOTE: Platform subscriptions are automatically placed into their respective management groups when subscription IDs are provided.
+
+NOTE: Management Groups deployments require elevated permissions (`Management Group Contributor` at Tenant Root level, and `Owner` in each subscription).
+
+=== Policy Assignments
+
+Archetype-based **Azure Policy assignments** from the https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz[ALZ Library] are applied per management group.
+Policy default values and assignments are managed in the `locals_policy_assignments.tf` file.
+
+The module by default uses the standard ALZ Library policies without custom overrides.
+
+=== Microsoft Defender for Cloud
+
+When management groups are enabled, `DeployIfNotExists` policies for Microsoft Defender for Cloud are deployed.
+All Defender plans default to **disabled** — enable individual plans via `microsoft_defender_settings.defender_plans` (e.g., `servers`, `key_vault`, `storage`).
+
+The `microsoft_defender_settings.email_security_contact` is required when management groups are enabled, ensuring security alerts always have a notification target.
+
+See the <<api-reference,API Reference>> for the full list of available Defender plans, sub-features, and pricing details.
+
+=== Azure Monitor Private Link Scope (AMPLS)
+
+This module is designed to work with AMPLS deployed by the connectivity module.
+By default, Log Analytics is configured with secure settings that require private connectivity:
+
+[cols="2,1,4",options="header"]
+|===
+| Setting | Default | Description
+
+| `internet_ingestion_enabled`
+| `false`
+| Blocks data ingestion from public internet
+
+| `internet_query_enabled`
+| `false`
+| Blocks queries from public internet
+
+| `local_authentication_enabled`
+| `false`
+| Requires Entra ID authentication
+|===
+
+The deployment order ensures private connectivity is established:
+
+. **Management module** — Creates Log Analytics Workspace with private-only settings
+. **Connectivity module** — Creates AMPLS and links Log Analytics to private network
+
+WARNING: Enabling public access reduces security. Use only in development environments where AMPLS is not deployed. See <<examples,Examples>> for development configuration.

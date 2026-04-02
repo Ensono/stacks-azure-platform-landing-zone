@@ -58,7 +58,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "law_query_failures" {
 
   name                = "law-query-failures-${terraform.workspace}"
   resource_group_name = coalesce(var.management_resource_settings.resource_group_name, local.resource_names.resource_group)
-  location            = var.location
+  location            = var.region
   scopes              = [module.management_resources[0].log_analytics_workspace.id]
   description         = "Alert when Log Analytics queries fail, indicating potential workspace issues or query problems."
   severity            = 2
@@ -166,7 +166,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "law_query_runtime" {
 
   name                = "law-query-runtime-${terraform.workspace}"
   resource_group_name = coalesce(var.management_resource_settings.resource_group_name, local.resource_names.resource_group)
-  location            = var.location
+  location            = var.region
   scopes              = [module.management_resources[0].log_analytics_workspace.id]
   description         = "Alert when Log Analytics queries exceed ${var.monitoring_alerts.query_duration_threshold_ms} ms, indicating inefficient or stuck workloads."
   severity            = 3

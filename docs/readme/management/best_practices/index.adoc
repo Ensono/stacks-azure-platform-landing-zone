@@ -1,0 +1,118 @@
+[[best-practices]]
+== Best Practices
+
+=== Reliability and Zone Redundancy
+
+The module implements Azure Well-Architected Framework reliability best practices.
+
+==== Log Analytics Workspace
+
+[cols="2,2,4",options="header"]
+|===
+| Feature | Status | Notes
+
+| Data Resilience
+| ✅ Automatic
+| Data replicated across availability zones in supported regions
+
+| Service Resilience
+| ⚠️ Regional
+| Requires dedicated cluster for full zone-redundant service operations
+
+| Diagnostics
+| ✅ Enabled
+| Self-monitoring via diagnostic settings
+|===
+
+**Supported regions for data resilience**: UK South, West Europe, East US, West US 2, and https://learn.microsoft.com/azure/azure-monitor/logs/availability-zones#supported-regions[others].
+
+==== High Availability Requirements
+
+For mission-critical deployments requiring service resilience (not just data resilience):
+
+[source,hcl]
+----
+# Consider dedicated clusters for high-volume, mission-critical workloads
+# Requires 500+ GB/day commitment
+management_resource_settings = {
+  log_analytics_workspace_sku = "CapacityReservation"
+  log_analytics_workspace_reservation_capacity_in_gb_per_day = 500
+}
+----
+
+NOTE: Dedicated clusters provide service resilience (query availability during zone failures) but require minimum 500 GB/day commitment. For most workloads, standard data resilience is sufficient.
+
+=== Cost Optimisation
+
+The module follows Azure Well-Architected Framework cost optimisation guidance.
+
+==== Log Analytics Workspace Cost Settings
+
+[cols="3,1,4",options="header"]
+|===
+| Setting | Default | Cost Impact
+
+| `log_analytics_workspace_daily_quota_gb`
+| `-1` (unlimited)
+| Set a cap to prevent runaway costs
+
+| `log_analytics_workspace_sku`
+| `PerGB2018`
+| Pay-as-you-go pricing
+
+| `log_analytics_workspace_reservation_capacity_in_gb_per_day`
+| `null`
+| Use commitment tiers for 15-25% savings
+|===
+
+==== Estimated Monthly Costs
+
+The following table provides estimated monthly costs for typical deployments.
+Actual costs vary based on data ingestion volume, retention, and region.
+
+[cols="2,3,2",options="header"]
+|===
+| Resource | Configuration | Estimated Cost (GBP)
+
+| Log Analytics Workspace
+| PerGB2018, ~5 GB/day
+| ~£58/month
+
+| Data Collection Rules
+| N/A
+| Included
+
+| User Assigned Managed Identity
+| N/A
+| Free
+
+| Management Groups
+| N/A
+| Free
+
+| Azure Policies
+| N/A
+| Free
+|===
+
+**Typical Total**: ~£58/month (varies by ingestion volume)
+
+TIP: Use the https://azure.microsoft.com/pricing/calculator/[Azure Pricing Calculator] for precise estimates. Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day). Set `log_analytics_workspace_daily_quota_gb` to cap unexpected ingestion costs.
+
+=== Security
+
+==== Private-Only Access
+
+By default, the Log Analytics Workspace is configured for private-only access:
+
+* Internet ingestion disabled
+* Internet queries disabled
+* Local authentication disabled (Entra ID only)
+
+This requires AMPLS to be deployed by the connectivity module for network connectivity.
+See <<architecture,Architecture>> for the deployment order and <<examples,Enabling Public Access>> for development configuration.
+
+==== Resource Locks
+
+Resource groups are protected with `CanNotDelete` locks by default (`resource_group_lock_enabled = true`).
+This prevents accidental deletion of the management resource group and its contents.

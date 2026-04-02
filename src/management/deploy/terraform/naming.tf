@@ -4,8 +4,8 @@ module "naming" {
   for_each = local.naming_instances
 
   suffix = [
-    substr(var.company_name, 0, 3),
-    module.azure_regions.regions_by_name[var.location].geo_code,
+    substr(var.company, 0, 3),
+    module.azure_regions.regions_by_name[var.region].geo_code,
     terraform.workspace,
     each.value.component,
     "001"

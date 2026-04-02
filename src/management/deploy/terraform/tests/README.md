@@ -34,7 +34,7 @@ terraform test -verbose
 ## Default Variables
 
 The `terraform.tfvars` file sets only the required variables (those without defaults):
-`company_name`, `location`, and `management_subscription_id`.
+`company`, `region`, and `management_subscription_id`.
 It also overrides `management_resources_enabled = false` to disable real resource creation.
 
 Optional variables (`connectivity_subscription_id`, `identity_subscription_id`, etc.) are

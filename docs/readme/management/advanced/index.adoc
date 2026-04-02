@@ -1,0 +1,48 @@
+[[advanced]]
+== Advanced Configuration
+
+This section covers management group customisation for organisations that need to modify the default ALZ hierarchy.
+For the default architecture overview, see <<architecture,Architecture>>.
+
+=== Customising Management Groups
+
+==== Updating the Management Group Architecture
+
+If the architecture needs to be changed, update the `alz_custom.alz_architecture_definition.yaml` file:
+
+----
+deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml
+----
+
+==== Using an Existing Management Group
+
+It is recommended to keep the hierarchy flat where possible, but if an existing management group is being used as the root, update the architecture definition file.
+For example:
+
+[source,yaml]
+----
+management_groups:
+  - id: existing_group
+    display_name: Existing Group
+    archetypes:
+      - root
+    parent_id: null # setting to null indicates to the provider that we should use the parent resource id
+    exists: true
+----
+
+==== Using ALZ Library Policies Without Customisation
+
+The module by default uses the standard https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz[ALZ Library] policies without custom overrides.
+Policy default values and assignments are managed in the `locals_policy_assignments.tf` file.
+
+==== Custom Policy Overrides
+
+To customise policy assignments for specific management groups, create or modify archetype override files in:
+
+----
+deploy/terraform/lib/archetype_definitions/
+----
+
+Override files use the naming convention `*_custom.alz_archetype_override.yaml`.
+
+See the https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz[ALZ Library] for the full list of available archetypes and policies.

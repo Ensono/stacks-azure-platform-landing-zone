@@ -35,8 +35,8 @@ eirctl infrastructure:apply
 
 | Variable | Description |
 | -------- | ----------- |
-| `company_name` | Company prefix for resource naming (e.g., "ensono") |
-| `location` | Azure region (e.g., "uksouth") |
+| `company` | Company prefix for resource naming (e.g., "ensono") |
+| `region` | Azure region (e.g., "uksouth") |
 | `management_subscription_id` | Management subscription ID |
 | `connectivity_subscription_id` | Connectivity subscription ID (required unless `skip_subscription_placement = true`) |
 | `identity_subscription_id` | Identity subscription ID (required unless `skip_subscription_placement = true`) |

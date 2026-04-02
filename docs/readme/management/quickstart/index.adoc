@@ -1,0 +1,41 @@
+[[quickstart]]
+== Quick Start
+
+Deploy the management module with minimal configuration to get centralised logging up and running.
+
+=== Minimal Deployment
+
+Deploys a Log Analytics Workspace and Data Collection Rules with sensible defaults:
+
+[source,hcl]
+----
+company                    = "ensono"
+region                     = "uksouth"
+management_subscription_id = "00000000-0000-0000-0000-000000000000"
+----
+
+This provisions:
+
+* A **Log Analytics Workspace** with private-only access and Entra ID authentication
+* **Data Collection Rules** for Change Tracking and VM Insights
+* A **User Assigned Managed Identity** for Azure Monitor Agent
+* **Self-monitoring diagnostics** on the workspace
+* **Subscription Activity Log** routing to the workspace
+
+=== Deployment Order
+
+When deploying the full platform, the management module is always deployed **first**:
+
+----
+1. Management Module      ← you are here
+2. Connectivity Module    (consumes LAW ID and GUID)
+3. Identity Module        (consumes LAW ID)
+4. Security Module        (consumes LAW ID and name)
+----
+
+=== What's Next?
+
+* <<features,Features>> — See all available features and their defaults
+* <<examples,Examples>> — Configuration examples for common scenarios
+* <<architecture,Architecture>> — Management group hierarchy and architecture details
+* <<integration,Integration>> — How this module connects to other landing zone modules
