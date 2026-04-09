@@ -68,6 +68,8 @@ run "monitoring_alerts_auto_enabled_with_action_group" {
   state_key = "alerts_auto_enabled"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     monitoring_alerts = {
       action_group_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Insights/actionGroups/test-ag"
     }
@@ -82,6 +84,11 @@ run "monitoring_alerts_auto_enabled_with_action_group" {
 run "monitoring_alerts_disabled_without_action_group" {
   command   = plan
   state_key = "alerts_disabled"
+
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
 
   assert {
     condition     = local.monitoring_alerts_enabled == false
@@ -98,6 +105,8 @@ run "ingest_threshold_gb_to_bytes_conversion" {
   state_key = "gb_bytes"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     monitoring_alerts = {
       action_group_id          = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Insights/actionGroups/test-ag"
       data_ingest_threshold_gb = 100
@@ -116,6 +125,8 @@ run "monitoring_alerts_explicit_disable_overrides_action_group" {
   state_key = "explicit_disable"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     monitoring_alerts = {
       enabled         = false
       action_group_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Insights/actionGroups/test-ag"

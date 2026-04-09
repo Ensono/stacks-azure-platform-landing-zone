@@ -68,6 +68,11 @@ run "policy_defaults_computed_safely" {
   command   = plan
   state_key = "policy_defaults"
 
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
+
   # Policy defaults should be computed safely when resources disabled
   assert {
     condition     = local.policy_default_values != null
@@ -89,6 +94,11 @@ run "resource_groups_empty_when_disabled" {
   command   = plan
   state_key = "rg_disabled"
 
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
+
   assert {
     condition     = length(local.resource_groups) == 0
     error_message = "resource_groups should be empty when management_resources_enabled is false."
@@ -100,6 +110,7 @@ run "resource_groups_populated_when_enabled" {
   state_key = "rg_enabled"
 
   variables {
+    management_groups_enabled    = false
     management_resources_enabled = true
   }
 
