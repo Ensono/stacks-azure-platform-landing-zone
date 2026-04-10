@@ -1,5 +1,5 @@
 # Network Watcher for network diagnostics
-# Provides: Connection Monitor, IP Flow Verify, Next Hop, Packet Capture, NSG Diagnostics
+# Provides: Connection Monitor, IP Flow Verify, Next Hop, Packet Capture, VNet Flow Logs
 
 resource "azurerm_network_watcher" "this" {
   for_each = var.network_watcher.enabled ? local.enabled_hubs : {}
@@ -25,7 +25,6 @@ resource "azurerm_network_watcher_flow_log" "sidecar_vnet" {
   target_resource_id   = module.virtual_wan.sidecar_virtual_network_resource_ids[each.key]
   storage_account_id   = local.flow_logs_storage_account_ids[each.key]
   enabled              = true
-  version              = 2
   tags                 = merge(var.tags, each.value.tags)
 
   retention_policy {

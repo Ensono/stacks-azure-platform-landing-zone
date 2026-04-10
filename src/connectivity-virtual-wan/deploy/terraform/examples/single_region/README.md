@@ -23,7 +23,7 @@ flowchart TB
     subgraph sidecar["Sidecar VNet (10.0.4.0/22)"]
         direction TB
         dns["✓ Private DNS Zones"]
-        resolver["✓ DNS Resolver"]
+        resolver["○ DNS Resolver"]
         autoreg["✓ Auto-Registration Zone"]
         pe["✓ Private Endpoints Subnet"]
         bastion["○ Bastion"]
@@ -41,7 +41,7 @@ flowchart TB
     style sidecar fill:#50E6FF,stroke:#0078D4,color:#000
     style fw fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns fill:#107C10,stroke:#0B5C0B,color:#fff
-    style resolver fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver fill:#605E5C,stroke:#3B3A39,color:#fff
     style autoreg fill:#107C10,stroke:#0B5C0B,color:#fff
     style pe fill:#107C10,stroke:#0B5C0B,color:#fff
     style bastion fill:#605E5C,stroke:#3B3A39,color:#fff
@@ -104,7 +104,7 @@ hubs = { ukwest = {} }
 hubs = {
   uksouth = {
     features = {
-      firewall_sku         = "Basic"  # Cost saving: ~£180/month vs Standard ~£720/month
+      firewall_sku         = "Basic"  # Cost saving: ~£230/month vs Standard ~£720/month
       bastion              = true     # Secure VM access
       vpn_gateway          = true     # On-premises connectivity (S2S/P2S)
       private_dns_resolver = true     # Hybrid DNS resolution
@@ -132,11 +132,11 @@ hubs = {
 
 | Component | Monthly Cost (approx) |
 |-----------|----------------------|
-| Virtual Hub | ~£240 |
+| Virtual Hub | ~£145 |
 | Azure Firewall (Standard) | ~£720 |
-| Azure Firewall (Basic) | ~£180 |
+| Azure Firewall (Basic) | ~£230 |
 | Azure Bastion (Basic) | ~£110 |
-| VPN Gateway (VpnGw1) | ~£110 |
+| VPN Gateway (1 Scale Unit) | ~£210 |
 | Private DNS Resolver | ~£145 |
 | AMPLS Private Endpoint | ~£7 |
 

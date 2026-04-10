@@ -1,4 +1,3 @@
-[[architecture]]
 == Architecture
 
 === IP Address Layout
@@ -10,11 +9,11 @@ Each hub region receives a `/16` block from the `10.0.0.0/8` address space. With
 
 | Hub Address Space | `10.x.0.0/16` | Per-region address space
 | Virtual Hub Prefix | `10.x.0.0/23` | Virtual Hub managed address space
-| Sidecar VNet | `10.x.4.0/24` | Sidecar services address space
+| Sidecar VNet | `10.x.4.0/22` | Sidecar services address space
 | AzureBastionSubnet | `10.x.4.0/26` | Azure Bastion (64 IPs)
 | GatewaySubnet | `10.x.4.64/27` | VPN/ExpressRoute gateway (32 IPs)
-| DNS Resolver | `10.x.4.96/28` | Private DNS Resolver inbound (16 IPs)
-| Private Endpoints | `10.x.4.128/26` | AMPLS private endpoints (64 IPs)
+| DNS Resolver | `10.x.4.192/28` | Private DNS Resolver inbound (16 IPs)
+| Private Endpoints | `10.x.4.208/28` | AMPLS private endpoints (16 IPs)
 |===
 
 === IP Allocation Algorithm
@@ -35,11 +34,11 @@ The module supports up to 256 regions using the `10.0.0.0/8` address space.
 Unlike hub-spoke topology where all resources reside in the hub VNet, Virtual WAN places some resources in a companion sidecar VNet:
 
 ----
-Virtual Hub (/23)          Sidecar VNet (/24)
+Virtual Hub (/23)          Sidecar VNet (/22)
 ├── Azure Firewall         ├── AzureBastionSubnet /26
 ├── VPN Gateway            ├── GatewaySubnet /27
 ├── ExpressRoute Gateway   ├── DNS Resolver /28
-└── Route Tables           └── Private Endpoints /26
+└── Route Tables           └── Private Endpoints /28
 ----
 
 The sidecar VNet is automatically connected to the virtual hub for reachability.

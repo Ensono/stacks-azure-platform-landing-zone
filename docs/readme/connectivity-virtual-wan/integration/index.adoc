@@ -1,4 +1,3 @@
-[[integration]]
 == Module Integration
 
 === Management Landing Zone
@@ -56,13 +55,23 @@ resource "azurerm_private_dns_zone_virtual_network_link" "spoke" {
 |===
 | Output | Description
 
-| `virtual_wan_id` | Virtual WAN resource ID
+| `virtual_wan_resource_id` | Virtual WAN resource ID
+| `virtual_wan_name` | Virtual WAN name
 | `virtual_hub_resource_ids` | Virtual Hub IDs, keyed by region
+| `virtual_hub_resource_names` | Virtual Hub names, keyed by region
 | `firewall_resource_ids` | Firewall IDs, keyed by region
 | `firewall_private_ip_addresses` | Firewall private IPs, keyed by region
-| `vpn_gateway_resource_ids` | VPN Gateway IDs, keyed by region
+| `firewall_public_ip_addresses` | Firewall public IPs, keyed by region
+| `firewall_policy_resource_ids` | Firewall Policy IDs, keyed by region
+| `dns_server_ip_addresses` | DNS server IPs (firewall or resolver), keyed by region
 | `express_route_gateway_resource_ids` | ExpressRoute Gateway IDs, keyed by region
+| `bastion_host_resource_ids` | Bastion Host IDs, keyed by region
+| `private_dns_resolver_resource_ids` | DNS Resolver IDs, keyed by region
 | `sidecar_virtual_network_resource_ids` | Sidecar VNet IDs, keyed by region
-| `private_dns_zone_resource_ids` | DNS Zone IDs, keyed by region
 | `resource_group_ids` | Resource Group IDs, keyed by purpose
+| `resource_group_names` | Resource Group names, keyed by purpose
+| `network_watcher_ids` | Network Watcher IDs, keyed by region
+| `flow_log_ids` | VNet flow log IDs, keyed by region
+| `flow_logs_storage_account_ids` | Flow logs storage account IDs, keyed by region
+| `azure_monitor_private_link_scope_id` | AMPLS resource ID
 |===

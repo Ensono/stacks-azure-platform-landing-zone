@@ -1,4 +1,3 @@
-[[features]]
 == Features
 
 |===
@@ -16,7 +15,9 @@
 | VPN Gateway | ❌ | Site-to-Site/Point-to-Site VPN
 | ExpressRoute Gateway | ❌ | ExpressRoute connectivity
 | DDoS Protection Plan | ❌ | Shared across all hubs
-| Flow Logs Storage | ✅ | Per-hub storage account for NSG/VNet flow logs
+| Network Watcher | ✅ | Free network diagnostics per region
+| VNet Flow Logs | ❌ | Per-hub storage account for sidecar VNet flow logs
+| Private Endpoints NSG | ✅ | NSG on private endpoints subnet
 | Azure Monitor Private Link | ✅ | AMPLS for secure monitoring connectivity
 | Metric Alerts | ✅ | Firewall, gateway, and virtual hub health alerts
 |===

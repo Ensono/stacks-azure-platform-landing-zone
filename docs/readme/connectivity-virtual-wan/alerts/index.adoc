@@ -1,4 +1,3 @@
-[[alerts]]
 == Metric Alerts
 
 Metric alerts are deployed when a Log Analytics workspace ID is available (via management remote state or direct configuration). Alerts target firewalls, gateways, and virtual hubs.

@@ -1,4 +1,3 @@
-[[best-practices]]
 == Best Practices
 
 === Firewall DNS Proxy
@@ -35,7 +34,7 @@ To override zone configuration:
 hubs = {
   uksouth = {
     features = {
-      availability_zones = ["1", "2", "3"]
+      availability_zones = [1, 2, 3]
     }
   }
 }

@@ -1,11 +1,42 @@
-[[advanced]]
 == Advanced Configuration
 
-=== Flow Logs Storage
+=== VNet Flow Logs
 
-Each hub region deploys a storage account for NSG and VNet flow logs. The storage account name is globally unique, generated using the naming module's `name_unique` suffix.
+Flow logs capture traffic in the sidecar virtual networks (Bastion, DNS Resolver, private endpoints). Virtual WAN hub traffic is managed by Microsoft and not visible via VNet flow logs. Flow logs are disabled by default.
 
-To use an externally created storage account, configure the storage account resource ID in the hub settings.
+[source,hcl]
+----
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
+----
+
+Each hub region deploys a storage account for flow log data. The storage account name is globally unique, generated using the naming module's `name_unique` suffix.
+
+To use an externally created storage account:
+
+[source,hcl]
+----
+flow_logs = {
+  enabled = true
+  storage = {
+    create                      = false
+    external_storage_account_id = "/subscriptions/.../storageAccounts/stexisting"
+  }
+}
+----
+
+Optional Traffic Analytics requires a Log Analytics workspace (from management remote state):
+
+[source,hcl]
+----
+flow_logs = {
+  enabled                   = true
+  traffic_analytics_enabled = true
+  storage                   = { create = true }
+}
+----
 
 === Azure Monitor Private Link Scope (AMPLS)
 
@@ -48,3 +79,48 @@ When DNS servers are specified and DNS proxy is enabled, the firewall forwards D
 === Network Watcher
 
 Network Watcher is deployed per region when enabled. It provides network diagnostic capabilities including connection monitor, packet capture, and flow logs.
+
+=== Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/` that validate configuration logic using mock providers.
+These tests run in CI when changes are made to the module and do not require Azure credentials.
+
+==== Running Tests
+
+[source,bash]
+----
+eirctl tests
+----
+
+To run a specific test file:
+
+[source,bash]
+----
+eirctl tests TF_TEST_FILTER=tests/hub_networking.tftest.hcl
+----
+
+==== Test Coverage
+
+[cols="2,3,4",options="header"]
+|===
+| Test File | Test Cases | What It Validates
+
+| `hub_networking.tftest.hcl`
+| single_hub_addressing, multi_hub_addressing, custom_address_space
+| Default /16 allocation, multi-hub unique addressing, hub index determinism, custom address space overrides, virtual hub prefix derivation
+
+| `hub_resources.tftest.hcl`
+| hub_defaults, enabled_hubs_filtering, feature_toggles_propagate, firewall_sku_propagates, resource_groups_created, naming_conventions, ddos_creates_resource_group, ampls_dns_zones_and_diagnostics, flow_logs_enabled_with_storage
+| Feature flag defaults and propagation, firewall SKU/DNS proxy/threat intel, resource group creation, CAF naming patterns, DDoS resource group and settings, AMPLS DNS zone count, diagnostics enablement with workspace ID, flow logs with storage
+|===
+
+==== Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the established patterns:
+
+* Use `command = plan` with `state_key` to isolate test runs
+* Assert against locals and computed values, not Azure API responses
+* Enable `parallel = true` at the test level
+* Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.

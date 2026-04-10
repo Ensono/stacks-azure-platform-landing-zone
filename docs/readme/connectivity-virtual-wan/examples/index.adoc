@@ -1,4 +1,3 @@
-[[examples]]
 == Configuration Examples
 
 === Multi-Region Deployment
@@ -29,7 +28,7 @@ Use Firewall Basic SKU for dev/test environments:
 hubs = {
   uksouth = {
     features = {
-      firewall_sku = "Basic"  # ~£180/month vs Standard ~£720/month
+      firewall_sku = "Basic"  # ~£230/month vs Standard ~£720/month
     }
   }
 }
@@ -38,9 +37,9 @@ hubs = {
 |===
 | Firewall SKU | Monthly Cost | Use Case
 
-| Basic | ~£180 | Dev/Test, low throughput
+| Basic | ~£230 | Dev/Test, low throughput
 | Standard | ~£720 | Production, threat intelligence
-| Premium | ~£800 | TLS inspection, IDPS signatures
+| Premium | ~£1,010 | TLS inspection, IDPS signatures
 |===
 
 WARNING: Firewall Basic SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
@@ -95,7 +94,7 @@ hubs = {
 
 === DDoS Protection Plan
 
-DDoS Protection Plan is disabled by default due to significant cost (~£2,200/month flat fee).
+DDoS Protection Plan is disabled by default due to significant cost (~£2,330/month flat fee).
 
 [source,hcl]
 ----
@@ -136,21 +135,23 @@ management_remote_state = {
 
 === Cost Estimation
 
-Estimated monthly costs per hub (UK South, January 2025):
+Estimated monthly costs per hub (UK South, April 2026):
 
 |===
 | Resource | Default | Monthly Cost (GBP) | Notes
 
-| Virtual Hub | ✅ | ~£210 | Base hub cost
-| Azure Firewall Standard | ✅ | ~£720 | Hub firewall
-| Azure Firewall Basic | ❌ | ~£180 | Dev/test alternative
-| VPN Gateway | ❌ | ~£140 | Scale unit 1
-| ExpressRoute Gateway | ❌ | ~£140 | Scale unit 1
-| Azure Bastion Standard | ❌ | ~£140 | 2 scale units
-| DDoS Protection Plan | ❌ | ~£2,200 | Shared across subscription
+| Virtual Hub | ✅ | ~£145 | Base hub cost (~£0.20/hr)
+| Azure Firewall Standard | ✅ | ~£720 | Secured hub (~£0.99/hr)
+| Azure Firewall Basic | ❌ | ~£230 | Dev/test alternative (~£0.31/hr)
+| VPN Gateway | ❌ | ~£210 | 1 scale unit (~£0.29/hr)
+| ExpressRoute Gateway | ❌ | ~£240 | 1 scale unit (~£0.33/hr)
+| Azure Bastion Standard | ❌ | ~£170 | 2 scale units (~£0.23/hr)
+| Azure Bastion Basic | ❌ | ~£110 | Single instance (~£0.15/hr)
+| Private DNS Resolver | ❌ | ~£145 | Inbound endpoint (~£142/month)
+| DDoS Protection Plan | ❌ | ~£2,330 | Shared across subscription
 | Log Analytics | - | Variable | ~£2/GB/month ingestion
-| **Minimum (Hub + Firewall)** | | **~£930** |
-| **Full Production** | | **~£1,210** | Hub + Firewall + VPN + Bastion
+| **Minimum (Hub + Firewall)** | | **~£865** |
+| **Full Production** | | **~£1,185** | Hub + Firewall + VPN + Bastion Basic
 |===
 
 TIP: Virtual WAN costs more than hub-spoke due to the managed hub infrastructure, but provides simplified routing and better scalability for large deployments.

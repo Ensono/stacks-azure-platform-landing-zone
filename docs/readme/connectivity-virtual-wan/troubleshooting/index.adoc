@@ -1,4 +1,3 @@
-[[troubleshooting]]
 == Troubleshooting
 
 === Common Issues
@@ -43,11 +42,21 @@ resource_group_lock_enabled = false
 
 **Fix**: Increase Terraform timeouts if needed. The AVM module sets appropriate defaults.
 
-=== Testing
+==== Flow logs validation fails
 
-Unit tests validate configuration logic without deploying infrastructure. Tests use mock providers to run offline.
-
-[source,bash]
 ----
-terraform test
+Error: Flow logs require network_watcher.enabled = true
+----
+
+**Cause**: Flow logs depend on Network Watcher. Either Network Watcher is disabled or no storage is configured.
+
+**Fix**: Ensure both are enabled:
+
+[source,hcl]
+----
+network_watcher = { enabled = true }
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
 ----

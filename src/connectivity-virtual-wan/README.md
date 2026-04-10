@@ -2,9 +2,15 @@
 
 ## Overview
 
-This module deploys a Virtual WAN network topology using Azure Verified
-Modules (AVM). It supports single or multi-region deployments with
-automatic IP allocation and CAF-compliant naming.
+The **Stacks Azure Platform Landing Zone Connectivity Virtual WAN**
+module deploys a Virtual WAN network topology using the below Azure
+Verified Modules:
+
+[Virtual
+WAN](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm/latest)
+
+It supports single or multi-region deployments with automatic IP
+allocation and CAF-compliant naming.
 
 Virtual WAN provides a fully managed hub infrastructure with automatic
 any-to-any routing, integrating VPN and ExpressRoute gateways directly
@@ -39,6 +45,7 @@ flowchart TB
             Bastion["AzureBastionSubnet /26"]
             GWSubnet["GatewaySubnet /27"]
             Resolver["DNS Resolver /28"]
+            PE["Private Endpoints /28"]
         end
     end
 
@@ -98,7 +105,9 @@ flowchart TB
 | VPN Gateway                | ❌      | Site-to-Site/Point-to-Site VPN                      |
 | ExpressRoute Gateway       | ❌      | ExpressRoute connectivity                           |
 | DDoS Protection Plan       | ❌      | Shared across all hubs                              |
-| Flow Logs Storage          | ✅      | Per-hub storage account for NSG/VNet flow logs      |
+| Network Watcher            | ✅      | Free network diagnostics per region                 |
+| VNet Flow Logs             | ❌      | Per-hub storage account for sidecar VNet flow logs  |
+| Private Endpoints NSG      | ✅      | NSG on private endpoints subnet                     |
 | Azure Monitor Private Link | ✅      | AMPLS for secure monitoring connectivity            |
 | Metric Alerts              | ✅      | Firewall, gateway, and virtual hub health alerts    |
 
@@ -127,12 +136,6 @@ hubs = {
 2.  Deploy this module with `management_remote_state` pointing to the
     management state
 
-### Required Environment Variable
-
-``` bash
-export ARM_SUBSCRIPTION_ID="<connectivity-subscription-id>"
-```
-
 ## Architecture
 
 ### IP Address Layout
@@ -145,11 +148,11 @@ sidecar VNet uses adjacent subnets.
 |--------------------|-----------------|---------------------------------------|
 | Hub Address Space  | `10.x.0.0/16`   | Per-region address space              |
 | Virtual Hub Prefix | `10.x.0.0/23`   | Virtual Hub managed address space     |
-| Sidecar VNet       | `10.x.4.0/24`   | Sidecar services address space        |
+| Sidecar VNet       | `10.x.4.0/22`   | Sidecar services address space        |
 | AzureBastionSubnet | `10.x.4.0/26`   | Azure Bastion (64 IPs)                |
 | GatewaySubnet      | `10.x.4.64/27`  | VPN/ExpressRoute gateway (32 IPs)     |
-| DNS Resolver       | `10.x.4.96/28`  | Private DNS Resolver inbound (16 IPs) |
-| Private Endpoints  | `10.x.4.128/26` | AMPLS private endpoints (64 IPs)      |
+| DNS Resolver       | `10.x.4.192/28` | Private DNS Resolver inbound (16 IPs) |
+| Private Endpoints  | `10.x.4.208/28` | AMPLS private endpoints (16 IPs)      |
 
 ### IP Allocation Algorithm
 
@@ -168,11 +171,11 @@ space.
 Unlike hub-spoke topology where all resources reside in the hub VNet,
 Virtual WAN places some resources in a companion sidecar VNet:
 
-    Virtual Hub (/23)          Sidecar VNet (/24)
+    Virtual Hub (/23)          Sidecar VNet (/22)
     ├── Azure Firewall         ├── AzureBastionSubnet /26
     ├── VPN Gateway            ├── GatewaySubnet /27
     ├── ExpressRoute Gateway   ├── DNS Resolver /28
-    └── Route Tables           └── Private Endpoints /26
+    └── Route Tables           └── Private Endpoints /28
 
 The sidecar VNet is automatically connected to the virtual hub for
 reachability.
@@ -203,7 +206,7 @@ Use Firewall Basic SKU for dev/test environments:
 hubs = {
   uksouth = {
     features = {
-      firewall_sku = "Basic"  # ~£180/month vs Standard ~£720/month
+      firewall_sku = "Basic"  # ~£230/month vs Standard ~£720/month
     }
   }
 }
@@ -211,9 +214,9 @@ hubs = {
 
 | Firewall SKU | Monthly Cost | Use Case                        |
 |--------------|--------------|---------------------------------|
-| Basic        | ~£180        | Dev/Test, low throughput        |
+| Basic        | ~£230        | Dev/Test, low throughput        |
 | Standard     | ~£720        | Production, threat intelligence |
-| Premium      | ~£800        | TLS inspection, IDPS signatures |
+| Premium      | ~£1,010      | TLS inspection, IDPS signatures |
 
 <div class="warning">
 
@@ -270,7 +273,7 @@ hubs = {
 ### DDoS Protection Plan
 
 DDoS Protection Plan is disabled by default due to significant cost
-(~£2,200/month flat fee).
+(~£2,330/month flat fee).
 
 ``` hcl
 ddos_protection_plan = {
@@ -308,20 +311,22 @@ management_remote_state = {
 
 ### Cost Estimation
 
-Estimated monthly costs per hub (UK South, January 2025):
+Estimated monthly costs per hub (UK South, April 2026):
 
-| Resource                     | Default | Monthly Cost (GBP) | Notes                          |
-|------------------------------|---------|--------------------|--------------------------------|
-| Virtual Hub                  | ✅      | ~£210              | Base hub cost                  |
-| Azure Firewall Standard      | ✅      | ~£720              | Hub firewall                   |
-| Azure Firewall Basic         | ❌      | ~£180              | Dev/test alternative           |
-| VPN Gateway                  | ❌      | ~£140              | Scale unit 1                   |
-| ExpressRoute Gateway         | ❌      | ~£140              | Scale unit 1                   |
-| Azure Bastion Standard       | ❌      | ~£140              | 2 scale units                  |
-| DDoS Protection Plan         | ❌      | ~£2,200            | Shared across subscription     |
-| Log Analytics                | \-      | Variable           | ~£2/GB/month ingestion         |
-| **Minimum (Hub + Firewall)** |         | **~£930**          |                                |
-| **Full Production**          |         | **~£1,210**        | Hub + Firewall + VPN + Bastion |
+| Resource                     | Default | Monthly Cost (GBP) | Notes                                |
+|------------------------------|---------|--------------------|--------------------------------------|
+| Virtual Hub                  | ✅      | ~£145              | Base hub cost (~£0.20/hr)            |
+| Azure Firewall Standard      | ✅      | ~£720              | Secured hub (~£0.99/hr)              |
+| Azure Firewall Basic         | ❌      | ~£230              | Dev/test alternative (~£0.31/hr)     |
+| VPN Gateway                  | ❌      | ~£210              | 1 scale unit (~£0.29/hr)             |
+| ExpressRoute Gateway         | ❌      | ~£240              | 1 scale unit (~£0.33/hr)             |
+| Azure Bastion Standard       | ❌      | ~£170              | 2 scale units (~£0.23/hr)            |
+| Azure Bastion Basic          | ❌      | ~£110              | Single instance (~£0.15/hr)          |
+| Private DNS Resolver         | ❌      | ~£145              | Inbound endpoint (~£142/month)       |
+| DDoS Protection Plan         | ❌      | ~£2,330            | Shared across subscription           |
+| Log Analytics                | \-      | Variable           | ~£2/GB/month ingestion               |
+| **Minimum (Hub + Firewall)** |         | **~£865**          |                                      |
+| **Full Production**          |         | **~£1,185**        | Hub + Firewall + VPN + Bastion Basic |
 
 <div class="tip">
 
@@ -364,36 +369,39 @@ for large deployments.
 
 ## Resource Naming
 
-All resources use [CAF naming
-conventions](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
-via the
-[Azure/naming](https://registry.terraform.io/modules/Azure/naming/azurerm/latest)
+Resources follow [Cloud Adoption Framework
+(CAF)](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
+naming conventions using the [Azure
+Naming](https://registry.terraform.io/modules/Azure/naming/azurerm/latest)
 module. Names can be overridden per hub using `name_overrides`.
 
 ### Generated Names
 
-With `company = "ensono"` and region `uksouth`:
+With `company = "ensono"`, region `uksouth` (geo_code `uks`), and
+workspace `prd`:
 
-| Resource             | Generated Name           | Name Override Key         |
-|----------------------|--------------------------|---------------------------|
-| Resource Group       | `rg-hub-uksouth`         | `resource_group`          |
-| Virtual WAN          | `vwan-hub-uksouth`       | \-                        |
-| Virtual Hub          | `vhub-hub-uksouth`       | `virtual_hub`             |
-| Sidecar VNet         | `vnet-hub-uksouth`       | `sidecar_virtual_network` |
-| Firewall             | `afw-hub-uksouth`        | `firewall`                |
-| Firewall Policy      | `afwp-hub-uksouth`       | `firewall_policy`         |
-| Bastion Host         | `bas-hub-bas-uksouth`    | `bastion`                 |
-| VPN Gateway          | `vwan-hub-vpn-uksouth`   | `vpn_gateway`             |
-| ExpressRoute Gateway | `vwan-hub-er-uksouth`    | `expressroute_gateway`    |
-| DNS Resolver         | `dnspr-hub-dns-uksouth`  | `private_dns_resolver`    |
-| Flow Logs Storage    | `st<unique>hubfluksouth` | \-                        |
+| Resource             | Generated Name                  | Name Override Key         |
+|----------------------|---------------------------------|---------------------------|
+| Resource Group       | `rg-ens-uks-prd-hub-001`        | `resource_group`          |
+| Virtual WAN          | `vwan-ens-uks-prd-hub-001`      | \-                        |
+| Virtual Hub          | `vhub-ens-uks-prd-hub-001`      | `virtual_hub`             |
+| Sidecar VNet         | `vnet-ens-uks-prd-hub-001`      | `sidecar_virtual_network` |
+| Firewall             | `afw-ens-uks-prd-hub-001`       | `firewall`                |
+| Firewall Policy      | `afwp-ens-uks-prd-hub-001`      | `firewall_policy`         |
+| Bastion Host         | `bas-ens-uks-prd-hub-bas-001`   | `bastion`                 |
+| VPN Gateway          | `vwan-ens-uks-prd-hub-vpn-001`  | `vpn_gateway`             |
+| ExpressRoute Gateway | `vwan-ens-uks-prd-hub-er-001`   | `expressroute_gateway`    |
+| DNS Resolver         | `dnspr-ens-uks-prd-hub-dns-001` | `private_dns_resolver`    |
+| Flow Logs Storage    | `st<unique>ensukshubfl001`      | \-                        |
 
 ### Naming Pattern
 
-Names follow the pattern: `{caf_prefix}-{company}-{component}-{region}`
+Names follow the pattern:
+`{caf_prefix}-{company_3}-{geo_code}-{workspace}-{component}-{instance}`
 
-The module uses `substr(var.company, 0, 5)` to limit the company prefix
-length, ensuring resource names stay within Azure limits.
+The module uses `substr(var.company, 0, 3)` to limit the company prefix
+length and the region’s `geo_code` (e.g., `uks` for UK South), ensuring
+resource names stay within Azure limits.
 
 ## Module Integration
 
@@ -454,17 +462,27 @@ resource "azurerm_private_dns_zone_virtual_network_link" "spoke" {
 
 ### Available Outputs
 
-| Output                                 | Description                               |
-|----------------------------------------|-------------------------------------------|
-| `virtual_wan_id`                       | Virtual WAN resource ID                   |
-| `virtual_hub_resource_ids`             | Virtual Hub IDs, keyed by region          |
-| `firewall_resource_ids`                | Firewall IDs, keyed by region             |
-| `firewall_private_ip_addresses`        | Firewall private IPs, keyed by region     |
-| `vpn_gateway_resource_ids`             | VPN Gateway IDs, keyed by region          |
-| `express_route_gateway_resource_ids`   | ExpressRoute Gateway IDs, keyed by region |
-| `sidecar_virtual_network_resource_ids` | Sidecar VNet IDs, keyed by region         |
-| `private_dns_zone_resource_ids`        | DNS Zone IDs, keyed by region             |
-| `resource_group_ids`                   | Resource Group IDs, keyed by purpose      |
+| Output                                 | Description                                            |
+|----------------------------------------|--------------------------------------------------------|
+| `virtual_wan_resource_id`              | Virtual WAN resource ID                                |
+| `virtual_wan_name`                     | Virtual WAN name                                       |
+| `virtual_hub_resource_ids`             | Virtual Hub IDs, keyed by region                       |
+| `virtual_hub_resource_names`           | Virtual Hub names, keyed by region                     |
+| `firewall_resource_ids`                | Firewall IDs, keyed by region                          |
+| `firewall_private_ip_addresses`        | Firewall private IPs, keyed by region                  |
+| `firewall_public_ip_addresses`         | Firewall public IPs, keyed by region                   |
+| `firewall_policy_resource_ids`         | Firewall Policy IDs, keyed by region                   |
+| `dns_server_ip_addresses`              | DNS server IPs (firewall or resolver), keyed by region |
+| `express_route_gateway_resource_ids`   | ExpressRoute Gateway IDs, keyed by region              |
+| `bastion_host_resource_ids`            | Bastion Host IDs, keyed by region                      |
+| `private_dns_resolver_resource_ids`    | DNS Resolver IDs, keyed by region                      |
+| `sidecar_virtual_network_resource_ids` | Sidecar VNet IDs, keyed by region                      |
+| `resource_group_ids`                   | Resource Group IDs, keyed by purpose                   |
+| `resource_group_names`                 | Resource Group names, keyed by purpose                 |
+| `network_watcher_ids`                  | Network Watcher IDs, keyed by region                   |
+| `flow_log_ids`                         | VNet flow log IDs, keyed by region                     |
+| `flow_logs_storage_account_ids`        | Flow logs storage account IDs, keyed by region         |
+| `azure_monitor_private_link_scope_id`  | AMPLS resource ID                                      |
 
 ## Metric Alerts
 
@@ -551,7 +569,7 @@ To override zone configuration:
 hubs = {
   uksouth = {
     features = {
-      availability_zones = ["1", "2", "3"]
+      availability_zones = [1, 2, 3]
     }
   }
 }
@@ -595,14 +613,46 @@ management_remote_state = {
 
 ## Advanced Configuration
 
-### Flow Logs Storage
+### VNet Flow Logs
 
-Each hub region deploys a storage account for NSG and VNet flow logs.
-The storage account name is globally unique, generated using the naming
-module’s `name_unique` suffix.
+Flow logs capture traffic in the sidecar virtual networks (Bastion, DNS
+Resolver, private endpoints). Virtual WAN hub traffic is managed by
+Microsoft and not visible via VNet flow logs. Flow logs are disabled by
+default.
 
-To use an externally created storage account, configure the storage
-account resource ID in the hub settings.
+``` hcl
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
+```
+
+Each hub region deploys a storage account for flow log data. The storage
+account name is globally unique, generated using the naming module’s
+`name_unique` suffix.
+
+To use an externally created storage account:
+
+``` hcl
+flow_logs = {
+  enabled = true
+  storage = {
+    create                      = false
+    external_storage_account_id = "/subscriptions/.../storageAccounts/stexisting"
+  }
+}
+```
+
+Optional Traffic Analytics requires a Log Analytics workspace (from
+management remote state):
+
+``` hcl
+flow_logs = {
+  enabled                   = true
+  traffic_analytics_enabled = true
+  storage                   = { create = true }
+}
+```
 
 ### Azure Monitor Private Link Scope (AMPLS)
 
@@ -651,6 +701,47 @@ Network Watcher is deployed per region when enabled. It provides network
 diagnostic capabilities including connection monitor, packet capture,
 and flow logs.
 
+### Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/`
+that validate configuration logic using mock providers. These tests run
+in CI when changes are made to the module and do not require Azure
+credentials.
+
+#### Running Tests
+
+``` bash
+eirctl tests
+```
+
+To run a specific test file:
+
+``` bash
+eirctl tests TF_TEST_FILTER=tests/hub_networking.tftest.hcl
+```
+
+#### Test Coverage
+
+| Test File                   | Test Cases                                                                                                                                                                                                                          | What It Validates                                                                                                                                                                                                                                  |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `hub_networking.tftest.hcl` | single_hub_addressing, multi_hub_addressing, custom_address_space                                                                                                                                                                   | Default /16 allocation, multi-hub unique addressing, hub index determinism, custom address space overrides, virtual hub prefix derivation                                                                                                          |
+| `hub_resources.tftest.hcl`  | hub_defaults, enabled_hubs_filtering, feature_toggles_propagate, firewall_sku_propagates, resource_groups_created, naming_conventions, ddos_creates_resource_group, ampls_dns_zones_and_diagnostics, flow_logs_enabled_with_storage | Feature flag defaults and propagation, firewall SKU/DNS proxy/threat intel, resource group creation, CAF naming patterns, DDoS resource group and settings, AMPLS DNS zone count, diagnostics enablement with workspace ID, flow logs with storage |
+
+#### Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the
+established patterns:
+
+- Use `command = plan` with `state_key` to isolate test runs
+
+- Assert against locals and computed values, not Azure API responses
+
+- Enable `parallel = true` at the test level
+
+- Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -698,13 +789,21 @@ deployments with multiple gateways may take longer.
 **Fix**: Increase Terraform timeouts if needed. The AVM module sets
 appropriate defaults.
 
-### Testing
+#### Flow logs validation fails
 
-Unit tests validate configuration logic without deploying
-infrastructure. Tests use mock providers to run offline.
+    Error: Flow logs require network_watcher.enabled = true
 
-``` bash
-terraform test
+**Cause**: Flow logs depend on Network Watcher. Either Network Watcher
+is disabled or no storage is configured.
+
+**Fix**: Ensure both are enabled:
+
+``` hcl
+network_watcher = { enabled = true }
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
 ```
 
 ## API Reference
@@ -717,8 +816,6 @@ terraform test
 | <span id="requirement_terraform"></span> [terraform](#requirement_terraform) | ~> 1.12 |
 | <span id="requirement_azapi"></span> [azapi](#requirement_azapi)             | ~> 2.0  |
 | <span id="requirement_azurerm"></span> [azurerm](#requirement_azurerm)       | ~> 4.0  |
-| <span id="requirement_local"></span> [local](#requirement_local)             | ~> 2.5  |
-| <span id="requirement_modtm"></span> [modtm](#requirement_modtm)             | ~> 0.3  |
 | <span id="requirement_random"></span> [random](#requirement_random)          | ~> 3.8  |
 
 ## Providers
@@ -883,13 +980,10 @@ configuration for private connectivity to Log Analytics.</p></td>
 id="input_ddos_protection_plan"></span> <a
 href="#input_ddos_protection_plan">ddos_protection_plan</a></p></td>
 <td style="text-align: left;"><p>DDoS Protection Plan configuration.
-Disabled by default due to significant cost (~£2,200/month).</p>
-<ul>
-<li><p><code>enabled</code> - (Optional) Enable DDoS Protection Plan.
-Default: <code>false</code>.</p></li>
-</ul></td>
+Disabled by default due to significant cost (~£2,200/month).</p></td>
 <td style="text-align: left;"><pre><code>object({
     enabled = optional(bool, false)
+    name    = optional(string)
   })</code></pre></td>
 <td style="text-align: left;"><p><code>{}</code></p></td>
 <td style="text-align: left;"><p>no</p></td>

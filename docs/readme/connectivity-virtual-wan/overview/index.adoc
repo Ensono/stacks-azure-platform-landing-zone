@@ -1,7 +1,10 @@
-[[overview]]
 == Overview
 
-This module deploys a Virtual WAN network topology using Azure Verified Modules (AVM). It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
+The **Stacks Azure Platform Landing Zone Connectivity Virtual WAN** module deploys a Virtual WAN network topology using the below Azure Verified Modules:
+
+https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm/latest[Virtual WAN]
+
+It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
 
 Virtual WAN provides a fully managed hub infrastructure with automatic any-to-any routing, integrating VPN and ExpressRoute gateways directly within the virtual hub. Each hub has a companion sidecar VNet for services such as Azure Bastion, DNS Resolver, and private endpoints that cannot be placed inside the virtual hub itself.
 
@@ -33,6 +36,7 @@ flowchart TB
             Bastion["AzureBastionSubnet /26"]
             GWSubnet["GatewaySubnet /27"]
             Resolver["DNS Resolver /28"]
+            PE["Private Endpoints /28"]
         end
     end
 

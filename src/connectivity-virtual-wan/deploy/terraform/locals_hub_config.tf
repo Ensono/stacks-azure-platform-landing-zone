@@ -18,7 +18,12 @@ locals {
       location            = local.primary_hub_region
       resource_group_name = local.all_resource_groups["ddos"].name
       tags                = var.tags
-    } : {}
+      } : {
+      name                = null
+      location            = null
+      resource_group_name = null
+      tags                = null
+    }
   }
 
   # Auto-detect availability zones per hub region

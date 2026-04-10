@@ -13,7 +13,7 @@ to validate configuration logic without deploying actual Azure resources.
 |------|---------|
 | `terraform.tfvars` | Default variable values auto-loaded by all tests |
 | `hub_networking.tftest.hcl` | Address space, sidecar subnets, multi-hub addressing |
-| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall |
+| `hub_resources.tftest.hcl` | Features, gateways, DNS, DDoS, AMPLS, firewall, flow logs |
 
 ## Running Tests
 
