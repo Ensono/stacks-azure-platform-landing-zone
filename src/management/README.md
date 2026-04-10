@@ -76,7 +76,7 @@ The module comprises two conditionally-enabled module chains:
 2.  **Management Group Hierarchy** (optional) — ALZ management group
     hierarchy with policy-driven governance
 
-### Architecture
+### Architecture Overview
 
 ``` mermaid
 flowchart TB

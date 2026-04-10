@@ -40,7 +40,7 @@ The module comprises two conditionally-enabled module chains:
 . **Management Resources** — Log Analytics Workspace (platform logs), Data Collection Rules, User Assigned Managed Identity, and health monitoring alerts
 . **Management Group Hierarchy** (optional) — ALZ management group hierarchy with policy-driven governance
 
-=== Architecture
+=== Architecture Overview
 
 [source,mermaid]
 ----
