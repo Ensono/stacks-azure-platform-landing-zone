@@ -1,4 +1,3 @@
-[[naming]]
 == Resource Naming
 
 Resources follow https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming[Cloud Adoption Framework (CAF)] naming conventions using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming module].

@@ -87,10 +87,10 @@ Required when `management_groups_enabled = true`. Can be omitted when testing wi
 |no
 
 |[[input_identity_subscription_id]] <<input_identity_subscription_id,identity_subscription_id>>
-|Subscription ID to place in the 'identity' management group.
+|(Optional) Subscription ID to place in the 'identity' management group.
 
-Required when `management_groups_enabled = true` for standard ALZ deployments.
-Can be omitted for cloud-native organisations using only Microsoft Entra ID (set `skip_identity_subscription_check = true`).
+When provided, the subscription is placed in the 'identity' management group.
+Can be omitted for cloud-native organisations using only Microsoft Entra ID.
 
 |`string`
 |`null`
@@ -377,7 +377,7 @@ Properties:
 - `log_analytics_solution_plans` - (Optional) Solution plans to deploy to the workspace.
 - `log_analytics_workspace_allow_resource_only_permissions` - (Optional) Allow resource-only permissions. Defaults to true.
 - `log_analytics_workspace_cmk_for_query_forced` - (Optional) Force CMK for queries.
-- `log_analytics_workspace_daily_quota_gb` - (Optional) Daily ingestion quota in GB.
+- `log_analytics_workspace_daily_quota_gb` - (Optional) Daily ingestion quota in GB. Defaults to 10. Set to `-1` for unlimited.
 - `log_analytics_workspace_internet_ingestion_enabled` - (Optional) Enable internet ingestion. Defaults to false.
 - `log_analytics_workspace_internet_query_enabled` - (Optional) Enable internet queries. Defaults to false.
 - `log_analytics_workspace_local_authentication_enabled` - (Optional) Enable local authentication. Defaults to false.
@@ -427,7 +427,7 @@ object({
     })))
     log_analytics_workspace_allow_resource_only_permissions    = optional(bool, true)
     log_analytics_workspace_cmk_for_query_forced               = optional(bool)
-    log_analytics_workspace_daily_quota_gb                     = optional(number)
+    log_analytics_workspace_daily_quota_gb                     = optional(number, 10)
     log_analytics_workspace_internet_ingestion_enabled         = optional(bool, false)
     log_analytics_workspace_internet_query_enabled             = optional(bool, false)
     log_analytics_workspace_local_authentication_enabled       = optional(bool, false)
@@ -643,7 +643,7 @@ object({
 |Skip platform subscription validation and placement.
 
 When `true`:
-- Skips connectivity_subscription_id and identity_subscription_id validation
+- Skips connectivity_subscription_id validation
 - Only places management_subscription_id into the management group
 - Allows testing the full ALZ deployment with a single subscription
 
@@ -669,6 +669,5 @@ Not recommended for production deployments.
 |Name |Description
 |[[output_log_analytics_workspace_guid]] <<output_log_analytics_workspace_guid,log_analytics_workspace_guid>> |The workspace GUID of the log analytics workspace.
 |[[output_log_analytics_workspace_id]] <<output_log_analytics_workspace_id,log_analytics_workspace_id>> |The resource ID of the log analytics workspace.
-|[[output_log_analytics_workspace_name]] <<output_log_analytics_workspace_name,log_analytics_workspace_name>> |The name of the log analytics workspace.
 |===
 <!-- END_TF_DOCS -->

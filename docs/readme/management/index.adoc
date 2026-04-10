@@ -27,7 +27,6 @@ include::advanced/index.adoc[]
 
 include::troubleshooting/index.adoc[]
 
-[[api-reference]]
 == API Reference
 
 include::tfdocs.adoc[]

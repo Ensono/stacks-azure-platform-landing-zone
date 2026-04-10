@@ -280,10 +280,10 @@ variable "identity_subscription_id" {
   type        = string
   default     = null
   description = <<DESCRIPTION
-Subscription ID to place in the 'identity' management group.
+(Optional) Subscription ID to place in the 'identity' management group.
 
-Required when `management_groups_enabled = true` for standard ALZ deployments.
-Can be omitted for cloud-native organisations using only Microsoft Entra ID (set `skip_identity_subscription_check = true`).
+When provided, the subscription is placed in the 'identity' management group.
+Can be omitted for cloud-native organisations using only Microsoft Entra ID.
 DESCRIPTION
 
   validation {
@@ -320,7 +320,7 @@ variable "skip_subscription_placement" {
 Skip platform subscription validation and placement.
 
 When `true`:
-- Skips connectivity_subscription_id and identity_subscription_id validation
+- Skips connectivity_subscription_id validation
 - Only places management_subscription_id into the management group
 - Allows testing the full ALZ deployment with a single subscription
 

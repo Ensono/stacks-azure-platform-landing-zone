@@ -1,5 +1,60 @@
-[[best-practices]]
 == Best Practices
+
+=== Workspace Design
+
+This module follows Microsoft's recommendation to start with a single Log Analytics Workspace and only introduce additional workspaces when driven by specific requirements.
+
+==== Microsoft Guidance Summary
+
+[cols="2,3,3",options="header"]
+|===
+| Criterion | Single Workspace | Multiple Workspaces
+
+| Default recommendation
+| ✅ Start here
+| Only when required
+
+| Operational complexity
+| Lower — one workspace to manage and query
+| Higher — cross-workspace queries, duplicate config
+
+| Cost
+| May qualify for commitment tier discounts
+| Each workspace billed independently
+
+| Data visibility
+| Full cross-resource correlation
+| Requires cross-workspace queries (max 100 workspaces)
+
+| Access control
+| Resource-context RBAC + table-level RBAC
+| Workspace-level separation
+
+| Data retention
+| Per-table retention settings within one workspace
+| Per-workspace defaults (useful when same table needs different retention for different sources)
+|===
+
+==== Security Data (Microsoft Sentinel)
+
+The most common reason to add a second workspace is Microsoft Sentinel:
+
+* When Sentinel is enabled, **all data in the workspace** is subject to https://learn.microsoft.com/azure/azure-monitor/logs/cost-logs#workspaces-with-microsoft-sentinel[Sentinel pricing] — even operational data
+* A workspace with Sentinel gets **90 days free retention** (vs 31 days without Sentinel)
+* Separating security data allows independent RBAC, retention, and cost management for security teams
+
+[cols="2,4",options="header"]
+|===
+| Approach | When to Use
+
+| **Combined workspace**
+| Low data volumes where commitment tier discount offsets Sentinel pricing on operational data. Use table-level RBAC to restrict security table access.
+
+| **Separate workspaces**
+| Higher data volumes, strict security/ops team separation, or when Sentinel pricing on operational data is a concern. Use cross-workspace queries for correlation.
+|===
+
+TIP: If you later need a dedicated security workspace, deploy it using the https://registry.terraform.io/modules/Azure/avm-res-operationalinsights-workspace/azurerm/latest[`avm-res-operationalinsights-workspace`] resource module for a lightweight workspace without the management overhead of the pattern module.
 
 === Reliability and Zone Redundancy
 
@@ -53,8 +108,8 @@ The module follows Azure Well-Architected Framework cost optimisation guidance.
 | Setting | Default | Cost Impact
 
 | `log_analytics_workspace_daily_quota_gb`
-| `-1` (unlimited)
-| Set a cap to prevent runaway costs
+| `10` GB/day
+| Safety cap to prevent runaway costs. Increase for higher-volume environments
 
 | `log_analytics_workspace_sku`
 | `PerGB2018`
@@ -95,9 +150,9 @@ Actual costs vary based on data ingestion volume, retention, and region.
 | Free
 |===
 
-**Typical Total**: ~£58/month (varies by ingestion volume)
+**Typical Total**: ~£58/month (varies by ingestion volume, capped at 10 GB/day by default)
 
-TIP: Use the https://azure.microsoft.com/pricing/calculator/[Azure Pricing Calculator] for precise estimates. Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day). Set `log_analytics_workspace_daily_quota_gb` to cap unexpected ingestion costs.
+TIP: Use the https://azure.microsoft.com/pricing/calculator/[Azure Pricing Calculator] for precise estimates. Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day). The default `log_analytics_workspace_daily_quota_gb` of 10 GB/day provides cost protection — this can be increased or set to `-1` for unlimited in higher-volume environments.
 
 === Security
 

@@ -1,4 +1,3 @@
-[[integration]]
 == Integration
 
 This module is the foundation of the Azure Platform Landing Zone.
@@ -11,10 +10,7 @@ Its outputs are consumed by all downstream landing zone modules via Terraform re
 | Output | Consumed By
 
 | `log_analytics_workspace_id`
-| Connectivity (AMPLS, diagnostics), Identity (VM diagnostics), Security (Sentinel)
-
-| `log_analytics_workspace_name`
-| Security (Sentinel enablement)
+| Connectivity (AMPLS, diagnostics), Identity (VM diagnostics)
 
 | `log_analytics_workspace_guid`
 | Connectivity (Traffic Analytics)
@@ -26,8 +22,7 @@ Its outputs are consumed by all downstream landing zone modules via Terraform re
 Management (this module)
   ├── Connectivity Hub-Spoke  (consumes LAW ID + GUID)
   ├── Connectivity Virtual WAN (consumes LAW ID + GUID)
-  ├── Identity                (consumes LAW ID)
-  └── Security                (consumes LAW ID + name)
+  └── Identity                (consumes LAW ID)
 ----
 
 === Connectivity Module Integration
@@ -46,15 +41,13 @@ The identity module reads management outputs for:
 
 === Security Module Integration
 
-The security module reads management outputs for:
-
-* **Microsoft Sentinel** — Enables Sentinel on the Log Analytics Workspace
-* **Diagnostic settings** — Sends Key Vault and security resource logs to the workspace
+If your organisation deploys a dedicated security workspace (for Microsoft Sentinel or Defender for Cloud), that module manages its own Log Analytics Workspace and does not consume management module outputs.
+See <<workspace-design,Workspace Design>> in Best Practices for guidance on when a separate security workspace is warranted.
 
 === Downstream Module Configuration
 
 Downstream modules consume management outputs via Terraform remote state.
-Configure the following in the connectivity, identity, or security module's `terraform.tfvars`:
+Configure the following in the connectivity or identity module's `terraform.tfvars`:
 
 [source,hcl]
 ----

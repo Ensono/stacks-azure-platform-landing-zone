@@ -1,4 +1,3 @@
-[[troubleshooting]]
 == Troubleshooting
 
 === Common Issues
@@ -24,17 +23,17 @@ management_resource_settings = {
 
 **Symptom**: `AuthorizationFailed` errors when deploying management groups.
 
-**Cause**: The deploying identity requires `Management Group Contributor` at the Tenant Root level and `Owner` in each subscription.
+**Cause**: The deploying identity requires `Management Group Contributor` and `User Access Administrator` at the target management group scope, and `Owner` at the target subscription scope. These permissions are required to create resources, assign policies, and configure RBAC during deployment.
 
-**Resolution**: Ensure the service principal or user has the required permissions. For automated deployments, configure the identity with Tenant Root-level access.
+**Resolution**: Ensure the service principal or user has the required permissions at the correct scopes.
 
 ==== Subscription Placement Validation
 
-**Symptom**: Terraform validation fails when management groups are enabled but connectivity or identity subscription IDs are not provided.
+**Symptom**: Terraform validation fails when management groups are enabled but the connectivity subscription ID is not provided.
 
-**Cause**: The module validates that all required subscriptions are provided when management groups are enabled.
+**Cause**: The module validates that `connectivity_subscription_id` is provided when management groups are enabled.
 
-**Resolution**: Either provide all required subscription IDs or set `skip_subscription_placement = true` for development/testing with a single subscription. See the <<examples,Development / Testing>> example.
+**Resolution**: Either provide `connectivity_subscription_id` or set `skip_subscription_placement = true` for development/testing with a single subscription. See the <<examples,Development / Testing>> example.
 
 ==== ALZ Policy Assignment Failures
 

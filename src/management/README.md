@@ -2,22 +2,76 @@
 
 ## Overview
 
-The **Stacks Azure Platform Landing Zone - Management** module deploys
-management resources using [Azure Verified Modules
-(AVM)](https://azure.github.io/Azure-Verified-Modules/). It provides
-centralised logging, monitoring, and an optional default management
-group architecture for Azure Landing Zones.
+The **Stacks Azure Platform Landing Zone Management** module deploys
+management resources using the below Azure Verified Modules:
+
+[Management Groups, Policy and Role
+Assignments](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm/latest)
+
+[Management
+Resources](https://registry.terraform.io/modules/Azure/avm-ptn-alz-management/azurerm/latest)
+
+It provides centralised logging, monitoring, and an optional default
+management group architecture for Azure Landing Zones.
 
 This module is designed for **platform engineers** who need to provision
 a centralised management foundation for logging, monitoring, governance,
 and policy enforcement across Azure subscriptions.
 
+### Log Analytics Workspace Strategy
+
+This module deploys a **single Log Analytics Workspace** in the
+management subscription for platform operational data. This follows
+[Microsoft’s primary
+recommendation](https://learn.microsoft.com/azure/azure-monitor/logs/workspace-design)
+to start with a single workspace and only add more when specific
+requirements demand it.
+
+#### Why a Single Workspace
+
+- **Simplified operations** — One workspace to manage, query, and
+  monitor
+
+- **Cost efficiency** — Consolidating data may qualify for commitment
+  tier discounts (15-25% savings at 100+ GB/day)
+
+- **Better visibility** — All platform operational data in one place
+  makes cross-resource correlation straightforward
+
+- **Resource-context RBAC** — Users with read access to an Azure
+  resource automatically inherit permissions to that resource’s logs,
+  without needing workspace-level access
+
+#### When to Consider a Second Workspace
+
+Microsoft recommends adding workspaces only when driven by specific
+requirements:
+
+- **Security data (Microsoft Sentinel)** — When Sentinel is enabled, all
+  data in the workspace is subject to Sentinel pricing. A dedicated
+  security workspace avoids applying Sentinel costs to operational data.
+  Alternatively, use a combined workspace with table-level RBAC if the
+  commitment tier discount outweighs the pricing impact
+
+- **Data sovereignty** — Regulatory requirements to keep data in
+  specific Azure regions
+
+- **Data ownership** — Organisational boundaries (subsidiaries,
+  affiliates) requiring strict data segregation
+
+- **Split billing** — When cost reporting via Azure Cost Management is
+  insufficient for chargeback requirements
+
+See the [Best Practices](#best-practices) section for detailed workspace
+design guidance with Microsoft documentation references.
+
 ### What This Module Deploys
 
 The module comprises two conditionally-enabled module chains:
 
-1.  **Management Resources** — Log Analytics Workspace, Data Collection
-    Rules, User Assigned Managed Identity, and health monitoring alerts
+1.  **Management Resources** — Log Analytics Workspace (platform logs),
+    Data Collection Rules, User Assigned Managed Identity, and health
+    monitoring alerts
 
 2.  **Management Group Hierarchy** (optional) — ALZ management group
     hierarchy with policy-driven governance
@@ -55,24 +109,27 @@ flowchart TB
 
 - Terraform ~> 1.12, AzureRM ~> 4.0, AzAPI ~> 2.0
 
-- For management groups: `Management Group Contributor` at Tenant Root
-  level and `Owner` in each subscription
+- For management groups: `Management Group Contributor` and
+  `User Access Administrator` at the target management group scope, and
+  `Owner` at the target subscription scope. These permissions are
+  required to create resources, assign policies, and configure
+  role-based access control (RBAC) during deployment.
 
 ## Features
 
 The following table summarises the features available in this module and
 their default state.
 
-| Feature                      | Default     | Description                                                                                                                       |
-|------------------------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Log Analytics Workspace      | ✅ Enabled  | Central logging hub for all Azure resources. Private-only by default with Entra ID authentication.                                |
-| Data Collection Rules        | ✅ Enabled  | Change Tracking and VM Insights enabled by default. Defender for SQL is optional.                                                 |
-| Azure Monitor Agent Identity | ✅ Enabled  | User-assigned managed identity for policy-driven AMA deployment.                                                                  |
-| Resource Group Locks         | ✅ Enabled  | `CanNotDelete` locks on resource groups to prevent accidental deletion.                                                           |
-| Log Analytics Diagnostics    | ✅ Enabled  | Self-monitoring diagnostic settings (Audit, SummaryLogs, AllMetrics).                                                             |
-| Subscription Activity Logs   | ✅ Enabled  | Routes Activity Logs (Administrative, Security, Policy, ServiceHealth, ResourceHealth, Alert, Recommendation) into Log Analytics. |
-| Health Monitoring Alerts     | ❌ Disabled | Ingestion latency, search availability, query failures/runtime, and data ingestion guardrails. Requires an Action Group.          |
-| Management Groups            | ❌ Disabled | ALZ management group hierarchy with Azure Policy assignments and Microsoft Defender for Cloud enablement.                         |
+| Feature                      | Default     | Description                                                                                                                                                                                                                      |
+|------------------------------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Log Analytics Workspace      | ✅ Enabled  | Central platform logging hub for operational telemetry (activity logs, diagnostics, metrics). Private-only by default with Entra ID authentication. Security logs are sent to a separate workspace in the security subscription. |
+| Data Collection Rules        | ✅ Enabled  | Change Tracking and VM Insights enabled by default. Defender for SQL is optional.                                                                                                                                                |
+| Azure Monitor Agent Identity | ✅ Enabled  | User-assigned managed identity for policy-driven AMA deployment.                                                                                                                                                                 |
+| Resource Group Locks         | ✅ Enabled  | `CanNotDelete` locks on resource groups to prevent accidental deletion.                                                                                                                                                          |
+| Log Analytics Diagnostics    | ✅ Enabled  | Self-monitoring diagnostic settings (Audit, SummaryLogs, AllMetrics).                                                                                                                                                            |
+| Subscription Activity Logs   | ✅ Enabled  | Routes Activity Logs (Administrative, Security, Policy, ServiceHealth, ResourceHealth, Alert, Recommendation) into Log Analytics.                                                                                                |
+| Health Monitoring Alerts     | ❌ Disabled | Ingestion latency, search availability, query failures/runtime, and data ingestion guardrails. Requires an Action Group.                                                                                                         |
+| Management Groups            | ❌ Disabled | ALZ management group hierarchy with Azure Policy assignments and Microsoft Defender for Cloud enablement.                                                                                                                        |
 
 ## Quick Start
 
@@ -111,16 +168,14 @@ deployed **first**:
     1. Management Module      ← you are here
     2. Connectivity Module    (consumes LAW ID and GUID)
     3. Identity Module        (consumes LAW ID)
-    4. Security Module        (consumes LAW ID and name)
+    4. Security Module        (has its own Log Analytics Workspace)
 
 ### What’s Next?
 
-- [Features](#features) — See all available features and their defaults
-
-- [Examples](#examples) — Configuration examples for common scenarios
-
 - [Architecture](#architecture) — Management group hierarchy and
   architecture details
+
+- [Examples](#examples) — Configuration examples for common scenarios
 
 - [Integration](#integration) — How this module connects to other
   landing zone modules
@@ -184,9 +239,11 @@ management groups when subscription IDs are provided.
 
 <div class="note">
 
-Management Groups deployments require elevated permissions
-(`Management Group Contributor` at Tenant Root level, and `Owner` in
-each subscription).
+Management Group deployments require the deployment identity to have
+`Management Group Contributor` and `User Access Administrator` at the
+target management group scope, and `Owner` at the target subscription
+scope. These permissions are required to create resources, assign
+policies, and configure RBAC during deployment.
 
 </div>
 
@@ -197,14 +254,27 @@ Library](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform
 are applied per management group. Policy default values and assignments
 are managed in the `locals_policy_assignments.tf` file.
 
-The module by default uses the standard ALZ Library policies without
-custom overrides.
+In addition to the standard ALZ Library policies, the module includes
+custom audit policy assignments in the `lib/policy_assignments/`
+directory. These are added to the root management group via the
+`root_custom` archetype override in
+`lib/archetype_definitions/root_custom.alz_archetype_override.yaml`:
+
+- **Audit-CIS-Azure** — CIS Microsoft Azure Foundations Benchmark v2.0.0
+
+- **Audit-GDPR** — EU General Data Protection Regulation (GDPR) 2016/679
+
+- **Audit-ISO27001** — ISO 27001:2013
+
+To add or remove custom policy assignments, modify the
+`policy_assignments_to_add` list in the relevant archetype override
+file.
 
 ### Microsoft Defender for Cloud
 
 When management groups are enabled, `DeployIfNotExists` policies for
 Microsoft Defender for Cloud are deployed. All Defender plans default to
-**disabled** — enable individual plans via
+**disabled** - enable individual plans via
 `microsoft_defender_settings.defender_plans` (e.g., `servers`,
 `key_vault`, `storage`).
 
@@ -220,6 +290,18 @@ Defender plans, sub-features, and pricing details.
 This module is designed to work with AMPLS deployed by the connectivity
 module. By default, Log Analytics is configured with secure settings
 that require private connectivity:
+
+<div class="note">
+
+This module deploys a single Log Analytics Workspace for platform
+operational data, following [Microsoft’s
+recommendation](https://learn.microsoft.com/azure/azure-monitor/logs/workspace-design)
+to start with a single workspace. If your organisation requires a
+dedicated security workspace for Microsoft Sentinel or Defender for
+Cloud, deploy it separately - see [Workspace Design](#workspace-design)
+in Best Practices for guidance.
+
+</div>
 
 | Setting                        | Default | Description                                |
 |--------------------------------|---------|--------------------------------------------|
@@ -256,7 +338,7 @@ management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
 # Customise retention and disable VM Insights DCR
 management_resource_settings = {
-  log_analytics_workspace_retention_in_days = 90
+  log_analytics_workspace_retention_in_days = 180
 
   data_collection_rules = {
     vm_insights = { enabled = false }
@@ -274,11 +356,13 @@ company                    = "ensono"
 region                     = "uksouth"
 management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
-# Required: Platform subscriptions
-connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
-identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
+# Platform subscriptions
+connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"  # Required unless skip_subscription_placement = true
 
-# Optional: Security subscription
+# Optional: Identity can be omitted for cloud-native orgs using only Microsoft Entra ID
+# identity_subscription_id = "22222222-2222-2222-2222-222222222222"
+
+# Optional: Dedicated security subscription for centralised security tooling
 # security_subscription_id = "33333333-3333-3333-3333-333333333333"
 
 # Enable management groups (deploys under tenant root group by default)
@@ -294,7 +378,7 @@ microsoft_defender_settings = {
 
 `microsoft_defender_settings` is required when
 `management_groups_enabled = true`. All Defender plans default to
-disabled — enable individual plans via `defender_plans`. See the [API
+disabled - enable individual plans via `defender_plans`. See the [API
 Reference](#api-reference) for full configuration options.
 
 </div>
@@ -309,7 +393,7 @@ region                     = "uksouth"
 management_subscription_id = "00000000-0000-0000-0000-000000000000"
 
 management_groups_enabled    = true
-skip_subscription_placement  = true  # Skips connectivity/identity validation
+skip_subscription_placement  = true  # Skips connectivity subscription validation
 
 microsoft_defender_settings = {
   email_security_contact = "security@example.invalid"
@@ -436,19 +520,17 @@ Terraform remote state.
 
 ### Outputs for Downstream Modules
 
-| Output                         | Consumed By                                                                       |
-|--------------------------------|-----------------------------------------------------------------------------------|
-| `log_analytics_workspace_id`   | Connectivity (AMPLS, diagnostics), Identity (VM diagnostics), Security (Sentinel) |
-| `log_analytics_workspace_name` | Security (Sentinel enablement)                                                    |
-| `log_analytics_workspace_guid` | Connectivity (Traffic Analytics)                                                  |
+| Output                         | Consumed By                                                  |
+|--------------------------------|--------------------------------------------------------------|
+| `log_analytics_workspace_id`   | Connectivity (AMPLS, diagnostics), Identity (VM diagnostics) |
+| `log_analytics_workspace_guid` | Connectivity (Traffic Analytics)                             |
 
 ### Module Dependency Chain
 
     Management (this module)
       ├── Connectivity Hub-Spoke  (consumes LAW ID + GUID)
       ├── Connectivity Virtual WAN (consumes LAW ID + GUID)
-      ├── Identity                (consumes LAW ID)
-      └── Security                (consumes LAW ID + name)
+      └── Identity                (consumes LAW ID)
 
 ### Connectivity Module Integration
 
@@ -471,19 +553,17 @@ The identity module reads management outputs for:
 
 ### Security Module Integration
 
-The security module reads management outputs for:
-
-- **Microsoft Sentinel** — Enables Sentinel on the Log Analytics
-  Workspace
-
-- **Diagnostic settings** — Sends Key Vault and security resource logs
-  to the workspace
+If your organisation deploys a dedicated security workspace (for
+Microsoft Sentinel or Defender for Cloud), that module manages its own
+Log Analytics Workspace and does not consume management module outputs.
+See [Workspace Design](#workspace-design) in Best Practices for guidance
+on when a separate security workspace is warranted.
 
 ### Downstream Module Configuration
 
 Downstream modules consume management outputs via Terraform remote
-state. Configure the following in the connectivity, identity, or
-security module’s `terraform.tfvars`:
+state. Configure the following in the connectivity or identity module’s
+`terraform.tfvars`:
 
 ``` hcl
 management_remote_state = {
@@ -555,6 +635,52 @@ Practices](#best-practices) for cost considerations.
 
 ## Best Practices
 
+### Workspace Design
+
+This module follows Microsoft’s recommendation to start with a single
+Log Analytics Workspace and only introduce additional workspaces when
+driven by specific requirements.
+
+#### Microsoft Guidance Summary
+
+| Criterion              | Single Workspace                                  | Multiple Workspaces                                                                             |
+|------------------------|---------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Default recommendation | ✅ Start here                                     | Only when required                                                                              |
+| Operational complexity | Lower — one workspace to manage and query         | Higher — cross-workspace queries, duplicate config                                              |
+| Cost                   | May qualify for commitment tier discounts         | Each workspace billed independently                                                             |
+| Data visibility        | Full cross-resource correlation                   | Requires cross-workspace queries (max 100 workspaces)                                           |
+| Access control         | Resource-context RBAC + table-level RBAC          | Workspace-level separation                                                                      |
+| Data retention         | Per-table retention settings within one workspace | Per-workspace defaults (useful when same table needs different retention for different sources) |
+
+#### Security Data (Microsoft Sentinel)
+
+The most common reason to add a second workspace is Microsoft Sentinel:
+
+- When Sentinel is enabled, **all data in the workspace** is subject to
+  [Sentinel
+  pricing](https://learn.microsoft.com/azure/azure-monitor/logs/cost-logs#workspaces-with-microsoft-sentinel)
+  — even operational data
+
+- A workspace with Sentinel gets **90 days free retention** (vs 31 days
+  without Sentinel)
+
+- Separating security data allows independent RBAC, retention, and cost
+  management for security teams
+
+| Approach                | When to Use                                                                                                                                                       |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Combined workspace**  | Low data volumes where commitment tier discount offsets Sentinel pricing on operational data. Use table-level RBAC to restrict security table access.             |
+| **Separate workspaces** | Higher data volumes, strict security/ops team separation, or when Sentinel pricing on operational data is a concern. Use cross-workspace queries for correlation. |
+
+<div class="tip">
+
+If you later need a dedicated security workspace, deploy it using the
+[`avm-res-operationalinsights-workspace`](https://registry.terraform.io/modules/Azure/avm-res-operationalinsights-workspace/azurerm/latest)
+resource module for a lightweight workspace without the management
+overhead of the pattern module.
+
+</div>
+
 ### Reliability and Zone Redundancy
 
 The module implements Azure Well-Architected Framework reliability best
@@ -601,11 +727,11 @@ guidance.
 
 #### Log Analytics Workspace Cost Settings
 
-| Setting                                                      | Default          | Cost Impact                             |
-|--------------------------------------------------------------|------------------|-----------------------------------------|
-| `log_analytics_workspace_daily_quota_gb`                     | `-1` (unlimited) | Set a cap to prevent runaway costs      |
-| `log_analytics_workspace_sku`                                | `PerGB2018`      | Pay-as-you-go pricing                   |
-| `log_analytics_workspace_reservation_capacity_in_gb_per_day` | `null`           | Use commitment tiers for 15-25% savings |
+| Setting                                                      | Default     | Cost Impact                                                                  |
+|--------------------------------------------------------------|-------------|------------------------------------------------------------------------------|
+| `log_analytics_workspace_daily_quota_gb`                     | `10` GB/day | Safety cap to prevent runaway costs. Increase for higher-volume environments |
+| `log_analytics_workspace_sku`                                | `PerGB2018` | Pay-as-you-go pricing                                                        |
+| `log_analytics_workspace_reservation_capacity_in_gb_per_day` | `null`      | Use commitment tiers for 15-25% savings                                      |
 
 #### Estimated Monthly Costs
 
@@ -621,15 +747,18 @@ retention, and region.
 | Management Groups              | N/A                  | Free                 |
 | Azure Policies                 | N/A                  | Free                 |
 
-**Typical Total**: ~£58/month (varies by ingestion volume)
+**Typical Total**: ~£58/month (varies by ingestion volume, capped at 10
+GB/day by default)
 
 <div class="tip">
 
 Use the [Azure Pricing
 Calculator](https://azure.microsoft.com/pricing/calculator/) for precise
 estimates. Consider commitment tiers for 15-25% savings on predictable
-workloads (100+ GB/day). Set `log_analytics_workspace_daily_quota_gb` to
-cap unexpected ingestion costs.
+workloads (100+ GB/day). The default
+`log_analytics_workspace_daily_quota_gb` of 10 GB/day provides cost
+protection — this can be increased or set to `-1` for unlimited in
+higher-volume environments.
 
 </div>
 
@@ -709,6 +838,50 @@ See the [ALZ
 Library](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz)
 for the full list of available archetypes and policies.
 
+### Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/`
+that validate configuration logic using mock providers. These tests run
+in CI when changes are made to the module and do not require Azure
+credentials.
+
+#### Running Tests
+
+``` bash
+eirctl tests
+```
+
+To run a specific test file:
+
+``` bash
+eirctl tests TF_TEST_FILTER=tests/naming.tftest.hcl
+```
+
+#### Test Coverage
+
+| Test File                           | Test Cases                                                                                                                                                                                                                                                              | What It Validates                                                                       |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| `naming.tftest.hcl`                 | naming_module_produces_caf_prefixes                                                                                                                                                                                                                                     | Resource naming follows CAF conventions                                                 |
+| `locals_safe_defaults.tftest.hcl`   | policy_defaults_computed_safely                                                                                                                                                                                                                                         | Policy default values are computed without errors when settings are null                |
+| `monitoring_alerts.tftest.hcl`      | monitoring_alerts_auto_enabled_with_action_group, monitoring_alerts_disabled_without_action_group, ingest_threshold_gb_to_bytes_conversion, monitoring_alerts_explicit_disable_overrides_action_group                                                                   | Alert auto-enablement, threshold conversions, and explicit disable behaviour            |
+| `policy_assignments.tftest.hcl`     | defender_plans_all_disabled_by_default, defender_plans_selective_enable, defender_settings_propagated, policy_values_empty_when_resources_disabled, policy_values_populated_when_resources_enabled, policy_values_dcr_selective_disable, private_dns_zones_not_enforced | Defender plan defaults, policy value propagation, DCR toggles, and DNS zone enforcement |
+| `subscription_placement.tftest.hcl` | all_subscriptions_placed, skip_placement_only_management, security_subscription_omitted_by_default, subscription_placement_custom_override                                                                                                                              | Subscription placement into management groups, skip logic, and custom overrides         |
+
+#### Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the
+established patterns:
+
+- Use `command = plan` with `state_key` to isolate test runs
+
+- Assert against locals and computed values, not Azure API responses
+
+- Enable `parallel = true` at the test level
+
+- Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -741,22 +914,23 @@ management_resource_settings = {
 groups.
 
 **Cause**: The deploying identity requires
-`Management Group Contributor` at the Tenant Root level and `Owner` in
-each subscription.
+`Management Group Contributor` and `User Access Administrator` at the
+target management group scope, and `Owner` at the target subscription
+scope. These permissions are required to create resources, assign
+policies, and configure RBAC during deployment.
 
 **Resolution**: Ensure the service principal or user has the required
-permissions. For automated deployments, configure the identity with
-Tenant Root-level access.
+permissions at the correct scopes.
 
 #### Subscription Placement Validation
 
 **Symptom**: Terraform validation fails when management groups are
-enabled but connectivity or identity subscription IDs are not provided.
+enabled but the connectivity subscription ID is not provided.
 
-**Cause**: The module validates that all required subscriptions are
+**Cause**: The module validates that `connectivity_subscription_id` is
 provided when management groups are enabled.
 
-**Resolution**: Either provide all required subscription IDs or set
+**Resolution**: Either provide `connectivity_subscription_id` or set
 `skip_subscription_placement = true` for development/testing with a
 single subscription. See the [Development / Testing](#examples) example.
 
@@ -893,12 +1067,11 @@ href="https://aka.ms/avm/telemetryinfo">https://aka.ms/avm/telemetryinfo</a>.</p
 <td style="text-align: left;"><p><span
 id="input_identity_subscription_id"></span> <a
 href="#input_identity_subscription_id">identity_subscription_id</a></p></td>
-<td style="text-align: left;"><p>Subscription ID to place in the
-'identity' management group.</p>
-<p>Required when <code>management_groups_enabled = true</code> for
-standard ALZ deployments. Can be omitted for cloud-native organisations
-using only Microsoft Entra ID (set
-<code>skip_identity_subscription_check = true</code>).</p></td>
+<td style="text-align: left;"><p>(Optional) Subscription ID to place in
+the 'identity' management group.</p>
+<p>When provided, the subscription is placed in the 'identity'
+management group. Can be omitted for cloud-native organisations using
+only Microsoft Entra ID.</p></td>
 <td style="text-align: left;"><p><code>string</code></p></td>
 <td style="text-align: left;"><p><code>null</code></p></td>
 <td style="text-align: left;"><p>no</p></td>
@@ -1232,7 +1405,8 @@ Defaults to disabled. - <code>log_analytics_solution_plans</code> -
 <code>log_analytics_workspace_cmk_for_query_forced</code> - (Optional)
 Force CMK for queries. -
 <code>log_analytics_workspace_daily_quota_gb</code> - (Optional) Daily
-ingestion quota in GB. -
+ingestion quota in GB. Defaults to 10. Set to <code>-1</code> for
+unlimited. -
 <code>log_analytics_workspace_internet_ingestion_enabled</code> -
 (Optional) Enable internet ingestion. Defaults to false. -
 <code>log_analytics_workspace_internet_query_enabled</code> - (Optional)
@@ -1285,7 +1459,7 @@ href="https://registry.terraform.io/modules/Azure/avm-ptn-alz-management">https:
     })))
     log_analytics_workspace_allow_resource_only_permissions    = optional(bool, true)
     log_analytics_workspace_cmk_for_query_forced               = optional(bool)
-    log_analytics_workspace_daily_quota_gb                     = optional(number)
+    log_analytics_workspace_daily_quota_gb                     = optional(number, 10)
     log_analytics_workspace_internet_ingestion_enabled         = optional(bool, false)
     log_analytics_workspace_internet_query_enabled             = optional(bool, false)
     log_analytics_workspace_local_authentication_enabled       = optional(bool, false)
@@ -1526,10 +1700,10 @@ id="input_skip_subscription_placement"></span> <a
 href="#input_skip_subscription_placement">skip_subscription_placement</a></p></td>
 <td style="text-align: left;"><p>Skip platform subscription validation
 and placement.</p>
-<p>When <code>true</code>: - Skips connectivity_subscription_id and
-identity_subscription_id validation - Only places
-management_subscription_id into the management group - Allows testing
-the full ALZ deployment with a single subscription</p>
+<p>When <code>true</code>: - Skips connectivity_subscription_id
+validation - Only places management_subscription_id into the management
+group - Allows testing the full ALZ deployment with a single
+subscription</p>
 <p>Useful for development/testing when you only have a management
 subscription. Not recommended for production deployments.</p></td>
 <td style="text-align: left;"><p><code>bool</code></p></td>
@@ -1554,7 +1728,6 @@ resources.</p></td>
 |-----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
 | <span id="output_log_analytics_workspace_guid"></span> [log_analytics_workspace_guid](#output_log_analytics_workspace_guid) | The workspace GUID of the log analytics workspace. |
 | <span id="output_log_analytics_workspace_id"></span> [log_analytics_workspace_id](#output_log_analytics_workspace_id)       | The resource ID of the log analytics workspace.    |
-| <span id="output_log_analytics_workspace_name"></span> [log_analytics_workspace_name](#output_log_analytics_workspace_name) | The name of the log analytics workspace.           |
 
 <!-- END_TF_DOCS -->
 

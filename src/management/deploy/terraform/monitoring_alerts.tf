@@ -1,13 +1,3 @@
-# Health monitoring alerts for management resources
-
-locals {
-  # Auto-enable alerts when action_group_id is provided, unless explicitly disabled
-  monitoring_alerts_enabled = coalesce(var.monitoring_alerts.enabled, var.monitoring_alerts.action_group_id != null)
-
-  # Convert data ingestion threshold (GB) to bytes for metric alert comparisons
-  monitoring_alerts_ingest_threshold_bytes = coalesce(var.monitoring_alerts.data_ingest_threshold_gb, 0) * pow(1024, 3)
-}
-
 # Ensure alerts have an action group target to keep notifications actionable
 resource "terraform_data" "monitoring_alerts_require_action_group" {
   count = local.monitoring_alerts_enabled ? 1 : 0

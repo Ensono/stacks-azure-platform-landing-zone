@@ -1,4 +1,3 @@
-[[alerts]]
 == Health Monitoring Alerts
 
 The module supports optional Azure Monitor health monitoring alerts to ensure the observability infrastructure remains healthy.

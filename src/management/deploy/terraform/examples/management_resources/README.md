@@ -1,4 +1,4 @@
-# Management Resources Only
+# Management Resources
 
 Deploys management resources without management groups or policies.
 
@@ -38,6 +38,7 @@ All other variables have sensible defaults. See [variables documentation](../../
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
+| `management_resource_settings.log_analytics_workspace_daily_quota_gb` | `10` | Daily ingestion cap in GB (`-1` for unlimited) |
 | `management_resource_settings.log_analytics_workspace_retention_in_days` | `30` | Log retention period |
 | `management_resource_settings.log_analytics_workspace_sku` | `"PerGB2018"` | Pricing tier |
 | `resource_group_lock_enabled` | `true` | Enable CanNotDelete locks |
@@ -48,5 +49,4 @@ All other variables have sensible defaults. See [variables documentation](../../
 These outputs are consumed by the connectivity module via remote state:
 
 - `log_analytics_workspace_id`
-- `log_analytics_workspace_name`
 - `log_analytics_workspace_guid`
