@@ -197,7 +197,7 @@ hubs = {
 
 | File | Description |
 |------|-------------|
-| [hub_and_spoke_vnet.tfvars](./hub_and_spoke_vnet.tfvars) | Example configuration - copy to `terraform.tfvars` |
+| [hub_and_spoke_vnet.tfvars](./hub_and_spoke_vnet.tfvars) | Example configuration - copy to `workspace_variables/` |
 
 ## See Also
 

@@ -113,20 +113,21 @@ flowchart TB
 
 ## Quick Start
 
-Minimal single-region deployment:
+The `company` and `connectivity_subscription_id` variables are supplied as `TF_VAR_company` and `TF_VAR_connectivity_subscription_id` environment variables in the CI/CD pipeline. They are not set in tfvars files.
+
+Each workspace has a region-specific tfvars file in `workspace_variables/`. For example, `prd_uksouth_terraform.tfvars`:
 
 ``` hcl
-company                      = "ensono"
-connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
+hubs = {
+  uksouth = {}
+}
 
 management_remote_state = {
   storage_account_name = "<storage-account-name>"
 }
-
-hubs = {
-  uksouth = {}
-}
 ```
+
+The region names (`uksouth`, `ukwest`, etc.) are examples — use whichever Azure regions suit your deployment.
 
 ### Deployment Order
 
@@ -181,6 +182,15 @@ The sidecar VNet is automatically connected to the virtual hub for
 reachability.
 
 ## Configuration Examples
+
+Each region is deployed via its own workspace with a tfvars file under
+`workspace_variables/` (e.g., `prd_uksouth_terraform.tfvars`,
+`prd_ukwest_terraform.tfvars`). The `company` and
+`connectivity_subscription_id` variables are injected as `TF_VAR_`
+environment variables by the pipeline.
+
+The examples below use `uksouth` and `ukwest` as sample regions —
+substitute your own.
 
 ### Multi-Region Deployment
 
@@ -460,7 +470,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "spoke" {
 }
 ```
 
-### Available Outputs
+### Available Outputs for Spoke Integration
 
 | Output                                 | Description                                            |
 |----------------------------------------|--------------------------------------------------------|

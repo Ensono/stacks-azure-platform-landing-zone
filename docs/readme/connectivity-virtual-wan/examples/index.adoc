@@ -1,5 +1,9 @@
 == Configuration Examples
 
+Each region is deployed via its own workspace with a tfvars file under `workspace_variables/` (e.g., `prd_uksouth_terraform.tfvars`, `prd_ukwest_terraform.tfvars`). The `company` and `connectivity_subscription_id` variables are injected as `TF_VAR_` environment variables by the pipeline.
+
+The examples below use `uksouth` and `ukwest` as sample regions — substitute your own.
+
 === Multi-Region Deployment
 
 [source,hcl]
@@ -94,7 +98,7 @@ hubs = {
 
 === DDoS Protection Plan
 
-DDoS Protection Plan is disabled by default due to significant cost (~£2,330/month flat fee).
+DDoS Protection Plan is **disabled by default** due to significant cost (~£2,330/month flat fee).
 
 [source,hcl]
 ----

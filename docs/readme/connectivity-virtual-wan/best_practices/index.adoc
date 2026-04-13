@@ -2,7 +2,7 @@
 
 === Firewall DNS Proxy
 
-DNS Proxy is enabled by default on the firewall policy, as recommended by https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security[Microsoft's Well-Architected Framework].
+DNS Proxy is **enabled by default** on the firewall policy, as recommended by https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-firewall#security[Microsoft's Well-Architected Framework].
 
 DNS Proxy provides:
 

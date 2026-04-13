@@ -50,7 +50,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "spoke" {
 }
 ----
 
-=== Available Outputs
+=== Available Outputs for Spoke Integration
 
 |===
 | Output | Description
