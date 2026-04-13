@@ -21,7 +21,6 @@ resource "azurerm_network_watcher_flow_log" "vnet" {
   target_resource_id   = module.hub_and_spoke_vnet.virtual_network_resource_ids[each.key]
   storage_account_id   = local.flow_logs_storage_account_ids[each.key]
   enabled              = true
-  version              = 2
   tags                 = merge(var.tags, each.value.tags)
 
   retention_policy {

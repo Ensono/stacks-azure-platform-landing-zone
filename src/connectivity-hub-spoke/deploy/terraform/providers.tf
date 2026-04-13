@@ -1,6 +1,4 @@
 provider "azapi" {
-  enable_preflight = true
-
   skip_provider_registration = true
 }
 
