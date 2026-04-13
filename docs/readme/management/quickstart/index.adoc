@@ -1,16 +1,15 @@
 == Quick Start
 
-Deploy the management module with minimal configuration to get centralised logging up and running.
+The `company`, `region`, and `management_subscription_id` variables are supplied as `TF_VAR_company`, `TF_VAR_region`, and `TF_VAR_management_subscription_id` environment variables in the CI/CD pipeline. They are not set in tfvars files.
 
-=== Minimal Deployment
+When management groups are enabled, `connectivity_subscription_id` is also supplied as `TF_VAR_connectivity_subscription_id`.
 
-Deploys a Log Analytics Workspace and Data Collection Rules with sensible defaults:
+Each workspace has a tfvars file in `workspace_variables/`. For example, `prd_uksouth_terraform.tfvars`:
 
 [source,hcl]
 ----
-company                    = "ensono"
-region                     = "uksouth"
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
+# Management resources are deployed with sensible defaults.
+# No hub-specific settings are needed in the tfvars.
 ----
 
 This provisions:

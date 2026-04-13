@@ -18,19 +18,21 @@ Deploys management resources without management groups or policies.
 ## Usage
 
 ```bash
-cp management.tfvars ../../terraform.tfvars
-# Edit terraform.tfvars with your values
+cp management.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
+# Edit the tfvars file with your settings
 eirctl infrastructure:plan
 eirctl infrastructure:apply
 ```
 
-## Required Variables
+## Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description |
 | -------- | ----------- |
-| `company` | Company prefix for resource naming (e.g., "ensono") |
-| `region` | Azure region (e.g., "uksouth") |
-| `management_subscription_id` | Subscription ID to deploy resources |
+| `TF_VAR_company` | Company prefix for resource naming (e.g., "ensono") |
+| `TF_VAR_region` | Azure region (e.g., "uksouth") |
+| `TF_VAR_management_subscription_id` | Subscription ID to deploy resources |
 
 ## Optional Variables
 

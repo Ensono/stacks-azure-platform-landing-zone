@@ -5,13 +5,6 @@
 # Policy default values are computed from management_resources outputs.
 # Subscription placement is computed from subscription variables.
 
-company = "ensono"
-region  = "uksouth"
-
-# Required Platform Subscriptions
-management_subscription_id   = "00000000-0000-0000-0000-000000000000"
-connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
-
 # Enable Management Groups
 management_groups_enabled = true
 

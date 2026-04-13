@@ -5,8 +5,3 @@
 #
 # Use when management groups are deployed separately or already exist.
 # Outputs are consumed by connectivity module via remote state.
-
-company = "ensono"
-region  = "uksouth"
-
-management_subscription_id = "00000000-0000-0000-0000-000000000000"

@@ -133,18 +133,20 @@ their default state.
 
 ## Quick Start
 
-Deploy the management module with minimal configuration to get
-centralised logging up and running.
+The `company`, `region`, and `management_subscription_id` variables are
+supplied as `TF_VAR_company`, `TF_VAR_region`, and
+`TF_VAR_management_subscription_id` environment variables in the CI/CD
+pipeline. They are not set in tfvars files.
 
-### Minimal Deployment
+When management groups are enabled, `connectivity_subscription_id` is
+also supplied as `TF_VAR_connectivity_subscription_id`.
 
-Deploys a Log Analytics Workspace and Data Collection Rules with
-sensible defaults:
+Each workspace has a tfvars file in `workspace_variables/`. For example,
+`prd_uksouth_terraform.tfvars`:
 
 ``` hcl
-company                    = "ensono"
-region                     = "uksouth"
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
+# Management resources are deployed with sensible defaults.
+# No hub-specific settings are needed in the tfvars.
 ```
 
 This provisions:
@@ -327,15 +329,15 @@ development configuration.
 
 ## Examples
 
+The `company`, `region`, and `management_subscription_id` variables are
+injected as `TF_VAR_` environment variables by the pipeline. The
+examples below show only the tfvars settings.
+
 ### Customising Management Resources
 
 Override specific settings while using defaults for the rest:
 
 ``` hcl
-company                    = "ensono"
-region                     = "uksouth"
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
-
 # Customise retention and disable VM Insights DCR
 management_resource_settings = {
   log_analytics_workspace_retention_in_days = 180
@@ -349,22 +351,10 @@ management_resource_settings = {
 ### Full Azure Landing Zone with Management Groups
 
 Deploy a complete Azure Landing Zone management group architecture with
-policies:
+policies. The `connectivity_subscription_id` is also supplied as
+`TF_VAR_connectivity_subscription_id` in the pipeline:
 
 ``` hcl
-company                    = "ensono"
-region                     = "uksouth"
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
-
-# Platform subscriptions
-connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"  # Required unless skip_subscription_placement = true
-
-# Optional: Identity can be omitted for cloud-native orgs using only Microsoft Entra ID
-# identity_subscription_id = "22222222-2222-2222-2222-222222222222"
-
-# Optional: Dedicated security subscription for centralised security tooling
-# security_subscription_id = "33333333-3333-3333-3333-333333333333"
-
 # Enable management groups (deploys under tenant root group by default)
 management_groups_enabled = true
 
@@ -388,10 +378,6 @@ Reference](#api-reference) for full configuration options.
 For testing with only a management subscription:
 
 ``` hcl
-company                    = "ensono"
-region                     = "uksouth"
-management_subscription_id = "00000000-0000-0000-0000-000000000000"
-
 management_groups_enabled    = true
 skip_subscription_placement  = true  # Skips connectivity subscription validation
 
