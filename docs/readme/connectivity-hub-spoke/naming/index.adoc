@@ -1,26 +1,29 @@
-[[naming]]
 == Resource Naming
 
-Resources follow the Cloud Adoption Framework (CAF) naming convention using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming module].
+Resources follow https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming[Cloud Adoption Framework (CAF)] naming conventions using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming] module. Names can be overridden per hub using `name_overrides`.
 
-The naming suffix is composed of: `{company_3char}-{geo_code}-{workspace}-{component}-001`
+=== Generated Names
 
-For example, with `company = "ensono"` deploying to `uksouth` in the `default` workspace:
+With `company = "ensono"`, region `uksouth` (geo_code `uks`), and workspace `prd`:
 
 |===
-| Resource | Generated Name
+| Resource | Generated Name | Name Override Key
 
-| Resource Group | `rg-ens-uks-default-hub-001`
-| Virtual Network | `vnet-ens-uks-default-hub-001`
-| Firewall | `afw-ens-uks-default-hub-001`
-| Firewall Policy | `afwp-ens-uks-default-hub-001`
-| Route Table (firewall) | `rt-ens-uks-default-hub-fw-001`
-| Route Table (user) | `rt-ens-uks-default-hub-std-001`
-| Bastion Host | `bas-ens-uks-default-hub-001`
-| VPN Gateway | `vgw-ens-uks-default-hub-vpn-001`
-| ExpressRoute Gateway | `vgw-ens-uks-default-hub-er-001`
-| DNS Resolver | `dnspr-ens-uks-default-hub-dns-001`
-| Storage Account (flow logs) | `stensuksdefaulthubfl001` (globally unique)
+| Resource Group | `rg-ens-uks-prd-hub-001` | `resource_group`
+| Virtual Network | `vnet-ens-uks-prd-hub-001` | `virtual_network`
+| Firewall | `afw-ens-uks-prd-hub-001` | `firewall`
+| Firewall Policy | `afwp-ens-uks-prd-hub-001` | `firewall_policy`
+| Route Table (firewall) | `rt-ens-uks-prd-hub-fw-001` | `route_table_firewall`
+| Route Table (user) | `rt-ens-uks-prd-hub-std-001` | `route_table_user`
+| Bastion Host | `bas-ens-uks-prd-hub-001` | `bastion`
+| VPN Gateway | `vgw-ens-uks-prd-hub-vpn-001` | `vpn_gateway`
+| ExpressRoute Gateway | `vgw-ens-uks-prd-hub-er-001` | `expressroute_gateway`
+| DNS Resolver | `dnspr-ens-uks-prd-hub-dns-001` | `private_dns_resolver`
+| Storage Account (flow logs) | `st<unique>ensukshubfl001` | -
 |===
 
-All names can be overridden per hub using the `name_overrides` object. See <<examples>> for details.
+=== Naming Pattern
+
+Names follow the pattern: `{caf_prefix}-{company_3}-{geo_code}-{workspace}-{component}-{instance}`
+
+The module uses `substr(var.company, 0, 3)` to limit the company prefix length and the region's `geo_code` (e.g., `uks` for UK South), ensuring resource names stay within Azure limits.

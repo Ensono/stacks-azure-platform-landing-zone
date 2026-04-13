@@ -18,10 +18,10 @@ to validate configuration logic without deploying actual Azure resources.
 ## Running Tests
 
 ```bash
-# Run all tests (~3 minutes)
+# Run all tests
 terraform test
 
-# Run a specific test file (~1 minute)
+# Run a specific test file
 terraform test -filter=tests/hub_networking.tftest.hcl
 
 # Run with verbose output
@@ -77,6 +77,17 @@ mock_provider "azapi" {
 mock_provider "random" {}
 
 mock_provider "local" {}
+mock_provider "modtm" {}
+
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = { geo_code = "uks", name = "uksouth", display_name = "UK South", zones = ["1", "2", "3"] }
+      ukwest  = { geo_code = "ukw", name = "ukwest", display_name = "UK West", zones = ["1", "2", "3"] }
+    }
+  }
+}
 ```
 
 ## Writing New Tests

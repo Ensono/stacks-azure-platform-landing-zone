@@ -1,9 +1,8 @@
-[[integration]]
-== Integration
+== Module Integration
 
-=== Management Module Integration
+=== Management Landing Zone
 
-This module integrates with the Management Landing Zone via remote state to obtain the Log Analytics workspace ID for diagnostics, alerts, and Azure Monitor Private Link Scope.
+This module integrates with the Management Landing Zone to enable firewall diagnostics, centralized monitoring, and alerting. Configure the remote state backend to fetch the Log Analytics workspace ID.
 
 [source,hcl]
 ----
@@ -12,14 +11,13 @@ management_remote_state = {
 }
 ----
 
-Alternatively, provide the workspace ID directly:
+When the management remote state is configured, the module automatically:
 
-[source,hcl]
-----
-azure_monitor_private_link = {
-  log_analytics_workspace_id = "/subscriptions/.../providers/Microsoft.OperationalInsights/workspaces/log-analytics"
-}
-----
+* Sends firewall diagnostic logs to Log Analytics
+* Sends bastion diagnostic logs to Log Analytics
+* Sends gateway diagnostic logs to Log Analytics
+* Deploys metric alerts for firewall and gateways
+* Configures Azure Monitor Private Link Scope (AMPLS)
 
 === Spoke Integration
 

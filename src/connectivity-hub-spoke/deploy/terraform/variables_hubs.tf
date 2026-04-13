@@ -173,5 +173,5 @@ variable "ddos_protection_plan" {
     name    = optional(string)
   })
   default     = {}
-  description = "DDoS Protection Plan configuration."
+  description = "DDoS Protection Plan configuration. Disabled by default due to significant cost (~£2,200/month)."
 }

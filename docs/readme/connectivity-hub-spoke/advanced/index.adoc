@@ -1,4 +1,3 @@
-[[advanced]]
 == Advanced Configuration
 
 === Flow Logs Storage
@@ -88,3 +87,54 @@ hubs = {
   }
 }
 ----
+
+When DNS servers are specified and DNS proxy is enabled, the firewall forwards DNS queries to the specified servers instead of Azure DNS.
+
+=== Network Watcher
+
+Network Watcher is deployed per region when enabled. It provides network diagnostic capabilities including connection monitor, packet capture, and flow logs.
+
+=== Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/` that validate configuration logic using mock providers.
+These tests run in CI when changes are made to the module and do not require Azure credentials.
+
+==== Running Tests
+
+[source,bash]
+----
+eirctl tests
+----
+
+To run a specific test file:
+
+[source,bash]
+----
+eirctl tests TF_TEST_FILTER=tests/hub_networking.tftest.hcl
+----
+
+==== Test Coverage
+
+[cols="2,3,4",options="header"]
+|===
+| Test File | Test Cases | What It Validates
+
+| `hub_networking.tftest.hcl`
+| single_hub_networking_defaults, multi_hub_networking, custom_address_space, custom_subnets_merged
+| Default /16 allocation, subnet CIDR validity and minimum sizes, mesh peering (single/multi), hub index determinism, custom address space overrides, custom subnet merging
+
+| `hub_resources.tftest.hcl`
+| hub_defaults, feature_toggles_propagate, ddos_creates_resource_group, ampls_dns_zones_and_diagnostics, flow_logs_enabled_with_storage
+| Feature flag defaults and propagation, hub filtering, NSG rules, availability zones, diagnostics enablement, DDoS resource group and settings, AMPLS DNS zone count, flow logs with storage
+|===
+
+==== Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the established patterns:
+
+* Use `command = plan` with `state_key` to isolate test runs
+* Assert against locals and computed values, not Azure API responses
+* Enable `parallel = true` at the test level
+* Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.

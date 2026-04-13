@@ -149,4 +149,4 @@ hubs = {
 ## See Also
 
 - [Multi-Region Example](../multi_region/) - Recommended for production
-- [Module Variables](../../variables.hubs.tf) - Full variable documentation
+- [Module Variables](../../variables_hubs.tf) - Full variable documentation

@@ -1,5 +1,4 @@
-[[examples]]
-== Examples
+== Configuration Examples
 
 === Multi-Region Deployment
 
@@ -91,8 +90,6 @@ hubs = {
   }
 }
 ----
-
-See <<naming>> for the default naming convention.
 
 === Custom DNS Zone
 

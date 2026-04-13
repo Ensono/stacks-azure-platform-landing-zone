@@ -1,4 +1,3 @@
-[[best-practices]]
 == Best Practices
 
 === Firewall DNS Proxy
@@ -97,3 +96,11 @@ management_remote_state = {
 ----
 
 NOTE: Traffic Analytics requires `management_remote_state` to be enabled to obtain the Log Analytics workspace GUID.
+
+=== Hub-Spoke Considerations
+
+* Mesh VNet peering is automatically configured when multiple hubs are deployed, providing full hub-to-hub connectivity
+* Route tables are explicitly managed — user subnet route tables force traffic through Azure Firewall
+* Private Endpoints NSG is unique to hub-spoke topology, providing additional visibility and access control
+* DDoS protection applies directly to hub VNets (unlike Virtual WAN where hubs are managed infrastructure)
+* Spoke VNets must be peered manually to the hub and associated with the firewall route table

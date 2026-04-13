@@ -1,7 +1,6 @@
-[[alerts]]
-== Alerts
+== Metric Alerts
 
-Metric alerts are automatically deployed when a Log Analytics workspace ID is available (via <<integration,management remote state>> or direct configuration).
+Metric alerts are deployed when a Log Analytics workspace ID is available (via management remote state or direct configuration). Alerts target firewalls and gateways.
 
 === Firewall Alerts
 

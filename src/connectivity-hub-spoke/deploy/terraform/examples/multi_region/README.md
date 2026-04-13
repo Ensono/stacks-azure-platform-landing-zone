@@ -200,4 +200,4 @@ hubs = {
 ## See Also
 
 - [Single Region Example](../single_region/) - Simpler deployment (not recommended for production)
-- [Module Variables](../../variables.hubs.tf) - Full variable documentation
+- [Module Variables](../../variables_hubs.tf) - Full variable documentation

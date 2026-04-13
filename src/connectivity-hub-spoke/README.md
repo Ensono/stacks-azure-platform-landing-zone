@@ -2,24 +2,19 @@
 
 ## Overview
 
-This module deploys hub virtual networks using Azure Verified Modules
-(AVM). It supports single or multi-region deployments with automatic IP
+The **Stacks Azure Platform Landing Zone Connectivity Hub-Spoke** module
+deploys a hub-spoke network topology using the below Azure Verified
+Modules:
+
+[Hub and Spoke
+Networking](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest)
+
+It supports single or multi-region deployments with automatic IP
 allocation and CAF-compliant naming.
 
-### What This Module Deploys
-
-1.  **Hub Virtual Networks** — Per-region hub VNets with Azure Firewall,
-    DNS, and platform services
-
-2.  **Network Security** — Firewall policies, route tables, NSGs, and
-    DDoS protection
-
-3.  **Hybrid Connectivity** (optional) — VPN and ExpressRoute gateways
-
-4.  **Monitoring** — Diagnostic settings, metric alerts, and Azure
-    Monitor Private Link Scope
-
-### Architecture
+Hub-spoke provides a self-managed hub VNet with Azure Firewall, route
+tables, and mesh peering between hubs. Spoke VNets peer directly to the
+hub and use route tables to force traffic through the firewall.
 
 ``` mermaid
 flowchart TB
@@ -75,14 +70,24 @@ flowchart TB
 
     resource_groups → hub_and_spoke_vnet
 
+1.  **resource_groups** — Deploys resource groups per hub region using
+    `for_each` from configuration
+
+2.  **hub_and_spoke_vnet** — Deploys hub virtual networks, firewall,
+    bastion, DNS, and gateways using
+    [avm-ptn-alz-connectivity-hub-and-spoke-vnet](https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest)
+
 ### Prerequisites
 
-- An Azure subscription designated as the **connectivity subscription**
+- Terraform \>= 1.12
 
-- Terraform ~> 1.12, AzureRM ~> 4.0, AzAPI ~> 2.0
+- AzureRM provider \>= 4.0
 
-- Management module deployed first (for Log Analytics integration via
-  remote state)
+- AzAPI provider \>= 2.0
+
+- Azure subscription for connectivity resources
+
+- Management Landing Zone deployed (for Log Analytics integration)
 
 ## Features
 
@@ -106,15 +111,9 @@ flowchart TB
 | ExpressRoute Diagnostics   | ✅      | Gateway and route diagnostics (when gateway enabled)          |
 | DDoS Protection Plan       | ❌      | Shared across all hubs                                        |
 
-Diagnostics and alerts are automatically enabled when the management
-module integration provides a Log Analytics workspace ID. See
-[Alerts](#alerts) and [Best Practices](#best-practices).
-
 ## Quick Start
 
-Deploy a single-region hub network with minimal configuration.
-
-### Minimal Deployment
+Minimal single-region deployment:
 
 ``` hcl
 company                      = "ensono"
@@ -129,44 +128,13 @@ hubs = {
 }
 ```
 
-This provisions:
-
-- A **Hub Virtual Network** with a `/22` address space (from
-  `10.0.0.0/8`)
-
-- **Azure Firewall** (Standard SKU) with DNS Proxy enabled
-
-- **Route tables** for firewall and user subnets
-
-- **Private DNS Zones** for Azure Private Link services
-
-- **Private Endpoints NSG** for access control and flow logging
-
-- **Network Watcher** for diagnostics
-
-- **Azure Monitor Private Link Scope** (AMPLS) for private Log Analytics
-  connectivity
-
-- **Firewall diagnostics and alerts** (when Log Analytics workspace is
-  available)
-
 ### Deployment Order
 
-When deploying the full platform, the connectivity module is deployed
-**after** management:
+1.  Deploy Management Landing Zone first (provides Log Analytics
+    workspace)
 
-    1. Management Module
-    2. Connectivity Module   ← you are here
-    3. Application Landing Zones
-
-### Required Environment Variable
-
-The connectivity subscription ID can also be passed as an environment
-variable:
-
-``` bash
-export TF_VAR_connectivity_subscription_id="00000000-0000-0000-0000-000000000000"
-```
+2.  Deploy this module with `management_remote_state` pointing to the
+    management state
 
 ## Architecture
 
@@ -222,7 +190,7 @@ across deployments.
 When multiple hubs are deployed, VNet peering is automatically
 configured between all hubs, providing full mesh connectivity.
 
-## Examples
+## Configuration Examples
 
 ### Multi-Region Deployment
 
@@ -316,8 +284,6 @@ hubs = {
 }
 ```
 
-See [Resource Naming](#naming) for the default naming convention.
-
 ### Custom DNS Zone
 
 ``` hcl
@@ -399,40 +365,47 @@ across all regions.
 
 ## Resource Naming
 
-Resources follow the Cloud Adoption Framework (CAF) naming convention
-using the [Azure Naming
-module](https://registry.terraform.io/modules/Azure/naming/azurerm/latest).
+Resources follow [Cloud Adoption Framework
+(CAF)](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
+naming conventions using the [Azure
+Naming](https://registry.terraform.io/modules/Azure/naming/azurerm/latest)
+module. Names can be overridden per hub using `name_overrides`.
 
-The naming suffix is composed of:
-`{company_3char}-{geo_code}-{workspace}-{component}-001`
+### Generated Names
 
-For example, with `company = "ensono"` deploying to `uksouth` in the
-`default` workspace:
+With `company = "ensono"`, region `uksouth` (geo_code `uks`), and
+workspace `prd`:
 
-| Resource                    | Generated Name                              |
-|-----------------------------|---------------------------------------------|
-| Resource Group              | `rg-ens-uks-default-hub-001`                |
-| Virtual Network             | `vnet-ens-uks-default-hub-001`              |
-| Firewall                    | `afw-ens-uks-default-hub-001`               |
-| Firewall Policy             | `afwp-ens-uks-default-hub-001`              |
-| Route Table (firewall)      | `rt-ens-uks-default-hub-fw-001`             |
-| Route Table (user)          | `rt-ens-uks-default-hub-std-001`            |
-| Bastion Host                | `bas-ens-uks-default-hub-001`               |
-| VPN Gateway                 | `vgw-ens-uks-default-hub-vpn-001`           |
-| ExpressRoute Gateway        | `vgw-ens-uks-default-hub-er-001`            |
-| DNS Resolver                | `dnspr-ens-uks-default-hub-dns-001`         |
-| Storage Account (flow logs) | `stensuksdefaulthubfl001` (globally unique) |
+| Resource                    | Generated Name                  | Name Override Key      |
+|-----------------------------|---------------------------------|------------------------|
+| Resource Group              | `rg-ens-uks-prd-hub-001`        | `resource_group`       |
+| Virtual Network             | `vnet-ens-uks-prd-hub-001`      | `virtual_network`      |
+| Firewall                    | `afw-ens-uks-prd-hub-001`       | `firewall`             |
+| Firewall Policy             | `afwp-ens-uks-prd-hub-001`      | `firewall_policy`      |
+| Route Table (firewall)      | `rt-ens-uks-prd-hub-fw-001`     | `route_table_firewall` |
+| Route Table (user)          | `rt-ens-uks-prd-hub-std-001`    | `route_table_user`     |
+| Bastion Host                | `bas-ens-uks-prd-hub-001`       | `bastion`              |
+| VPN Gateway                 | `vgw-ens-uks-prd-hub-vpn-001`   | `vpn_gateway`          |
+| ExpressRoute Gateway        | `vgw-ens-uks-prd-hub-er-001`    | `expressroute_gateway` |
+| DNS Resolver                | `dnspr-ens-uks-prd-hub-dns-001` | `private_dns_resolver` |
+| Storage Account (flow logs) | `st<unique>ensukshubfl001`      | \-                     |
 
-All names can be overridden per hub using the `name_overrides` object.
-See [Examples](#examples) for details.
+### Naming Pattern
 
-## Integration
+Names follow the pattern:
+`{caf_prefix}-{company_3}-{geo_code}-{workspace}-{component}-{instance}`
 
-### Management Module Integration
+The module uses `substr(var.company, 0, 3)` to limit the company prefix
+length and the region’s `geo_code` (e.g., `uks` for UK South), ensuring
+resource names stay within Azure limits.
 
-This module integrates with the Management Landing Zone via remote state
-to obtain the Log Analytics workspace ID for diagnostics, alerts, and
-Azure Monitor Private Link Scope.
+## Module Integration
+
+### Management Landing Zone
+
+This module integrates with the Management Landing Zone to enable
+firewall diagnostics, centralized monitoring, and alerting. Configure
+the remote state backend to fetch the Log Analytics workspace ID.
 
 ``` hcl
 management_remote_state = {
@@ -440,13 +413,18 @@ management_remote_state = {
 }
 ```
 
-Alternatively, provide the workspace ID directly:
+When the management remote state is configured, the module
+automatically:
 
-``` hcl
-azure_monitor_private_link = {
-  log_analytics_workspace_id = "/subscriptions/.../providers/Microsoft.OperationalInsights/workspaces/log-analytics"
-}
-```
+- Sends firewall diagnostic logs to Log Analytics
+
+- Sends bastion diagnostic logs to Log Analytics
+
+- Sends gateway diagnostic logs to Log Analytics
+
+- Deploys metric alerts for firewall and gateways
+
+- Configures Azure Monitor Private Link Scope (AMPLS)
 
 ### Spoke Integration
 
@@ -526,11 +504,11 @@ resource "azurerm_monitor_private_link_scoped_service" "app_insights" {
 | `dns_server_ip_addresses`                  | DNS Resolver IPs for spoke DNS settings       |
 | `ampls_name` / `ampls_resource_group_name` | For adding Application Insights to AMPLS      |
 
-## Alerts
+## Metric Alerts
 
-Metric alerts are automatically deployed when a Log Analytics workspace
-ID is available (via [management remote state](#integration) or direct
-configuration).
+Metric alerts are deployed when a Log Analytics workspace ID is
+available (via management remote state or direct configuration). Alerts
+target firewalls and gateways.
 
 ### Firewall Alerts
 
@@ -694,6 +672,23 @@ obtain the Log Analytics workspace GUID.
 
 </div>
 
+### Hub-Spoke Considerations
+
+- Mesh VNet peering is automatically configured when multiple hubs are
+  deployed, providing full hub-to-hub connectivity
+
+- Route tables are explicitly managed — user subnet route tables force
+  traffic through Azure Firewall
+
+- Private Endpoints NSG is unique to hub-spoke topology, providing
+  additional visibility and access control
+
+- DDoS protection applies directly to hub VNets (unlike Virtual WAN
+  where hubs are managed infrastructure)
+
+- Spoke VNets must be peered manually to the hub and associated with the
+  firewall route table
+
 ## Advanced Configuration
 
 ### Flow Logs Storage
@@ -794,6 +789,56 @@ hubs = {
 }
 ```
 
+When DNS servers are specified and DNS proxy is enabled, the firewall
+forwards DNS queries to the specified servers instead of Azure DNS.
+
+### Network Watcher
+
+Network Watcher is deployed per region when enabled. It provides network
+diagnostic capabilities including connection monitor, packet capture,
+and flow logs.
+
+### Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/`
+that validate configuration logic using mock providers. These tests run
+in CI when changes are made to the module and do not require Azure
+credentials.
+
+#### Running Tests
+
+``` bash
+eirctl tests
+```
+
+To run a specific test file:
+
+``` bash
+eirctl tests TF_TEST_FILTER=tests/hub_networking.tftest.hcl
+```
+
+#### Test Coverage
+
+| Test File                   | Test Cases                                                                                                                            | What It Validates                                                                                                                                                                           |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `hub_networking.tftest.hcl` | single_hub_networking_defaults, multi_hub_networking, custom_address_space, custom_subnets_merged                                     | Default /16 allocation, subnet CIDR validity and minimum sizes, mesh peering (single/multi), hub index determinism, custom address space overrides, custom subnet merging                   |
+| `hub_resources.tftest.hcl`  | hub_defaults, feature_toggles_propagate, ddos_creates_resource_group, ampls_dns_zones_and_diagnostics, flow_logs_enabled_with_storage | Feature flag defaults and propagation, hub filtering, NSG rules, availability zones, diagnostics enablement, DDoS resource group and settings, AMPLS DNS zone count, flow logs with storage |
+
+#### Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the
+established patterns:
+
+- Use `command = plan` with `state_key` to isolate test runs
+
+- Assert against locals and computed values, not Azure API responses
+
+- Enable `parallel = true` at the test level
+
+- Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -839,23 +884,24 @@ change the `random_string` seed or use an external storage account.
 `management_remote_state` is disabled and no workspace ID is provided
 directly, alerts are skipped.
 
-**Fix**: Ensure management module integration is configured. See
-[Integration](#integration).
+**Fix**: Ensure management module integration is configured.
 
-### Testing
+#### Flow logs validation fails
 
-Unit tests validate configuration logic without deploying
-infrastructure. Tests use mock providers to run offline.
+    Error: Flow logs require network_watcher.enabled = true
 
-``` bash
-terraform test
-terraform test -filter=tests/hub_networking.tftest.hcl
+**Cause**: Flow logs depend on Network Watcher. Either Network Watcher
+is disabled or no storage is configured.
+
+**Fix**: Ensure both are enabled:
+
+``` hcl
+network_watcher = { enabled = true }
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
 ```
-
-| Test File                   | Description                                             |
-|-----------------------------|---------------------------------------------------------|
-| `hub_networking.tftest.hcl` | Address space, subnets, multi-hub, mesh peering         |
-| `hub_resources.tftest.hcl`  | Features, DDoS, AMPLS, flow logs, private endpoints NSG |
 
 ## API Reference
 
@@ -867,8 +913,6 @@ terraform test -filter=tests/hub_networking.tftest.hcl
 | <span id="requirement_terraform"></span> [terraform](#requirement_terraform) | ~> 1.12 |
 | <span id="requirement_azapi"></span> [azapi](#requirement_azapi)             | ~> 2.0  |
 | <span id="requirement_azurerm"></span> [azurerm](#requirement_azurerm)       | ~> 4.0  |
-| <span id="requirement_local"></span> [local](#requirement_local)             | ~> 2.5  |
-| <span id="requirement_modtm"></span> [modtm](#requirement_modtm)             | ~> 0.3  |
 | <span id="requirement_random"></span> [random](#requirement_random)          | ~> 3.8  |
 
 ## Providers
@@ -1042,8 +1086,8 @@ configuration for private connectivity to Log Analytics.</p></td>
 <td style="text-align: left;"><p><span
 id="input_ddos_protection_plan"></span> <a
 href="#input_ddos_protection_plan">ddos_protection_plan</a></p></td>
-<td style="text-align: left;"><p>DDoS Protection Plan
-configuration.</p></td>
+<td style="text-align: left;"><p>DDoS Protection Plan configuration.
+Disabled by default due to significant cost (~£2,200/month).</p></td>
 <td style="text-align: left;"><pre><code>object({
     enabled = optional(bool, false)
     name    = optional(string)

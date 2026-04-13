@@ -7,8 +7,6 @@
 |[[requirement_terraform]] <<requirement_terraform,terraform>> |~> 1.12
 |[[requirement_azapi]] <<requirement_azapi,azapi>> |~> 2.0
 |[[requirement_azurerm]] <<requirement_azurerm,azurerm>> |~> 4.0
-|[[requirement_local]] <<requirement_local,local>> |~> 2.5
-|[[requirement_modtm]] <<requirement_modtm,modtm>> |~> 0.3
 |[[requirement_random]] <<requirement_random,random>> |~> 3.8
 |===
 
@@ -174,7 +172,7 @@ object({
 |no
 
 |[[input_ddos_protection_plan]] <<input_ddos_protection_plan,ddos_protection_plan>>
-|DDoS Protection Plan configuration.
+|DDoS Protection Plan configuration. Disabled by default due to significant cost (~£2,200/month).
 |
 
 [source]

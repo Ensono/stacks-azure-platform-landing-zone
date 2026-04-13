@@ -26,8 +26,16 @@ mock_provider "azapi" {
 }
 
 mock_provider "random" {}
-mock_provider "local" {}
-mock_provider "modtm" {}
+
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = { geo_code = "uks", name = "uksouth", display_name = "UK South", zones = ["1", "2", "3"] }
+      ukwest  = { geo_code = "ukw", name = "ukwest", display_name = "UK West", zones = ["1", "2", "3"] }
+    }
+  }
+}
 
 override_data {
   target = data.terraform_remote_state.management
@@ -79,28 +87,22 @@ run "hub_defaults" {
     condition     = var.flow_logs.enabled == false
     error_message = "Flow logs should be disabled by default."
   }
+
+  # Private Endpoints NSG rules
+  assert {
+    condition     = module.nsg_private_endpoints["uksouth"].security_rules["allow_vnet_inbound"].priority == 100
+    error_message = "AllowVNetInbound rule should have priority 100."
+  }
+
+  assert {
+    condition     = module.nsg_private_endpoints["uksouth"].security_rules["deny_internet_inbound"].priority == 4096
+    error_message = "DenyInternetInbound rule should have priority 4096."
+  }
 }
 
 # =============================================================================
 # Feature Flags
 # =============================================================================
-
-run "enabled_hubs_filtering" {
-  command   = plan
-  state_key = "filtering"
-
-  variables {
-    hubs = {
-      uksouth = { enabled = true }
-      ukwest  = { enabled = false }
-    }
-  }
-
-  assert {
-    condition     = contains(keys(local.enabled_hubs), "uksouth") && !contains(keys(local.enabled_hubs), "ukwest")
-    error_message = "Only enabled hubs should appear in enabled_hubs map."
-  }
-}
 
 run "feature_toggles_propagate" {
   command   = plan
@@ -118,7 +120,14 @@ run "feature_toggles_propagate" {
           private_dns_resolver = true
         }
       }
+      ukwest = { enabled = false }
     }
+  }
+
+  # Hub filtering - only enabled hubs appear
+  assert {
+    condition     = contains(keys(local.enabled_hubs), "uksouth") && !contains(keys(local.enabled_hubs), "ukwest")
+    error_message = "Only enabled hubs should appear in enabled_hubs map."
   }
 
   # All feature flags propagate to hub config
@@ -218,24 +227,5 @@ run "flow_logs_enabled_with_storage" {
   assert {
     condition     = length(local.flow_logs_storage_account_ids) == 1
     error_message = "Storage account ID should exist for enabled hub."
-  }
-}
-
-# =============================================================================
-# NSG Rules
-# =============================================================================
-
-run "private_endpoints_nsg_rules" {
-  command   = plan
-  state_key = "nsg"
-
-  assert {
-    condition     = module.nsg_private_endpoints["uksouth"].security_rules["allow_vnet_inbound"].priority == 100
-    error_message = "AllowVNetInbound rule should have priority 100."
-  }
-
-  assert {
-    condition     = module.nsg_private_endpoints["uksouth"].security_rules["deny_internet_inbound"].priority == 4096
-    error_message = "DenyInternetInbound rule should have priority 4096."
   }
 }

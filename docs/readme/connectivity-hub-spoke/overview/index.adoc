@@ -1,16 +1,12 @@
-[[overview]]
 == Overview
 
-This module deploys hub virtual networks using Azure Verified Modules (AVM). It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
+The **Stacks Azure Platform Landing Zone Connectivity Hub-Spoke** module deploys a hub-spoke network topology using the below Azure Verified Modules:
 
-=== What This Module Deploys
+https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest[Hub and Spoke Networking]
 
-. **Hub Virtual Networks** — Per-region hub VNets with Azure Firewall, DNS, and platform services
-. **Network Security** — Firewall policies, route tables, NSGs, and DDoS protection
-. **Hybrid Connectivity** (optional) — VPN and ExpressRoute gateways
-. **Monitoring** — Diagnostic settings, metric alerts, and Azure Monitor Private Link Scope
+It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
 
-=== Architecture
+Hub-spoke provides a self-managed hub VNet with Azure Firewall, route tables, and mesh peering between hubs. Spoke VNets peer directly to the hub and use route tables to force traffic through the firewall.
 
 [source,mermaid]
 ----
@@ -69,8 +65,13 @@ flowchart TB
 resource_groups → hub_and_spoke_vnet
 ----
 
+. **resource_groups** — Deploys resource groups per hub region using `for_each` from configuration
+. **hub_and_spoke_vnet** — Deploys hub virtual networks, firewall, bastion, DNS, and gateways using https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest[avm-ptn-alz-connectivity-hub-and-spoke-vnet]
+
 === Prerequisites
 
-* An Azure subscription designated as the **connectivity subscription**
-* Terraform ~> 1.12, AzureRM ~> 4.0, AzAPI ~> 2.0
-* Management module deployed first (for Log Analytics integration via remote state)
+* Terraform >= 1.12
+* AzureRM provider >= 4.0
+* AzAPI provider >= 2.0
+* Azure subscription for connectivity resources
+* Management Landing Zone deployed (for Log Analytics integration)
