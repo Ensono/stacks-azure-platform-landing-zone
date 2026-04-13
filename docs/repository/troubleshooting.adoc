@@ -7,10 +7,10 @@
 [source,bash]
 ----
 # Check Terraform syntax
-eirctl lint:terraform:format
+eirctl lint
 
-# Run terraform-docs directly
-eirctl run terraform:docs:asciidoc
+# Run terraform-docs directly from module root
+eirctl docs
 ----
 
 ==== AsciiDoc conversion fails

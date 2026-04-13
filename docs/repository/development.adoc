@@ -82,8 +82,10 @@ eirctl tests
 
 [source,bash]
 ----
-# If you changed variables/outputs, API docs auto-update
-# If you need to update usage guide:
+# If you changed variables/outputs, regenerate API docs in README.md
+eirctl docs
+
+# If you need to update the usage guide or AsciiDoc source:
 vim docs/readme/<module>/index.adoc
 ----
 
