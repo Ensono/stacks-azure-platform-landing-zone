@@ -47,14 +47,13 @@ flowchart TB
 ## Quick Start
 
 ```bash
-# 1. Copy example to root terraform directory
-cp hub_and_spoke_vnet.tfvars ../../terraform.tfvars
+# 1. Copy example to workspace_variables directory (one file per region/environment)
+cp hub_and_spoke_vnet.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
 
-# 2. Edit terraform.tfvars:
+# 2. Edit the tfvars file:
 #    - Change hub region (uksouth) to your preferred location
 
-# 3. Set the subscription ID as an environment variable
-export TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
+# 3. Ensure pipeline variables are configured (see below)
 
 # 4. Initialize and deploy
 eirctl infrastructure:plan
@@ -63,18 +62,20 @@ eirctl infrastructure:apply
 
 ## Configuration
 
-### Required Variables
+### Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company` | Company identifier (first 3 chars used in names) | `"ensono"` |
-| `hubs` | Single hub configuration | `{ uksouth = {} }` |
+| `TF_VAR_company` | Company identifier (first 3 chars used in names) | `ensono` |
+| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
 
-### Required Environment Variables
+### Required Variables (tfvars)
 
 | Variable | Description | Example |
-|----------|-------------|--------|
-| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
+|----------|-------------|---------|
+| `hubs` | Single hub configuration | `{ uksouth = {} }` |
 
 ### Change Region
 

@@ -1,7 +1,3 @@
-# Single Region Deployment
-# WARNING: Not recommended for production. Use multi-region for HA/DR.
-# See ../../README.md for more configuration examples.
-
 hubs = {
   uksouth = {}
 }

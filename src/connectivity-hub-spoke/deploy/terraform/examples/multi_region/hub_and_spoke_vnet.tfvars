@@ -1,9 +1,6 @@
 # Multi-Region Deployment
 # See ../../README.md for more configuration examples.
 
-company                      = "ensono"
-connectivity_subscription_id = "00000000-0000-0000-0000-000000000000"
-
 hubs = {
   uksouth = {}
   ukwest  = {}
