@@ -149,6 +149,9 @@ Each workspace has a tfvars file in `workspace_variables/`. For example,
 # No hub-specific settings are needed in the tfvars.
 ```
 
+The region name (`uksouth`) is an example — use whichever Azure region
+suits your deployment.
+
 This provisions:
 
 - A **Log Analytics Workspace** with private-only access and Entra ID
