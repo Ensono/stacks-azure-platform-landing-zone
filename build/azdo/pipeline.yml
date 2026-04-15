@@ -142,7 +142,7 @@ stages:
 
   - stage: Validate
     displayName: Validate Modules
-    condition: or(eq(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.pre_release }}, true))
+    condition: and(succeeded(), or(eq(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.pre_release }}, true)))
     dependsOn:
       - Preliminaries
     variables:
@@ -188,7 +188,7 @@ stages:
 
   - stage: Build
     displayName: Build Modules
-    condition: and(not(failed('Validate')), not(canceled()))
+    condition: and(not(failed('Validate')), not(canceled()), or(eq(variables['is_main'], 'true'), eq(${{ parameters.pre_release }}, true)))
     dependsOn:
       - Preliminaries
       - Validate
