@@ -14,6 +14,7 @@ stacks-azure-platform-landing-zone/
 ├── build/                              # Build system configuration
 │   └── azdo/                           # Azure DevOps pipeline
 │       ├── templates/                  # Pipeline templates
+│       │   ├── module_validation.yml   # Module validation steps
 │       │   └── setup.yml               # Setup steps
 │       ├── pipeline.yml                # Pipeline definition
 │       └── variables.yml               # Pipeline variables
@@ -26,51 +27,59 @@ stacks-azure-platform-landing-zone/
 │   │   ├── connectivity-virtual-wan/   # Virtual WAN module docs (mirrors hub-spoke)
 │   │   └── management/                 # Management module docs
 │   └── repository/                     # Repository documentation (developers)
+│       ├── conf/                       # Document generation config (styles, fonts)
+│       ├── images/                     # Repository images
+│       ├── lib/                        # AsciiDoc extensions (banner, title page)
 │       ├── index.adoc                  # Main repository guide
 │       └── *.adoc                      # Individual section files
+├── stacks-cli/                         # Stacks CLI configuration
+│   └── internal_config.yml             # Internal config override for scaffolding
 ├── src/                                # Landing zone modules
 │   ├── connectivity-hub-spoke/         # Connectivity hub-and-spoke landing zone module
 │   │   ├── deploy/terraform/           # Terraform configuration
-│   │   │   ├── examples/               # Example tfvars
+│   │   │   ├── examples/               # Example tfvars (single_region, multi_region)
 │   │   │   ├── tests/                  # Unit tests (.tftest.hcl)
-│   │   │   ├── workspace_variables/    # Region-specific tfvars for pipelines
-│   │   │   ├── hub_and_spoke_vnet.tf   # Hub networking (AVM)
-│   │   │   ├── main.tf                 # Resource groups module
-│   │   │   ├── *_alerts.tf             # Metric alerts by resource
-│   │   │   ├── *_diagnostics.tf        # Diagnostic settings by resource
-│   │   │   ├── flow_logs_storage.tf    # Flow log storage account
-│   │   │   ├── locals_*.tf             # Local values
-│   │   │   ├── naming.tf               # Azure naming module
-│   │   │   ├── outputs.tf              # Module outputs
-│   │   │   ├── providers.tf            # Provider configuration
-│   │   │   ├── variables*.tf           # Input variables
-│   │   │   └── versions.tf             # Terraform and provider versions
+│   │   │   └── workspace_variables/    # Region-specific tfvars for pipelines
+│   │   ├── .checkov.yaml               # Checkov configuration
+│   │   ├── .commitlintrc.yml           # Commit lint configuration
+│   │   ├── .gitignore
+│   │   ├── .pre-commit-config.yaml     # Pre-commit hooks
 │   │   ├── .terraform-docs.yml         # terraform-docs configuration
+│   │   ├── .terraform-version          # Required Terraform version
+│   │   ├── .tflint.hcl                 # TFLint configuration
 │   │   ├── eirctl.yaml                 # Module-level task runner config
+│   │   ├── yamllint.conf               # YAML lint configuration
 │   │   └── README.md                   # Module documentation (auto-generated)
 │   ├── connectivity-virtual-wan/       # Connectivity virtual WAN landing zone module
-│   │   ├── deploy/terraform/           # Terraform configuration (mirrors hub-spoke)
+│   │   ├── deploy/terraform/           # Mirrors hub-spoke structure
+│   │   │   ├── examples/               # Example tfvars (single_region, multi_region)
+│   │   │   ├── tests/                  # Unit tests (.tftest.hcl)
+│   │   │   └── workspace_variables/    # Region-specific tfvars for pipelines
+│   │   ├── .checkov.yaml
+│   │   ├── .commitlintrc.yml
+│   │   ├── .gitignore
+│   │   ├── .pre-commit-config.yaml
 │   │   ├── .terraform-docs.yml
+│   │   ├── .terraform-version
+│   │   ├── .tflint.hcl
 │   │   ├── eirctl.yaml
+│   │   ├── yamllint.conf
 │   │   └── README.md
 │   └── management/                     # Management landing zone module
 │       ├── deploy/terraform/           # Terraform configuration
-│       │   ├── examples/               # Example tfvars
+│       │   ├── examples/               # Example tfvars (management_groups, management_resources)
 │       │   ├── lib/                    # ALZ library (archetypes, policies)
 │       │   ├── tests/                  # Unit tests (.tftest.hcl)
-│       │   ├── workspace_variables/    # Region-specific tfvars for pipelines
-│       │   ├── main.tf                 # Resource groups module
-│       │   ├── management_groups.tf    # Management group hierarchy
-│       │   ├── management_resources.tf # Log Analytics, DCRs, identities
-│       │   ├── monitoring_alerts.tf    # Monitoring metric alerts
-│       │   ├── locals_*.tf             # Local values
-│       │   ├── naming.tf               # Azure naming module
-│       │   ├── outputs.tf              # Module outputs
-│       │   ├── providers.tf            # Provider configuration
-│       │   ├── variables*.tf           # Input variables
-│       │   └── versions.tf             # Terraform and provider versions
+│       │   └── workspace_variables/    # Region-specific tfvars for pipelines
+│       ├── .checkov.yaml               # Checkov configuration
+│       ├── .commitlintrc.yml           # Commit lint configuration
+│       ├── .gitignore
+│       ├── .pre-commit-config.yaml     # Pre-commit hooks
 │       ├── .terraform-docs.yml         # terraform-docs configuration
+│       ├── .terraform-version          # Required Terraform version
+│       ├── .tflint.hcl                 # TFLint configuration
 │       ├── eirctl.yaml                 # Module-level task runner config
+│       ├── yamllint.conf               # YAML lint configuration
 │       └── README.md                   # Module documentation (auto-generated)
 ├── .checkov.yaml                       # Checkov configuration file
 ├── .gitignore
@@ -79,6 +88,7 @@ stacks-azure-platform-landing-zone/
 ├── .terraform-version                  # Required Terraform version
 ├── .tflint.hcl                         # TFLint configuration file
 ├── eirctl.yaml                         # Root task runner config
+├── stackscli.yml                       # Stacks CLI project settings (scaffolding)
 ├── LICENSE
 ├── README.md                           # Repository README
 └── yamllint.conf                       # YAML lint configuration
