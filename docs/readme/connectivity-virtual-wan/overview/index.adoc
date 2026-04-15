@@ -1,0 +1,75 @@
+== Overview
+
+The **Stacks Azure Platform Landing Zone Connectivity Virtual WAN** module deploys a Virtual WAN network topology using the below Azure Verified Modules:
+
+https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm/latest[Virtual WAN]
+
+It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
+
+Virtual WAN provides a fully managed hub infrastructure with automatic any-to-any routing, integrating VPN and ExpressRoute gateways directly within the virtual hub. Each hub has a companion sidecar VNet for services such as Azure Bastion, DNS Resolver, and private endpoints that cannot be placed inside the virtual hub itself.
+
+[source,mermaid]
+----
+flowchart TB
+    subgraph Internet
+        PIP["Public IPs"]
+    end
+
+    subgraph VWAN["Virtual WAN"]
+        direction TB
+
+        subgraph Hub1["Virtual Hub (per region)"]
+            direction TB
+            VHub["Virtual Hub /23"]
+
+            subgraph FW["Azure Firewall"]
+                FWHub["Hub Firewall"]
+            end
+
+            subgraph Gateway["Gateways (optional)"]
+                VPN["VPN Gateway"]
+                ER["ExpressRoute"]
+            end
+        end
+
+        subgraph Sidecar["Sidecar VNet (per region)"]
+            Bastion["AzureBastionSubnet /26"]
+            GWSubnet["GatewaySubnet /27"]
+            Resolver["DNS Resolver /28"]
+            PE["Private Endpoints /28"]
+        end
+    end
+
+    subgraph Spokes["Spoke VNets"]
+        Spoke1["App Landing Zone 1"]
+        Spoke2["App Landing Zone 2"]
+    end
+
+    subgraph Management["Management Landing Zone"]
+        LogAnalytics["Log Analytics"]
+    end
+
+    PIP --> FW
+    FW --> Spokes
+    Spokes -.-> |"VNet Connection"| Hub1
+    Gateway --> |"Hybrid"| OnPrem["On-Premises"]
+    Sidecar -.-> |"VNet Connection"| Hub1
+    FW --> LogAnalytics
+----
+
+=== Module Chain
+
+----
+resource_groups → virtual_wan
+----
+
+1. **resource_groups** — Deploys resource groups per hub region using `for_each` from configuration
+2. **virtual_wan** — Deploys the Virtual WAN, virtual hubs, firewall, bastion, DNS, and gateways using https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-virtual-wan/azurerm/latest[avm-ptn-alz-connectivity-virtual-wan]
+
+=== Prerequisites
+
+* Terraform >= 1.12
+* AzureRM provider >= 4.0
+* AzAPI provider >= 2.0
+* Azure subscription for connectivity resources
+* Management Landing Zone deployed (for Log Analytics integration)

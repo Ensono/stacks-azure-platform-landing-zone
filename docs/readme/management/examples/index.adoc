@@ -1,0 +1,115 @@
+== Examples
+
+The `company`, `region`, and `management_subscription_id` variables are injected as `TF_VAR_` environment variables by the pipeline. The examples below show only the tfvars settings.
+
+=== Customising Management Resources
+
+Override specific settings while using defaults for the rest:
+
+[source,hcl]
+----
+# Customise retention and disable VM Insights DCR
+management_resource_settings = {
+  log_analytics_workspace_retention_in_days = 180
+
+  data_collection_rules = {
+    vm_insights = { enabled = false }
+  }
+}
+----
+
+=== Full Azure Landing Zone with Management Groups
+
+Deploy a complete Azure Landing Zone management group architecture with policies.
+The `connectivity_subscription_id` is also supplied as `TF_VAR_connectivity_subscription_id` in the pipeline:
+
+[source,hcl]
+----
+# Enable management groups (deploys under tenant root group by default)
+management_groups_enabled = true
+
+# Required when management groups are enabled
+microsoft_defender_settings = {
+  email_security_contact = "security@example.invalid"
+}
+----
+
+NOTE: `microsoft_defender_settings` is required when `management_groups_enabled = true`. All Defender plans default to disabled - enable individual plans via `defender_plans`. See the <<api-reference,API Reference>> for full configuration options.
+
+=== Development / Testing (Single Subscription)
+
+For testing with only a management subscription:
+
+[source,hcl]
+----
+management_groups_enabled    = true
+skip_subscription_placement  = true  # Skips connectivity subscription validation
+
+microsoft_defender_settings = {
+  email_security_contact = "security@example.invalid"
+}
+----
+
+=== Enabling Public Access (Development Only)
+
+For development environments without private networking:
+
+[source,hcl]
+----
+management_resource_settings = {
+  # Enable public access for development/testing (not recommended for production)
+  log_analytics_workspace_internet_ingestion_enabled   = true
+  log_analytics_workspace_internet_query_enabled       = true
+  log_analytics_workspace_local_authentication_enabled = true
+}
+----
+
+WARNING: Enabling public access reduces security. Use only in development environments where AMPLS is not deployed.
+
+=== Health Monitoring Alerts
+
+Enable health monitoring alerts with custom thresholds:
+
+[source,hcl]
+----
+monitoring_alerts = {
+  action_group_id                         = "/subscriptions/.../actionGroups/platform-alerts"
+  ingestion_latency_threshold_seconds     = 60    # default 120
+  data_ingest_threshold_gb                = 50    # default 100
+  search_availability_threshold_percent   = 99.5  # default 99
+  query_duration_threshold_ms             = 20000 # default 15000
+  enable_query_failure_alerts             = true  # default true
+  query_failure_threshold                 = 10    # default 5
+}
+----
+
+NOTE: An Action Group must be provided when alerts are enabled. Create an Action Group in Azure Monitor first to receive notifications via email, SMS, webhook, or other channels.
+
+=== Commitment Tier Pricing
+
+For predictable workloads with 100+ GB/day ingestion:
+
+[source,hcl]
+----
+management_resource_settings = {
+  log_analytics_workspace_sku                                = "CapacityReservation"
+  log_analytics_workspace_reservation_capacity_in_gb_per_day = 100  # 100, 200, 300, 400, or 500 GB/day
+}
+----
+
+=== Custom Data Collection Rule Names
+
+Override the default DCR names:
+
+[source,hcl]
+----
+management_resource_settings = {
+  data_collection_rules = {
+    change_tracking = { name = "dcr-custom-change-tracking" }
+    vm_insights     = { name = "dcr-custom-vm-insights" }
+    defender_sql    = { enabled = true, name = "dcr-custom-defender-sql" }
+  }
+}
+----
+
+See <<naming,Resource Naming>> for the default DCR naming conventions.

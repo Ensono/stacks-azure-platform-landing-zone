@@ -1,0 +1,77 @@
+== Module Integration
+
+=== Management Landing Zone
+
+This module integrates with the Management Landing Zone to enable firewall diagnostics, centralized monitoring, and alerting. Configure the remote state backend to fetch the Log Analytics workspace ID.
+
+[source,hcl]
+----
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+When the management remote state is configured, the module automatically:
+
+* Sends firewall diagnostic logs to Log Analytics
+* Sends bastion diagnostic logs to Log Analytics
+* Sends gateway diagnostic logs to Log Analytics
+* Deploys metric alerts for firewall, gateways, and virtual hubs
+* Configures Azure Monitor Private Link Scope (AMPLS)
+
+=== Spoke Integration
+
+Spoke VNets connect to Virtual WAN through VNet connections, which provide automatic routing without manual route table management.
+
+==== VNet Connection
+
+[source,hcl]
+----
+resource "azurerm_virtual_hub_connection" "spoke" {
+  name                      = "conn-spoke-app"
+  virtual_hub_id            = "<virtual-hub-id>"
+  remote_virtual_network_id = azurerm_virtual_network.spoke.id
+
+  routing {
+    associated_route_table_id = "<default-route-table-id>"
+  }
+}
+----
+
+==== Private DNS Zone Links
+
+[source,hcl]
+----
+resource "azurerm_private_dns_zone_virtual_network_link" "spoke" {
+  name                  = "link-spoke-app"
+  resource_group_name   = "<dns-zone-resource-group>"
+  private_dns_zone_name = "privatelink.blob.core.windows.net"
+  virtual_network_id    = azurerm_virtual_network.spoke.id
+}
+----
+
+=== Available Outputs for Spoke Integration
+
+|===
+| Output | Description
+
+| `virtual_wan_resource_id` | Virtual WAN resource ID
+| `virtual_wan_name` | Virtual WAN name
+| `virtual_hub_resource_ids` | Virtual Hub IDs, keyed by region
+| `virtual_hub_resource_names` | Virtual Hub names, keyed by region
+| `firewall_resource_ids` | Firewall IDs, keyed by region
+| `firewall_private_ip_addresses` | Firewall private IPs, keyed by region
+| `firewall_public_ip_addresses` | Firewall public IPs, keyed by region
+| `firewall_policy_resource_ids` | Firewall Policy IDs, keyed by region
+| `dns_server_ip_addresses` | DNS server IPs (firewall or resolver), keyed by region
+| `express_route_gateway_resource_ids` | ExpressRoute Gateway IDs, keyed by region
+| `bastion_host_resource_ids` | Bastion Host IDs, keyed by region
+| `private_dns_resolver_resource_ids` | DNS Resolver IDs, keyed by region
+| `sidecar_virtual_network_resource_ids` | Sidecar VNet IDs, keyed by region
+| `resource_group_ids` | Resource Group IDs, keyed by purpose
+| `resource_group_names` | Resource Group names, keyed by purpose
+| `network_watcher_ids` | Network Watcher IDs, keyed by region
+| `flow_log_ids` | VNet flow log IDs, keyed by region
+| `flow_logs_storage_account_ids` | Flow logs storage account IDs, keyed by region
+| `azure_monitor_private_link_scope_id` | AMPLS resource ID
+|===

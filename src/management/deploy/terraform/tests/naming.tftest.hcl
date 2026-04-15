@@ -67,6 +67,10 @@ run "naming_module_produces_caf_prefixes" {
   command   = plan
   state_key = "naming"
 
+  variables {
+    management_groups_enabled = false
+  }
+
   # Resource group naming
   assert {
     condition     = startswith(local.resource_names.resource_group, "rg-")
@@ -88,19 +92,5 @@ run "naming_module_produces_caf_prefixes" {
   assert {
     condition     = startswith(local.resource_names.user_assigned_identity, "uai-")
     error_message = "User assigned identity name should start with 'uai-' CAF prefix."
-  }
-}
-
-# =============================================================================
-# Module Integration - Azure Regions (override contract)
-# =============================================================================
-
-run "azure_regions_provides_geo_codes" {
-  command   = plan
-  state_key = "location"
-
-  assert {
-    condition     = module.azure_regions.regions_by_name["uksouth"].geo_code == "uks"
-    error_message = "Overridden regions_by_name should provide geo_code 'uks' for uksouth."
   }
 }

@@ -1,19 +1,35 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
+# Import remote contexts and tasks for eirctl
 import:
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/contexts/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/security/eirctl.yaml
-  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.14/shared/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/contexts/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/security/eirctl.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/infra/terraform.yaml
+  - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/git/eirctl.yaml
 
-watchers:
-  lint:
-    watch: ["*.yml"]
-    events: [create, write]
-    task: lint:yaml
-  terraform:
-    watch: ["*.tf", "*.tfvars"]
-    events: [create, write]
-    task: lint:terraform:format
+# Local Tasks
+# tag::tasks[]
+tasks:
+  terraform:docs:
+    context: infra
+    description: |
+      Update the API Reference section in README.md using terraform-docs
+
+      Runs terraform-docs to inject markdown documentation between
+      <!-- BEGIN_TF_DOCS --> and <!-- END_TF_DOCS --> markers in the README
+
+      Uses .terraform-docs.yml for consistent configuration (markdown format)
+    command: |
+      $readmePath = Join-Path $PWD "README.md"
+
+      if (-not (Test-Path $readmePath)) {
+        Write-Error "README.md not found"
+        exit 1
+      }
+
+      terraform-docs -c .terraform-docs.yml --output-file $readmePath deploy/terraform
+      exit $LASTEXITCODE
+# end::tasks[]
 
 pipelines:
   lint:
@@ -27,6 +43,14 @@ pipelines:
 
   scan:
     - task: scan:terraform:checkov
+
+  docs:
+    - task: terraform:docs
+
+  tests:
+    - task: terraform:init:false
+    - task: terraform:tests
+      depends_on: terraform:init:false
 
   infrastructure:plan:
     - task: terraform:init
@@ -47,3 +71,6 @@ pipelines:
     - task: terraform:init
     - task: terraform:destroy:apply
       depends_on: terraform:init
+
+  tag:
+    - task: git:tag

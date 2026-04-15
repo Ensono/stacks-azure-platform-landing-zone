@@ -14,7 +14,7 @@ module "naming" {
   unique-seed = random_string.random_seed.result
 
   suffix = [
-    substr(var.company_name, 0, 3),
+    substr(var.company, 0, 3),
     module.azure_regions.regions_by_name[each.value.region].geo_code,
     terraform.workspace,
     each.value.component,

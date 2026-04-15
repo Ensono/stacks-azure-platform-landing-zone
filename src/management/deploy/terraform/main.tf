@@ -2,14 +2,14 @@ module "resource_groups" {
   source  = "Azure/avm-res-resources-resourcegroup/azurerm"
   version = "0.2.1"
 
-  for_each = local.resource_groups
+  count = var.management_resources_enabled ? 1 : 0
 
   enable_telemetry = var.enable_avm_telemetry
-  location         = each.value.location
+  location         = var.region
   lock = var.resource_group_lock_enabled ? {
     kind = "CanNotDelete"
     name = "CanNotDelete"
   } : null
-  name = each.value.name
-  tags = each.value.tags
+  name = local.resource_names.resource_group
+  tags = var.tags
 }

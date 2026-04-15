@@ -1,13 +1,3 @@
-# Health monitoring alerts for management resources
-
-locals {
-  # Auto-enable alerts when action_group_id is provided, unless explicitly disabled
-  monitoring_alerts_enabled = coalesce(var.monitoring_alerts.enabled, var.monitoring_alerts.action_group_id != null)
-
-  # Convert data ingestion threshold (GB) to bytes for metric alert comparisons
-  monitoring_alerts_ingest_threshold_bytes = coalesce(var.monitoring_alerts.data_ingest_threshold_gb, 0) * pow(1024, 3)
-}
-
 # Ensure alerts have an action group target to keep notifications actionable
 resource "terraform_data" "monitoring_alerts_require_action_group" {
   count = local.monitoring_alerts_enabled ? 1 : 0
@@ -58,7 +48,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "law_query_failures" {
 
   name                = "law-query-failures-${terraform.workspace}"
   resource_group_name = coalesce(var.management_resource_settings.resource_group_name, local.resource_names.resource_group)
-  location            = var.location
+  location            = var.region
   scopes              = [module.management_resources[0].log_analytics_workspace.id]
   description         = "Alert when Log Analytics queries fail, indicating potential workspace issues or query problems."
   severity            = 2
@@ -166,7 +156,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "law_query_runtime" {
 
   name                = "law-query-runtime-${terraform.workspace}"
   resource_group_name = coalesce(var.management_resource_settings.resource_group_name, local.resource_names.resource_group)
-  location            = var.location
+  location            = var.region
   scopes              = [module.management_resources[0].log_analytics_workspace.id]
   description         = "Alert when Log Analytics queries exceed ${var.monitoring_alerts.query_duration_threshold_ms} ms, indicating inefficient or stuck workloads."
   severity            = 3

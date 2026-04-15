@@ -1,20 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
+# Import remote contexts and tasks for eirctl
 import:
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/contexts/eirctl.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/security/eirctl.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/infra/terraform.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/git/eirctl.yaml
-
-watchers:
-  lint:
-    watch: ["*.yml"]
-    events: [create, write]
-    task: lint:yaml
-  terraform:
-    watch: ["*.tf", "*.tfvars"]
-    events: [create, write]
-    task: lint:terraform:format
 
 # Local Tasks
 # tag::tasks[]
@@ -55,6 +46,11 @@ pipelines:
 
   docs:
     - task: terraform:docs
+
+  tests:
+    - task: terraform:init:false
+    - task: terraform:tests
+      depends_on: terraform:init:false
 
   infrastructure:plan:
     - task: terraform:init

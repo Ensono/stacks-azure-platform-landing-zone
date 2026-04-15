@@ -1,0 +1,104 @@
+== Advanced Configuration
+
+This section covers management group customisation for organisations that need to modify the default ALZ hierarchy.
+For the default architecture overview, see <<architecture,Architecture>>.
+
+=== Customising Management Groups
+
+==== Updating the Management Group Architecture
+
+If the architecture needs to be changed, update the `alz_custom.alz_architecture_definition.yaml` file:
+
+----
+deploy/terraform/lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml
+----
+
+==== Using an Existing Management Group
+
+It is recommended to keep the hierarchy flat where possible, but if an existing management group is being used as the root, update the architecture definition file.
+For example:
+
+[source,yaml]
+----
+management_groups:
+  - id: existing_group
+    display_name: Existing Group
+    archetypes:
+      - root
+    parent_id: null # setting to null indicates to the provider that we should use the parent resource id
+    exists: true
+----
+
+==== Using ALZ Library Policies Without Customisation
+
+The module by default uses the standard https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz[ALZ Library] policies without custom overrides.
+Policy default values and assignments are managed in the `locals_policy_assignments.tf` file.
+
+==== Custom Policy Overrides
+
+To customise policy assignments for specific management groups, create or modify archetype override files in:
+
+----
+deploy/terraform/lib/archetype_definitions/
+----
+
+Override files use the naming convention `*_custom.alz_archetype_override.yaml`.
+
+See the https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz[ALZ Library] for the full list of available archetypes and policies.
+
+=== Unit Tests
+
+The module includes Terraform unit tests in `deploy/terraform/tests/` that validate configuration logic using mock providers.
+These tests run in CI when changes are made to the module and do not require Azure credentials.
+
+==== Running Tests
+
+[source,bash]
+----
+eirctl tests
+----
+
+To run a specific test file:
+
+[source,bash]
+----
+eirctl tests TF_TEST_FILTER=tests/naming.tftest.hcl
+----
+
+==== Test Coverage
+
+[cols="2,3,4",options="header"]
+|===
+| Test File | Test Cases | What It Validates
+
+| `naming.tftest.hcl`
+| naming_module_produces_caf_prefixes
+| Resource naming follows CAF conventions
+
+| `locals_safe_defaults.tftest.hcl`
+| policy_defaults_computed_safely
+| Policy default values are computed without errors when settings are null
+
+| `monitoring_alerts.tftest.hcl`
+| monitoring_alerts_auto_enabled_with_action_group, monitoring_alerts_disabled_without_action_group, ingest_threshold_gb_to_bytes_conversion, monitoring_alerts_explicit_disable_overrides_action_group
+| Alert auto-enablement, threshold conversions, and explicit disable behaviour
+
+| `policy_assignments.tftest.hcl`
+| defender_plans_all_disabled_by_default, defender_plans_selective_enable, defender_settings_propagated, policy_values_empty_when_resources_disabled, policy_values_populated_when_resources_enabled, policy_values_dcr_selective_disable, private_dns_zones_not_enforced
+| Defender plan defaults, policy value propagation, DCR toggles, and DNS zone enforcement
+
+| `subscription_placement.tftest.hcl`
+| all_subscriptions_placed, skip_placement_only_management, security_subscription_omitted_by_default, subscription_placement_custom_override
+| Subscription placement into management groups, skip logic, and custom overrides
+|===
+
+==== Writing New Tests
+
+Tests use `.tftest.hcl` files with mock providers. Follow the established patterns:
+
+* Use `command = plan` with `state_key` to isolate test runs
+* Assert against locals and computed values, not Azure API responses
+* Enable `parallel = true` at the test level
+* Cover default values, feature flag propagation, and edge cases
+
+See the existing test files and `tests/terraform.tfvars` for reference.

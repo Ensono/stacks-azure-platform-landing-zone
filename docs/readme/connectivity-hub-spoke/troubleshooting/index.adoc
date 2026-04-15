@@ -1,0 +1,62 @@
+== Troubleshooting
+
+=== Common Issues
+
+==== AMPLS validation fails
+
+----
+Error: AMPLS requires log_analytics_workspace_id
+----
+
+**Cause**: Azure Monitor Private Link Scope is enabled (default) but no Log Analytics workspace ID is available.
+
+**Fix**: Either configure `management_remote_state` or provide the ID directly. To disable AMPLS:
+
+[source,hcl]
+----
+azure_monitor_private_link = {
+  enabled = false
+}
+----
+
+==== Terraform destroy fails with locked resource groups
+
+**Cause**: Resource groups have `CanNotDelete` locks enabled by default.
+
+**Fix**: Disable locks before destroying:
+
+[source,hcl]
+----
+resource_group_lock_enabled = false
+----
+
+==== Flow logs storage account creation fails
+
+**Cause**: Storage account names must be globally unique and between 3-24 characters.
+
+**Fix**: The module uses `name_unique` from the naming module to generate globally unique storage account names. If collisions occur, change the `random_string` seed or use an external storage account.
+
+==== Firewall alerts not deploying
+
+**Cause**: Alerts require a Log Analytics workspace ID. If `management_remote_state` is disabled and no workspace ID is provided directly, alerts are skipped.
+
+**Fix**: Ensure management module integration is configured.
+
+==== Flow logs validation fails
+
+----
+Error: Flow logs require network_watcher.enabled = true
+----
+
+**Cause**: Flow logs depend on Network Watcher. Either Network Watcher is disabled or no storage is configured.
+
+**Fix**: Ensure both are enabled:
+
+[source,hcl]
+----
+network_watcher = { enabled = true }
+flow_logs = {
+  enabled = true
+  storage = { create = true }
+}
+----

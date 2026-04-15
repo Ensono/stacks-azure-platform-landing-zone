@@ -133,7 +133,7 @@ locals {
         Deploy-MDFC-Config-H224 = {
           parameters = merge(
             {
-              ascExportResourceGroupLocation = jsonencode({ value = var.location })
+              ascExportResourceGroupLocation = jsonencode({ value = var.region })
               ascExportResourceGroupName     = jsonencode({ value = try(var.microsoft_defender_settings.export_resource_group_name, "rg-asc-export") })
               emailSecurityContact           = jsonencode({ value = try(var.microsoft_defender_settings.email_security_contact, "") })
             },

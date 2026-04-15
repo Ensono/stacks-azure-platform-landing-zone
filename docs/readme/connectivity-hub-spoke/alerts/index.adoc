@@ -1,0 +1,37 @@
+== Metric Alerts
+
+Metric alerts are deployed when a Log Analytics workspace ID is available (via management remote state or direct configuration). Alerts target firewalls and gateways.
+
+=== Firewall Alerts
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Health Degradation | 1 (Critical) | `FirewallHealth` | Average < 100%
+| SNAT Port Exhaustion | 2 (Warning) | `SNATPortUtilization` | Average > 80%
+| High Throughput | 2 (Warning) | `Throughput` | Average > 2.5 Gbps
+|===
+
+=== VPN Gateway Alerts
+
+Deployed only when `vpn_gateway = true`:
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Tunnel Egress Drop | 2 (Warning) | `TunnelEgressBytes` | Total < 1 byte
+| P2S Connection Count | 2 (Warning) | `P2SConnectionCount` | Average > 100
+|===
+
+=== ExpressRoute Gateway Alerts
+
+Deployed only when `expressroute_gateway = true`:
+
+|===
+| Alert | Severity | Metric | Condition
+
+| Traffic Drop | 2 (Warning) | `ExpressRouteGatewayBitsPerSecond` | Average < 1
+| CPU Utilisation | 2 (Warning) | `ExpressRouteGatewayCpuUtilization` | Average > 80%
+|===
+
+All alerts are keyed by region and tagged with `var.tags`. Alert thresholds can be adjusted by modifying the alert resources directly.

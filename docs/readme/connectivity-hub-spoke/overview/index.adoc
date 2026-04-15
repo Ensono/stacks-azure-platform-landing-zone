@@ -1,0 +1,77 @@
+== Overview
+
+The **Stacks Azure Platform Landing Zone Connectivity Hub-Spoke** module deploys a hub-spoke network topology using the below Azure Verified Modules:
+
+https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest[Hub and Spoke Networking]
+
+It supports single or multi-region deployments with automatic IP allocation and CAF-compliant naming.
+
+Hub-spoke provides a self-managed hub VNet with Azure Firewall, route tables, and mesh peering between hubs. Spoke VNets peer directly to the hub and use route tables to force traffic through the firewall.
+
+[source,mermaid]
+----
+flowchart TB
+    subgraph Internet
+        PIP["Public IPs"]
+    end
+
+    subgraph Hub["Hub VNet (per region)"]
+        direction TB
+
+        subgraph FW["Azure Firewall"]
+            FWSubnet["AzureFirewallSubnet /26"]
+            FWMgmt["AzureFirewallManagementSubnet /26"]
+        end
+
+        subgraph Gateway["Gateways (optional)"]
+            GWSubnet["GatewaySubnet /27"]
+            VPN["VPN Gateway"]
+            ER["ExpressRoute"]
+        end
+
+        subgraph DNS["Private DNS"]
+            Resolver["DNS Resolver /28"]
+            Zones["Private DNS Zones"]
+        end
+
+        subgraph Services["Platform Services"]
+            Bastion["AzureBastionSubnet /26"]
+            PE["snet-private-endpoints /26"]
+            AMPLS["AMPLS Private Endpoint"]
+        end
+    end
+
+    subgraph Spokes["Spoke VNets"]
+        Spoke1["App Landing Zone 1"]
+        Spoke2["App Landing Zone 2"]
+    end
+
+    subgraph Management["Management Landing Zone"]
+        LogAnalytics["Log Analytics"]
+    end
+
+    PIP --> FW
+    FW --> Spokes
+    Spokes -.-> |"VNet Peering"| Hub
+    Gateway --> |"Hybrid"| OnPrem["On-Premises"]
+    DNS --> Spokes
+    AMPLS --> LogAnalytics
+    PE --> Zones
+----
+
+=== Module Chain
+
+----
+resource_groups → hub_and_spoke_vnet
+----
+
+. **resource_groups** — Deploys resource groups per hub region using `for_each` from configuration
+. **hub_and_spoke_vnet** — Deploys hub virtual networks, firewall, bastion, DNS, and gateways using https://registry.terraform.io/modules/Azure/avm-ptn-alz-connectivity-hub-and-spoke-vnet/azurerm/latest[avm-ptn-alz-connectivity-hub-and-spoke-vnet]
+
+=== Prerequisites
+
+* Terraform >= 1.12
+* AzureRM provider >= 4.0
+* AzAPI provider >= 2.0
+* Azure subscription for connectivity resources
+* Management Landing Zone deployed (for Log Analytics integration)

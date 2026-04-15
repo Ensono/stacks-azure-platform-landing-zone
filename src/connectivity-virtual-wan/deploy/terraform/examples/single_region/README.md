@@ -23,7 +23,7 @@ flowchart TB
     subgraph sidecar["Sidecar VNet (10.0.4.0/22)"]
         direction TB
         dns["✓ Private DNS Zones"]
-        resolver["✓ DNS Resolver"]
+        resolver["○ DNS Resolver"]
         autoreg["✓ Auto-Registration Zone"]
         pe["✓ Private Endpoints Subnet"]
         bastion["○ Bastion"]
@@ -41,7 +41,7 @@ flowchart TB
     style sidecar fill:#50E6FF,stroke:#0078D4,color:#000
     style fw fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns fill:#107C10,stroke:#0B5C0B,color:#fff
-    style resolver fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver fill:#605E5C,stroke:#3B3A39,color:#fff
     style autoreg fill:#107C10,stroke:#0B5C0B,color:#fff
     style pe fill:#107C10,stroke:#0B5C0B,color:#fff
     style bastion fill:#605E5C,stroke:#3B3A39,color:#fff
@@ -57,14 +57,13 @@ flowchart TB
 ## Quick Start
 
 ```bash
-# 1. Copy example to root terraform directory
-cp virtual_wan.tfvars ../../terraform.tfvars
+# 1. Copy example to workspace_variables directory (one file per region/environment)
+cp virtual_wan.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
 
-# 2. Edit terraform.tfvars:
+# 2. Edit the tfvars file:
 #    - Change hub region (uksouth) to your preferred location
 
-# 3. Set the subscription ID as an environment variable
-export TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
+# 3. Ensure pipeline variables are configured (see below)
 
 # 4. Initialize and deploy
 eirctl infrastructure:plan
@@ -73,18 +72,20 @@ eirctl infrastructure:apply
 
 ## Configuration
 
-### Required Variables
+### Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company_name` | Company identifier (first 3 chars used in names) | `"ensono"` |
-| `hubs` | Single hub configuration | `{ uksouth = {} }` |
+| `TF_VAR_company` | Company identifier (first 3 chars used in names) | `ensono` |
+| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
 
-### Required Environment Variables
+### Required Variables (tfvars)
 
 | Variable | Description | Example |
-|----------|-------------|--------|
-| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
+|----------|-------------|---------|
+| `hubs` | Single hub configuration | `{ uksouth = {} }` |
 
 ### Change Region
 
@@ -104,7 +105,7 @@ hubs = { ukwest = {} }
 hubs = {
   uksouth = {
     features = {
-      firewall_sku         = "Basic"  # Cost saving: ~£180/month vs Standard ~£720/month
+      firewall_sku         = "Basic"  # Cost saving: ~£230/month vs Standard ~£720/month
       bastion              = true     # Secure VM access
       vpn_gateway          = true     # On-premises connectivity (S2S/P2S)
       private_dns_resolver = true     # Hybrid DNS resolution
@@ -132,11 +133,11 @@ hubs = {
 
 | Component | Monthly Cost (approx) |
 |-----------|----------------------|
-| Virtual Hub | ~£240 |
+| Virtual Hub | ~£145 |
 | Azure Firewall (Standard) | ~£720 |
-| Azure Firewall (Basic) | ~£180 |
+| Azure Firewall (Basic) | ~£230 |
 | Azure Bastion (Basic) | ~£110 |
-| VPN Gateway (VpnGw1) | ~£110 |
+| VPN Gateway (1 Scale Unit) | ~£210 |
 | Private DNS Resolver | ~£145 |
 | AMPLS Private Endpoint | ~£7 |
 
@@ -157,7 +158,7 @@ hubs = {
 
 | File | Description |
 |------|-------------|
-| [virtual_wan.tfvars](./virtual_wan.tfvars) | Example configuration - copy to `terraform.tfvars` |
+| [virtual_wan.tfvars](./virtual_wan.tfvars) | Example configuration - copy to `workspace_variables/` |
 
 ## See Also
 

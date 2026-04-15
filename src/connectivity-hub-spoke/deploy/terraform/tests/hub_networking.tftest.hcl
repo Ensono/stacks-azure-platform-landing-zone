@@ -26,8 +26,16 @@ mock_provider "azapi" {
 }
 
 mock_provider "random" {}
-mock_provider "local" {}
-mock_provider "modtm" {}
+
+override_module {
+  target = module.azure_regions
+  outputs = {
+    regions_by_name = {
+      uksouth = { geo_code = "uks", name = "uksouth", display_name = "UK South", zones = ["1", "2", "3"] }
+      ukwest  = { geo_code = "ukw", name = "ukwest", display_name = "UK West", zones = ["1", "2", "3"] }
+    }
+  }
+}
 
 override_data {
   target = data.terraform_remote_state.management

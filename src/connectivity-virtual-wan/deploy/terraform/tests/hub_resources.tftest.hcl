@@ -26,8 +26,6 @@ mock_provider "azapi" {
 }
 
 mock_provider "random" {}
-mock_provider "local" {}
-mock_provider "modtm" {}
 
 override_module {
   target = module.azure_regions
@@ -89,6 +87,30 @@ run "hub_defaults" {
   assert {
     condition     = length(local.firewalls_with_diagnostics) == 0
     error_message = "Firewall diagnostics should be empty without workspace ID."
+  }
+
+  # Flow logs disabled by default
+  assert {
+    condition     = var.flow_logs.enabled == false
+    error_message = "Flow logs should be disabled by default."
+  }
+
+  # DNS Proxy enabled by default
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall_policy.dns.proxy_enabled == true
+    error_message = "DNS Proxy should be enabled by default."
+  }
+
+  # Threat intelligence mode defaults to Alert
+  assert {
+    condition     = local.virtual_hubs["uksouth"].firewall_policy.threat_intelligence_mode == "Alert"
+    error_message = "Threat intelligence mode should default to Alert."
+  }
+
+  # Availability zones auto-detected
+  assert {
+    condition     = local.hub_availability_zones["uksouth"] != null
+    error_message = "Availability zones should be auto-detected for uksouth."
   }
 }
 
@@ -191,26 +213,6 @@ run "firewall_sku_propagates" {
   }
 }
 
-run "firewall_dns_proxy_default" {
-  command   = plan
-  state_key = "dns_proxy"
-
-  assert {
-    condition     = local.virtual_hubs["uksouth"].firewall_policy.dns.proxy_enabled == true
-    error_message = "DNS Proxy should be enabled by default."
-  }
-}
-
-run "firewall_threat_intel_default" {
-  command   = plan
-  state_key = "threat_intel"
-
-  assert {
-    condition     = local.virtual_hubs["uksouth"].firewall_policy.threat_intelligence_mode == "Alert"
-    error_message = "Threat intelligence mode should default to Alert."
-  }
-}
-
 # =============================================================================
 # Resource Groups
 # =============================================================================
@@ -260,16 +262,74 @@ run "naming_conventions" {
 }
 
 # =============================================================================
-# Availability Zones
+# DDoS and AMPLS Resource Groups
 # =============================================================================
 
-run "availability_zones_auto_detected" {
+run "ddos_creates_resource_group" {
   command   = plan
-  state_key = "zones"
+  state_key = "ddos"
 
-  # UK South has zones
+  variables {
+    ddos_protection_plan = { enabled = true }
+  }
+
   assert {
-    condition     = local.hub_availability_zones["uksouth"] != null
-    error_message = "Availability zones should be auto-detected for uksouth."
+    condition     = contains(keys(local.ddos_resource_group), "ddos")
+    error_message = "DDoS should create dedicated resource group."
+  }
+
+  assert {
+    condition     = local.virtual_wan_settings.enabled_resources.ddos_protection_plan == true
+    error_message = "DDoS should be enabled in virtual WAN settings."
+  }
+}
+
+run "ampls_dns_zones_and_diagnostics" {
+  command   = plan
+  state_key = "ampls"
+
+  variables {
+    azure_monitor_private_link = {
+      enabled                    = true
+      log_analytics_workspace_id = "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-management/providers/Microsoft.OperationalInsights/workspaces/log-platform"
+    }
+  }
+
+  # AMPLS requires 5 DNS zones
+  assert {
+    condition     = length(local.ampls_required_dns_zone_keys) == 5
+    error_message = "AMPLS should require 5 DNS zones."
+  }
+
+  # Firewall diagnostics enabled with workspace ID
+  assert {
+    condition     = contains(keys(local.firewalls_with_diagnostics), "uksouth")
+    error_message = "Firewall diagnostics should be enabled with workspace ID."
+  }
+}
+
+# =============================================================================
+# Flow Logs
+# =============================================================================
+
+run "flow_logs_enabled_with_storage" {
+  command   = plan
+  state_key = "fl_enabled"
+
+  variables {
+    flow_logs = {
+      enabled = true
+      storage = { create = true }
+    }
+  }
+
+  assert {
+    condition     = local.flow_logs_enabled == true
+    error_message = "flow_logs_enabled should be true with storage."
+  }
+
+  assert {
+    condition     = length(local.flow_logs_storage_account_ids) == 1
+    error_message = "Storage account ID should exist for enabled hub."
   }
 }

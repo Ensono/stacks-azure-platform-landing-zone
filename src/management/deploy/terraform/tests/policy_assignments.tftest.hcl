@@ -66,6 +66,8 @@ run "defender_plans_all_disabled_by_default" {
   state_key = "defender_defaults"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     microsoft_defender_settings = {
       email_security_contact = "test@example.invalid"
     }
@@ -103,6 +105,8 @@ run "defender_plans_selective_enable" {
   state_key = "defender_enabled"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     microsoft_defender_settings = {
       email_security_contact = "security@example.invalid"
       defender_plans = {
@@ -160,6 +164,8 @@ run "defender_settings_propagated" {
   state_key = "defender_settings"
 
   variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
     microsoft_defender_settings = {
       email_security_contact     = "soc@example.invalid"
       export_resource_group_name = "rg-custom-export"
@@ -185,9 +191,96 @@ run "policy_values_empty_when_resources_disabled" {
   command   = plan
   state_key = "policy_disabled"
 
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
+
   assert {
     condition     = length(local.policy_values_from_resources) == 0
     error_message = "policy_values_from_resources should be empty when management_resources_enabled is false."
+  }
+}
+
+# =============================================================================
+# Policy Default Values - Populated When Resources Enabled
+# =============================================================================
+
+run "policy_values_populated_when_resources_enabled" {
+  command   = plan
+  state_key = "policy_enabled"
+
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = true
+  }
+
+  # Log Analytics workspace ID always present when resources enabled
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "log_analytics_workspace_id")
+    error_message = "policy_values_from_resources should contain log_analytics_workspace_id."
+  }
+
+  # Change tracking DCR enabled by default
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "ama_change_tracking_data_collection_rule_id")
+    error_message = "policy_values_from_resources should contain change tracking DCR (enabled by default)."
+  }
+
+  # VM insights DCR enabled by default
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "ama_vm_insights_data_collection_rule_id")
+    error_message = "policy_values_from_resources should contain VM insights DCR (enabled by default)."
+  }
+
+  # AMA user assigned identity enabled by default
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "ama_user_assigned_managed_identity_id")
+    error_message = "policy_values_from_resources should contain AMA user assigned identity (enabled by default)."
+  }
+
+  # Defender SQL DCR disabled by default
+  assert {
+    condition     = !contains(keys(local.policy_values_from_resources), "ama_mdfc_sql_data_collection_rule_id")
+    error_message = "policy_values_from_resources should not contain Defender SQL DCR (disabled by default)."
+  }
+}
+
+# =============================================================================
+# Policy Default Values - DCR Feature Flags
+# =============================================================================
+
+run "policy_values_dcr_selective_disable" {
+  command   = plan
+  state_key = "dcr_flags"
+
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = true
+    management_resource_settings = {
+      data_collection_rules = {
+        change_tracking = { enabled = false }
+        defender_sql    = { enabled = true }
+      }
+    }
+  }
+
+  # Disabled change tracking should be absent
+  assert {
+    condition     = !contains(keys(local.policy_values_from_resources), "ama_change_tracking_data_collection_rule_id")
+    error_message = "Disabled change tracking DCR should not appear in policy values."
+  }
+
+  # Enabled Defender SQL should be present
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "ama_mdfc_sql_data_collection_rule_id")
+    error_message = "Enabled Defender SQL DCR should appear in policy values."
+  }
+
+  # VM insights still enabled by default (not overridden)
+  assert {
+    condition     = contains(keys(local.policy_values_from_resources), "ama_vm_insights_data_collection_rule_id")
+    error_message = "VM insights DCR should remain when not explicitly overridden."
   }
 }
 
@@ -198,6 +291,11 @@ run "policy_values_empty_when_resources_disabled" {
 run "private_dns_zones_not_enforced" {
   command   = plan
   state_key = "dns_enforce"
+
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
 
   assert {
     condition     = local.default_policy_assignments_to_modify.corp.policy_assignments["Deploy-Private-DNS-Zones"].enforcement_mode == "DoNotEnforce"

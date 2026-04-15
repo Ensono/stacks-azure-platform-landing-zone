@@ -2,12 +2,9 @@
 
 === terraform-docs Configuration
 
-File: `.terraform-docs.yml`
+Each module has its own `.terraform-docs.yml` at the module root (e.g., `src/management/.terraform-docs.yml`). A root-level `.terraform-docs.yml` provides a shared fallback.
 
-[source,yaml]
-----
-include::../../.terraform-docs.yml[]
-----
+Module-level configs use the `markdown` formatter to generate `README.md` files directly. The root config uses the `asciidoc` formatter for the `tfdocs.adoc` includes.
 
 === eirctl Task Configurations
 

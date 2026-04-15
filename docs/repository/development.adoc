@@ -82,8 +82,10 @@ eirctl tests
 
 [source,bash]
 ----
-# If you changed variables/outputs, API docs auto-update
-# If you need to update usage guide:
+# If you changed variables/outputs, regenerate API docs in README.md
+eirctl docs
+
+# If you need to update the usage guide or AsciiDoc source:
 vim docs/readme/<module>/index.adoc
 ----
 
@@ -134,9 +136,9 @@ TF_BACKEND_INIT=storage_account_name=<storage_account_name>,container_name=tfsta
 ENVIRONMENT_NAME=sandbox
 
 # Terraform inputs
-# These will also be mapped to environment variables in uppercase with 'TF_VAR_' removed. For example: 'COMPANY_NAME'
-TF_VAR_company_name=ensono
-TF_VAR_location=uksouth
+# These will also be mapped to environment variables in uppercase with 'TF_VAR_' removed. For example: 'COMPANY'
+TF_VAR_company=ensono
+TF_VAR_region=uksouth
 
 TF_VAR_management_subscription_id=00000000-0000-0000-0000-000000000000
 TF_VAR_skip_subscription_placement=true

@@ -1,0 +1,47 @@
+framework:
+  name: infra
+  commands:
+    - name: terraform
+      version: ">= 1.12"
+
+init:
+  operations:
+    - action: cmd
+      cmd: pwsh
+      args: >-
+        -Command Copy-Item
+        -Path ./src/management/*
+        -Destination {{ .Project.Directory.WorkingDir }}/
+        -Recurse -Force
+      desc: Import Management Landing Zone module
+      tags:
+        - alz_management
+
+    - action: cmd
+      cmd: pwsh
+      args: >-
+        -Command Copy-Item
+        -Path ./src/connectivity-hub-spoke/*
+        -Destination {{ .Project.Directory.WorkingDir }}/
+        -Recurse -Force
+      desc: Import Connectivity Hub-Spoke Landing Zone module
+      tags:
+        - alz_connectivity_hub_spoke
+
+    - action: cmd
+      cmd: pwsh
+      args: >-
+        -Command Copy-Item
+        -Path ./src/connectivity-virtual-wan/*
+        -Destination {{ .Project.Directory.WorkingDir }}/
+        -Recurse -Force
+      desc: Import Connectivity Virtual-WAN Landing Zone module
+      tags:
+        - alz_connectivity_virtual_wan
+
+setup:
+  operations:
+    - action: cmd
+      cmd: eirctl
+      args: lint
+      desc: Validate Terraform configuration

@@ -41,7 +41,7 @@ variable "management_resource_settings" {
     })))
     log_analytics_workspace_allow_resource_only_permissions    = optional(bool, true)
     log_analytics_workspace_cmk_for_query_forced               = optional(bool)
-    log_analytics_workspace_daily_quota_gb                     = optional(number)
+    log_analytics_workspace_daily_quota_gb                     = optional(number, 10)
     log_analytics_workspace_internet_ingestion_enabled         = optional(bool, false)
     log_analytics_workspace_internet_query_enabled             = optional(bool, false)
     log_analytics_workspace_local_authentication_enabled       = optional(bool, false)
@@ -82,7 +82,7 @@ Properties:
 - `log_analytics_solution_plans` - (Optional) Solution plans to deploy to the workspace.
 - `log_analytics_workspace_allow_resource_only_permissions` - (Optional) Allow resource-only permissions. Defaults to true.
 - `log_analytics_workspace_cmk_for_query_forced` - (Optional) Force CMK for queries.
-- `log_analytics_workspace_daily_quota_gb` - (Optional) Daily ingestion quota in GB.
+- `log_analytics_workspace_daily_quota_gb` - (Optional) Daily ingestion quota in GB. Defaults to 10. Set to `-1` for unlimited.
 - `log_analytics_workspace_internet_ingestion_enabled` - (Optional) Enable internet ingestion. Defaults to false.
 - `log_analytics_workspace_internet_query_enabled` - (Optional) Enable internet queries. Defaults to false.
 - `log_analytics_workspace_local_authentication_enabled` - (Optional) Enable local authentication. Defaults to false.

@@ -1,0 +1,40 @@
+== Quick Start
+
+The `company`, `region`, and `management_subscription_id` variables are supplied as `TF_VAR_company`, `TF_VAR_region`, and `TF_VAR_management_subscription_id` environment variables in the CI/CD pipeline. They are not set in tfvars files.
+
+When management groups are enabled, `connectivity_subscription_id` is also supplied as `TF_VAR_connectivity_subscription_id`.
+
+Each workspace has a tfvars file in `workspace_variables/`. For example, `prd_uksouth_terraform.tfvars`:
+
+[source,hcl]
+----
+# Management resources are deployed with sensible defaults.
+# No hub-specific settings are needed in the tfvars.
+----
+
+The region name (`uksouth`) is an example — use whichever Azure region suits your deployment.
+
+This provisions:
+
+* A **Log Analytics Workspace** with private-only access and Entra ID authentication
+* **Data Collection Rules** for Change Tracking and VM Insights
+* A **User Assigned Managed Identity** for Azure Monitor Agent
+* **Self-monitoring diagnostics** on the workspace
+* **Subscription Activity Log** routing to the workspace
+
+=== Deployment Order
+
+When deploying the full platform, the management module is always deployed **first**:
+
+----
+1. Management Module      ← you are here
+2. Connectivity Module    (consumes LAW ID and GUID)
+3. Identity Module        (consumes LAW ID)
+4. Security Module        (has its own Log Analytics Workspace)
+----
+
+=== What's Next?
+
+* <<architecture,Architecture>> — Management group hierarchy and architecture details
+* <<examples,Examples>> — Configuration examples for common scenarios
+* <<integration,Integration>> — How this module connects to other landing zone modules

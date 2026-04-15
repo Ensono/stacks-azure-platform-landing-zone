@@ -1,6 +1,6 @@
-# Management Groups
+# Management Groups, Policy and Role Assignments
 
-Deploys management resources plus management group architecture with policies.
+Deploys management resources plus management group architecture with policies and role assignments.
 
 ## What Gets Deployed
 
@@ -25,26 +25,35 @@ Deploys management resources plus management group architecture with policies.
 ## Usage
 
 ```bash
-cp management.tfvars ../../terraform.tfvars
-# Edit terraform.tfvars with your values
+cp management.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
+# Edit the tfvars file with your settings
 eirctl infrastructure:plan
 eirctl infrastructure:apply
 ```
 
-## Required Variables
+## Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description |
 | -------- | ----------- |
-| `company_name` | Company prefix for resource naming (e.g., "ensono") |
-| `location` | Azure region (e.g., "uksouth") |
-| `management_subscription_id` | Management subscription ID |
-| `connectivity_subscription_id` | Connectivity subscription ID (required unless `skip_subscription_placement = true`) |
-| `identity_subscription_id` | Identity subscription ID (required unless `skip_subscription_placement = true`) |
+| `TF_VAR_company` | Company prefix for resource naming (e.g., "ensono") |
+| `TF_VAR_region` | Azure region (e.g., "uksouth") |
+| `TF_VAR_management_subscription_id` | Management subscription ID |
+| `TF_VAR_connectivity_subscription_id` | Connectivity subscription ID (required unless `skip_subscription_placement = true`) |
+
+## Required Variables (tfvars)
+
+| Variable | Description |
+| -------- | ----------- |
+| `management_groups_enabled` | Set to `true` to deploy management group hierarchy |
+| `microsoft_defender_settings.email_security_contact` | Email address for security alerts |
 
 ## Optional Variables
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
+| `identity_subscription_id` | `null` | Subscription ID for identity management group. Omit for cloud-native orgs using only Entra ID |
 | `management_group_settings.parent_management_group_id` | Tenant root | Parent management group ID/name |
 | `management_group_settings.default_management_group_name` | `"sandbox"` | Default MG for unassigned subscriptions |
 | `security_subscription_id` | `null` | Auto-placed in security management group |

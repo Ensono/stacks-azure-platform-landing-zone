@@ -34,12 +34,14 @@ terraform test -verbose
 ## Default Variables
 
 The `terraform.tfvars` file sets only the required variables (those without defaults):
-`company_name`, `location`, and `management_subscription_id`.
-It also overrides `management_resources_enabled = false` to disable real resource creation.
+`company`, `region`, and `management_subscription_id`.
 
 Optional variables (`connectivity_subscription_id`, `identity_subscription_id`, etc.) are
 left at their defaults (`null` / `false`) and set explicitly in test `variables` blocks
 where needed. This keeps the tfvars minimal and makes each test self-documenting.
+
+Resource creation is prevented at the module level through `override_module` directives in
+individual test files, which stub dependencies and control what resources are instantiated.
 
 ## Mock Providers and Module Overrides
 

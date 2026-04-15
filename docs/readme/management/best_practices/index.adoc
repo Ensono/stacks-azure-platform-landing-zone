@@ -1,0 +1,173 @@
+== Best Practices
+
+=== Workspace Design
+
+This module follows Microsoft's recommendation to start with a single Log Analytics Workspace and only introduce additional workspaces when driven by specific requirements.
+
+==== Microsoft Guidance Summary
+
+[cols="2,3,3",options="header"]
+|===
+| Criterion | Single Workspace | Multiple Workspaces
+
+| Default recommendation
+| ✅ Start here
+| Only when required
+
+| Operational complexity
+| Lower — one workspace to manage and query
+| Higher — cross-workspace queries, duplicate config
+
+| Cost
+| May qualify for commitment tier discounts
+| Each workspace billed independently
+
+| Data visibility
+| Full cross-resource correlation
+| Requires cross-workspace queries (max 100 workspaces)
+
+| Access control
+| Resource-context RBAC + table-level RBAC
+| Workspace-level separation
+
+| Data retention
+| Per-table retention settings within one workspace
+| Per-workspace defaults (useful when same table needs different retention for different sources)
+|===
+
+==== Security Data (Microsoft Sentinel)
+
+The most common reason to add a second workspace is Microsoft Sentinel:
+
+* When Sentinel is enabled, **all data in the workspace** is subject to https://learn.microsoft.com/azure/azure-monitor/logs/cost-logs#workspaces-with-microsoft-sentinel[Sentinel pricing] — even operational data
+* A workspace with Sentinel gets **90 days free retention** (vs 31 days without Sentinel)
+* Separating security data allows independent RBAC, retention, and cost management for security teams
+
+[cols="2,4",options="header"]
+|===
+| Approach | When to Use
+
+| **Combined workspace**
+| Low data volumes where commitment tier discount offsets Sentinel pricing on operational data. Use table-level RBAC to restrict security table access.
+
+| **Separate workspaces**
+| Higher data volumes, strict security/ops team separation, or when Sentinel pricing on operational data is a concern. Use cross-workspace queries for correlation.
+|===
+
+TIP: If you later need a dedicated security workspace, deploy it using the https://registry.terraform.io/modules/Azure/avm-res-operationalinsights-workspace/azurerm/latest[`avm-res-operationalinsights-workspace`] resource module for a lightweight workspace without the management overhead of the pattern module.
+
+=== Reliability and Zone Redundancy
+
+The module implements Azure Well-Architected Framework reliability best practices.
+
+==== Log Analytics Workspace
+
+[cols="2,2,4",options="header"]
+|===
+| Feature | Status | Notes
+
+| Data Resilience
+| ✅ Automatic
+| Data replicated across availability zones in supported regions
+
+| Service Resilience
+| ⚠️ Regional
+| Requires dedicated cluster for full zone-redundant service operations
+
+| Diagnostics
+| ✅ Enabled
+| Self-monitoring via diagnostic settings
+|===
+
+**Supported regions for data resilience**: UK South, West Europe, East US, West US 2, and https://learn.microsoft.com/azure/azure-monitor/logs/availability-zones#supported-regions[others].
+
+==== High Availability Requirements
+
+For mission-critical deployments requiring service resilience (not just data resilience):
+
+[source,hcl]
+----
+# Consider dedicated clusters for high-volume, mission-critical workloads
+# Requires 500+ GB/day commitment
+management_resource_settings = {
+  log_analytics_workspace_sku = "CapacityReservation"
+  log_analytics_workspace_reservation_capacity_in_gb_per_day = 500
+}
+----
+
+NOTE: Dedicated clusters provide service resilience (query availability during zone failures) but require minimum 500 GB/day commitment. For most workloads, standard data resilience is sufficient.
+
+=== Cost Optimisation
+
+The module follows Azure Well-Architected Framework cost optimisation guidance.
+
+==== Log Analytics Workspace Cost Settings
+
+[cols="3,1,4",options="header"]
+|===
+| Setting | Default | Cost Impact
+
+| `log_analytics_workspace_daily_quota_gb`
+| `10` GB/day
+| Safety cap to prevent runaway costs. Increase for higher-volume environments
+
+| `log_analytics_workspace_sku`
+| `PerGB2018`
+| Pay-as-you-go pricing
+
+| `log_analytics_workspace_reservation_capacity_in_gb_per_day`
+| `null`
+| Use commitment tiers for 15-25% savings
+|===
+
+==== Estimated Monthly Costs
+
+The following table provides estimated monthly costs for typical deployments.
+Actual costs vary based on data ingestion volume, retention, and region.
+
+[cols="2,3,2",options="header"]
+|===
+| Resource | Configuration | Estimated Cost (GBP)
+
+| Log Analytics Workspace
+| PerGB2018, ~5 GB/day
+| ~£58/month
+
+| Data Collection Rules
+| N/A
+| Included
+
+| User Assigned Managed Identity
+| N/A
+| Free
+
+| Management Groups
+| N/A
+| Free
+
+| Azure Policies
+| N/A
+| Free
+|===
+
+**Typical Total**: ~£58/month (varies by ingestion volume, capped at 10 GB/day by default)
+
+TIP: Use the https://azure.microsoft.com/pricing/calculator/[Azure Pricing Calculator] for precise estimates. Consider commitment tiers for 15-25% savings on predictable workloads (100+ GB/day). The default `log_analytics_workspace_daily_quota_gb` of 10 GB/day provides cost protection — this can be increased or set to `-1` for unlimited in higher-volume environments.
+
+=== Security
+
+==== Private-Only Access
+
+By default, the Log Analytics Workspace is configured for private-only access:
+
+* Internet ingestion disabled
+* Internet queries disabled
+* Local authentication disabled (Entra ID only)
+
+This requires AMPLS to be deployed by the connectivity module for network connectivity.
+See <<architecture,Architecture>> for the deployment order and <<examples,Enabling Public Access>> for development configuration.
+
+==== Resource Locks
+
+Resource groups are protected with `CanNotDelete` locks by default (`resource_group_lock_enabled = true`).
+This prevents accidental deletion of the management resource group and its contents.

@@ -5,6 +5,3 @@
 #
 # Use when management groups are deployed separately or already exist.
 # Outputs are consumed by connectivity module via remote state.
-
-company_name = "ensono"
-location     = "uksouth"

@@ -66,6 +66,8 @@ run "all_subscriptions_placed" {
   state_key = "all_subs"
 
   variables {
+    management_groups_enabled    = false
+    skip_subscription_placement  = false
     connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
     identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
     security_subscription_id     = "33333333-3333-3333-3333-333333333333"
@@ -106,6 +108,7 @@ run "skip_placement_only_management" {
   state_key = "skip_placement"
 
   variables {
+    management_groups_enabled    = false
     connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
     identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
     skip_subscription_placement  = true
@@ -131,6 +134,8 @@ run "security_subscription_omitted_by_default" {
   state_key = "no_security"
 
   variables {
+    management_groups_enabled    = false
+    skip_subscription_placement  = false
     connectivity_subscription_id = "11111111-1111-1111-1111-111111111111"
     identity_subscription_id     = "22222222-2222-2222-2222-222222222222"
   }
@@ -143,5 +148,37 @@ run "security_subscription_omitted_by_default" {
   assert {
     condition     = length(local.subscription_placement) == 3
     error_message = "Three subscriptions should be placed when security is omitted."
+  }
+}
+
+# =============================================================================
+# Subscription Placement - Custom Override
+# =============================================================================
+
+run "subscription_placement_custom_override" {
+  command   = plan
+  state_key = "custom_override"
+
+  variables {
+    management_groups_enabled   = false
+    skip_subscription_placement = false
+    management_group_settings = {
+      subscription_placement = {
+        custom = {
+          subscription_id       = "44444444-4444-4444-4444-444444444444"
+          management_group_name = "sandbox"
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = local.subscription_placement["custom"].management_group_name == "sandbox"
+    error_message = "Custom subscription placement should override defaults."
+  }
+
+  assert {
+    condition     = !contains(keys(local.subscription_placement), "management")
+    error_message = "Default management placement should be replaced by custom override."
   }
 }

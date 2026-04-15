@@ -24,7 +24,6 @@ crash.log
 # to change depending on the environment.
 #
 # *.tfvars
-**/terraform.tfvars
 !*_*.tfvars
 !**/examples/**/*.tfvars
 !**/tests/**/*.tfvars
@@ -47,8 +46,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-
-.terraform.lock.hcl
 
 # Junit XML test results
 test-results/

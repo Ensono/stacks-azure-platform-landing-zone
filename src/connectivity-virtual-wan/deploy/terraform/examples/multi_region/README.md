@@ -29,7 +29,7 @@ flowchart TB
     subgraph sidecarSouth["Sidecar VNet UK South (10.0.4.0/22)"]
         direction TB
         dns1["✓ DNS Zones"]
-        resolver1["✓ DNS Resolver"]
+        resolver1["○ DNS Resolver"]
         autoreg1["✓ Auto-Reg Zone"]
         pe1["✓ PE Subnet"]
         bas1["○ Bastion"]
@@ -62,7 +62,7 @@ flowchart TB
     style fw2 fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns1 fill:#107C10,stroke:#0B5C0B,color:#fff
     style dns2 fill:#107C10,stroke:#0B5C0B,color:#fff
-    style resolver1 fill:#107C10,stroke:#0B5C0B,color:#fff
+    style resolver1 fill:#605E5C,stroke:#3B3A39,color:#fff
     style resolver2 fill:#605E5C,stroke:#3B3A39,color:#fff
     style autoreg1 fill:#107C10,stroke:#0B5C0B,color:#fff
     style autoreg2 fill:#107C10,stroke:#0B5C0B,color:#fff
@@ -84,15 +84,15 @@ flowchart TB
 ## Quick Start
 
 ```bash
-# 1. Copy example to root terraform directory
-cp virtual_wan.tfvars ../../terraform.tfvars
+# 1. Copy example to workspace_variables directory (one file per region/environment)
+cp virtual_wan.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
+cp virtual_wan.tfvars ../../workspace_variables/prd_ukwest_terraform.tfvars
 
-# 2. Edit terraform.tfvars:
+# 2. Edit each tfvars file:
 #    - Change hub regions (uksouth/ukwest) to your preferred locations
 #    - Adjust features as needed
 
-# 3. Set the subscription ID as an environment variable
-export TF_VAR_connectivity_subscription_id=00000000-0000-0000-0000-000000000000
+# 3. Ensure pipeline variables are configured (see below)
 
 # 4. Initialize and deploy
 eirctl infrastructure:plan
@@ -101,18 +101,20 @@ eirctl infrastructure:apply
 
 ## Configuration
 
-### Required Variables
+### Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `company_name` | Company identifier (first 3 chars used in names) | `"ensono"` |
-| `hubs` | Map of hub configurations keyed by region | `{ uksouth = {}, ukwest = {} }` |
+| `TF_VAR_company` | Company identifier (first 3 chars used in names) | `ensono` |
+| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
 
-### Required Environment Variables
+### Required Variables (tfvars)
 
 | Variable | Description | Example |
-|----------|-------------|--------|
-| `TF_VAR_connectivity_subscription_id` | Subscription for hub resources | `00000000-0000-0000-0000-000000000000` |
+|----------|-------------|---------|
+| `hubs` | Map of hub configurations keyed by region | `{ uksouth = {}, ukwest = {} }` |
 
 ### Hub Features
 
@@ -124,7 +126,7 @@ Each hub can enable/disable these components:
 | `firewall_sku` | `"Standard"` | Firewall SKU: Basic/Standard/Premium |
 | `private_dns_zones` | `true` | Private Link DNS zones |
 | `private_dns_resolver` | `false` | DNS resolver for hybrid scenarios |
-| `auto_registration_zone` | `true` | VM DNS auto-registration |
+| `sidecar_virtual_network` | `true` | Sidecar VNet for ancillary services |
 | `bastion` | `false` | Azure Bastion for VM access |
 | `vpn_gateway` | `false` | VPN Gateway (S2S/P2S) |
 | `expressroute_gateway` | `false` | ExpressRoute Gateway |
@@ -134,7 +136,7 @@ Each hub can enable/disable these components:
 | Feature | Default | Description |
 |---------|---------|-------------|
 | `network_watcher.enabled` | `true` | Network Watcher (free) |
-| `ddos_protection_plan.enabled` | `false` | DDoS Protection (~£2,200/month) |
+| `ddos_protection_plan.enabled` | `false` | DDoS Protection (~£2,330/month) |
 
 ### Example: Enable Bastion in Primary Hub
 
@@ -192,16 +194,16 @@ hubs = {
 
 | Component | Monthly Cost (approx) |
 |-----------|----------------------|
-| Virtual Hub | ~£240/hub |
-| Azure Firewall (Basic) | ~£180/hub |
+| Virtual Hub | ~£145/hub |
+| Azure Firewall (Basic) | ~£230/hub |
 | Azure Firewall (Standard) | ~£720/hub |
-| Azure Firewall (Premium) | ~£800/hub |
+| Azure Firewall (Premium) | ~£1,010/hub |
 | Azure Bastion (Basic) | ~£110/hub |
-| VPN Gateway (VpnGw1) | ~£110/hub |
-| ExpressRoute Gateway | ~£110/hub |
+| VPN Gateway (1 Scale Unit) | ~£210/hub |
+| ExpressRoute Gateway (1 Scale Unit) | ~£240/hub |
 | Private DNS Resolver | ~£145 |
 | AMPLS Private Endpoint | ~£7/hub |
-| DDoS Protection Plan | ~£2,200 (global) |
+| DDoS Protection Plan | ~£2,330 (global) |
 
 *Costs vary by region and configuration. Use the [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) for accurate estimates.*
 
@@ -209,7 +211,7 @@ hubs = {
 
 | File | Description |
 |------|-------------|
-| [virtual_wan.tfvars](./virtual_wan.tfvars) | Example configuration - copy to `terraform.tfvars` |
+| [virtual_wan.tfvars](./virtual_wan.tfvars) | Example configuration - copy to `workspace_variables/` |
 
 ## See Also
 

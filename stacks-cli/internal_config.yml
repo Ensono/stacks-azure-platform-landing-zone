@@ -1,0 +1,43 @@
+# stacks-cli internal configuration override for Azure Platform Landing Zone modules.
+#
+# Usage:
+#   stacks-cli scaffold -c stacks.yml --internalconfig internal_config.yml
+#
+# All components clone the same monorepo. The stackscli.yml at the repo root
+# uses tags to select which src/{module}/ gets copied based on framework.option.
+#
+# Update the version field to match the latest release tag.
+
+frameworks:
+  - name: infra
+    commands:
+      - name: git
+      - name: terraform
+      - name: pwsh
+      - name: eirctl
+
+stacks:
+  components:
+    infra_alz_management:
+      group: infra
+      name: alz_management
+      package:
+        url: https://github.com/Ensono/stacks-azure-platform-landing-zone
+        type: git
+        version: v0.0.x
+
+    infra_alz_connectivity_hub_spoke:
+      group: infra
+      name: alz_connectivity_hub_spoke
+      package:
+        url: https://github.com/Ensono/stacks-azure-platform-landing-zone
+        type: git
+        version: v0.0.x
+
+    infra_alz_connectivity_virtual_wan:
+      group: infra
+      name: alz_connectivity_virtual_wan
+      package:
+        url: https://github.com/Ensono/stacks-azure-platform-landing-zone
+        type: git
+        version: v0.0.x

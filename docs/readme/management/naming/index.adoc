@@ -1,0 +1,58 @@
+== Resource Naming
+
+Resources follow https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming[Cloud Adoption Framework (CAF)] naming conventions using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming module].
+
+=== Naming Conventions
+
+The naming suffix is composed of: `{company_3char}-{geo_code}-{workspace}-{component}-001`
+
+Where `{workspace}` is the Terraform workspace name (e.g., `default`, `dev`, `prod`).
+
+[cols="2,3,3",options="header"]
+|===
+| Resource | Pattern | Example
+
+| Resource Group
+| `rg-{company}-{geo_code}-{workspace}-man-001`
+| `rg-ens-uks-default-man-001`
+
+| Log Analytics
+| `log-{company}-{geo_code}-{workspace}-man-001`
+| `log-ens-uks-default-man-001`
+
+| User Assigned Identity
+| `uai-ama`
+| `uai-ama`
+
+| Data Collection Rule
+| `dcr-{type}`
+| `dcr-change-tracking`
+|===
+
+=== Naming Strategy
+
+The module uses deterministic naming with `001` suffixes for all resources by default.
+This ensures resource names are known at plan time, which is https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm/latest#unknown-values--depends-on[required for ALZ policy assignments].
+
+=== Data Collection Rule Names
+
+DCR names use AVM defaults but can be customised:
+
+[cols="2,2,3",options="header"]
+|===
+| DCR | Default Name | Description
+
+| Change Tracking
+| `dcr-change-tracking`
+| File and registry change monitoring
+
+| VM Insights
+| `dcr-vm-insights`
+| VM performance and dependency data
+
+| Defender for SQL
+| `dcr-defender-sql`
+| SQL security telemetry
+|===
+
+See <<examples,Examples>> for overriding DCR names.

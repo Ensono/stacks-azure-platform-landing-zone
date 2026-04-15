@@ -17,11 +17,9 @@
 
 === Testing
 
-- Test with multiple projects in `var.project`
 - Test with different regions
 - Test with different workspace names
 - Verify name lengths for Azure resource limits
-- Test environment file generation
 
 === Git Workflow
 

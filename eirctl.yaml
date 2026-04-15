@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Ensono/eirctl/refs/heads/main/schemas/schema_v1.json
 
+# Import remote contexts and tasks for eirctl
 import:
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/contexts/eirctl.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/ado/eirctl.yaml
@@ -7,16 +8,6 @@ import:
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/docs/eirctl.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/infra/terraform.yaml
   - https://raw.githubusercontent.com/Ensono/stacks-eirctl-configurations/refs/tags/v0.1.17/shared/github/eirctl.yaml
-
-watchers:
-  lint:
-    watch: ["*.yml"]
-    events: [create, write]
-    task: lint:yaml
-  terraform:
-    watch: ["*.tf", "*.tfvars"]
-    events: [create, write]
-    task: lint:terraform:format
 
 pipelines:
   # tag::build[]
@@ -39,13 +30,13 @@ pipelines:
   docs:
     - task: docs:generate
 
-  scan:
-    - task: scan:terraform:checkov
-
   lint:
     - task: lint:terraform:validate
     - task: lint:terraform:tflint
       depends_on: lint:terraform:validate
+
+  scan:
+    - task: scan:terraform:checkov
 
   tests:
     - task: terraform:init:false

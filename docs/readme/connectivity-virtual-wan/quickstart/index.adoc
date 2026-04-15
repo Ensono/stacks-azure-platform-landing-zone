@@ -1,0 +1,23 @@
+== Quick Start
+
+The `company` and `connectivity_subscription_id` variables are supplied as `TF_VAR_company` and `TF_VAR_connectivity_subscription_id` environment variables in the CI/CD pipeline. They are not set in tfvars files.
+
+Each workspace has a region-specific tfvars file in `workspace_variables/`. For example, `prd_uksouth_terraform.tfvars`:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+}
+
+management_remote_state = {
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+The region names (`uksouth`, `ukwest`, etc.) are examples — use whichever Azure regions suit your deployment.
+
+=== Deployment Order
+
+. Deploy Management Landing Zone first (provides Log Analytics workspace)
+. Deploy this module with `management_remote_state` pointing to the management state

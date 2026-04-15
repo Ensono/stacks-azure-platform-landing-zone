@@ -1,0 +1,168 @@
+== Configuration Examples
+
+Each region is deployed via its own workspace with a tfvars file under `workspace_variables/` (e.g., `prd_uksouth_terraform.tfvars`, `prd_ukwest_terraform.tfvars`). The `company` and `connectivity_subscription_id` variables are injected as `TF_VAR_` environment variables by the pipeline.
+
+The examples below use `uksouth` and `ukwest` as sample regions — substitute your own.
+
+=== Multi-Region Deployment
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = {}
+}
+----
+
+IP addresses are calculated automatically (sorted alphabetically). Each hub receives a `/16` block, with the VNet using the first `/22`:
+
+* uksouth: `10.0.0.0/22` (from `10.0.0.0/16`)
+* ukwest: `10.1.0.0/22` (from `10.1.0.0/16`)
+
+Mesh VNet peering is configured automatically between all hubs.
+
+=== Cost Optimisation for Non-Production
+
+Use Firewall `Basic` SKU for dev/test environments (~£540/month savings per hub):
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Basic"  # ~£180/month vs Standard ~£720/month
+    }
+  }
+}
+----
+
+|===
+| Firewall SKU | Monthly Cost | Use Case
+
+| Basic | ~£180 | Dev/Test, low throughput
+| Standard | ~£720 | Production, threat intelligence
+| Premium | ~£800 | TLS inspection, IDPS signatures
+|===
+
+WARNING: Firewall `Basic` SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
+
+=== Enable Optional Features
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      bastion              = true
+      vpn_gateway          = true
+      expressroute_gateway = true
+    }
+  }
+}
+----
+
+=== Custom IP Addressing
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    address_space = "172.16.0.0/16"
+    subnets = {
+      firewall_address_prefix             = "172.16.0.0/26"
+      bastion_address_prefix              = "172.16.0.64/26"
+      private_endpoints_address_prefix    = "172.16.0.128/26"
+      firewall_management_address_prefix  = "172.16.0.192/26"
+      gateway_address_prefix              = "172.16.1.0/27"
+      private_dns_resolver_address_prefix = "172.16.1.32/28"
+    }
+  }
+}
+----
+
+=== Custom Resource Names
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    name_overrides = {
+      resource_group  = "rg-network-hub-prod"
+      virtual_network = "vnet-hub-prod"
+      firewall        = "fw-hub-prod"
+    }
+  }
+}
+----
+
+=== Custom DNS Zone
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    dns = {
+      auto_registration_zone_name = "uksouth.corp.ensono.com"
+    }
+  }
+}
+----
+
+=== Disable a Hub Temporarily
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = { enabled = false }
+}
+----
+
+=== Custom Subnets in Hub
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    custom_subnets = {
+      management = {
+        name             = "snet-management"
+        address_prefixes = ["10.0.2.0/24"]
+      }
+    }
+  }
+}
+----
+
+=== DDoS Protection Plan
+
+DDoS Protection Plan is **disabled by default** due to significant cost (~£2,200/month flat fee). The plan is shared across all VNets in the subscription.
+
+[source,hcl]
+----
+ddos_protection_plan = {
+  enabled = true
+}
+----
+
+NOTE: DDoS Protection Plan provides L3/L4 protection, telemetry, and rapid response support. Consider enabling for production workloads with public-facing endpoints.
+
+=== Cost Estimation
+
+Estimated monthly costs per hub (UK South, January 2025):
+
+|===
+| Resource | Default | Monthly Cost (GBP) | Notes
+
+| Azure Firewall Standard | ✅ | ~£720 | 3 AZ deployment
+| Azure Firewall Basic | ❌ | ~£180 | Dev/test alternative
+| VPN Gateway (VpnGw1AZ) | ❌ | ~£140 | Active-active
+| ExpressRoute Gateway | ❌ | ~£140 | ErGw1AZ SKU
+| Azure Bastion Standard | ❌ | ~£140 | 2 scale units
+| DDoS Protection Plan | ❌ | ~£2,200 | Shared across subscription
+| Log Analytics | - | Variable | ~£2/GB/month ingestion
+| **Minimum (Firewall only)** | | **~£720** |
+| **Full Production** | | **~£1,140** | Firewall + VPN + Bastion
+|===
+
+TIP: For multi-region, multiply per-hub costs. DDoS Protection Plan is shared across all regions.

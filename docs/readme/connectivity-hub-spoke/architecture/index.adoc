@@ -1,0 +1,50 @@
+== Architecture
+
+=== IP Address Layout
+
+Default subnet layout within each hub's `/22`:
+
+|===
+| Subnet | Size | Default Range (first hub) | Purpose
+
+| AzureFirewallSubnet | /26 | 10.0.0.0/26 | Azure Firewall (required name)
+| AzureBastionSubnet | /26 | 10.0.0.64/26 | Azure Bastion (required name)
+| snet-private-endpoints | /26 | 10.0.0.128/26 | Platform private endpoints
+| AzureFirewallManagementSubnet | /26 | 10.0.0.192/26 | Firewall management (required name)
+| GatewaySubnet | /27 | 10.0.1.0/27 | VPN/ExpressRoute (required name)
+| PrivateDnsResolverSubnet | /28 | 10.0.1.32/28 | Private DNS Resolver
+|===
+
+=== IP Allocation Algorithm
+
+Hubs are sorted alphabetically by region name to ensure deterministic IP allocation. Each hub receives a `/16` block, with the VNet using the first `/22`:
+
+----
+Base: 10.0.0.0/8 (configurable via hub_network_address_prefix)
+
+uksouth: 10.0.0.0/16 → VNet: 10.0.0.0/22
+ukwest:  10.1.0.0/16 → VNet: 10.1.0.0/22
+----
+
+Each `/22` provides 1024 IPs, divided into:
+
+----
+┌─────────────────────────────────────────────────────────────┐
+│                    Hub Address Space /22                     │
+├─────────────────────────────────────────────────────────────┤
+│  First /24 (256 IPs)           │  Second /24 (256 IPs)      │
+│  ┌─────────┬─────────┐         │  ┌─────────┬─────────┐     │
+│  │ /26     │ /26     │         │  │ /27     │ /28 /28 │     │
+│  │ FW      │ Bastion │         │  │ Gateway │ DNS Rsv │     │
+│  ├─────────┼─────────┤         │  └─────────┴─────────┘     │
+│  │ /26     │ /26     │         │                            │
+│  │ PE      │ FW Mgmt │         │  Remaining: custom subnets │
+│  └─────────┴─────────┘         │                            │
+└─────────────────────────────────────────────────────────────┘
+----
+
+NOTE: The module supports up to 256 regions using the `10.0.0.0/8` address space. Regions are sorted alphabetically for consistent IP allocation across deployments.
+
+=== Mesh Peering
+
+When multiple hubs are deployed, VNet peering is automatically configured between all hubs, providing full mesh connectivity.

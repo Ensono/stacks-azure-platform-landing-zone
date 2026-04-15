@@ -1,0 +1,77 @@
+== Overview
+
+The **Stacks Azure Platform Landing Zone Management** module deploys management resources using the below Azure Verified Modules:
+
+https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm/latest[Management Groups, Policy and Role Assignments]
+
+https://registry.terraform.io/modules/Azure/avm-ptn-alz-management/azurerm/latest[Management Resources]
+
+It provides centralised logging, monitoring, and an optional default management group architecture for Azure Landing Zones.
+
+This module is designed for **platform engineers** who need to provision a centralised management foundation for logging, monitoring, governance, and policy enforcement across Azure subscriptions.
+
+=== Log Analytics Workspace Strategy
+
+This module deploys a **single Log Analytics Workspace** in the management subscription for platform operational data.
+This follows https://learn.microsoft.com/azure/azure-monitor/logs/workspace-design[Microsoft's primary recommendation] to start with a single workspace and only add more when specific requirements demand it.
+
+==== Why a Single Workspace
+
+* **Simplified operations** — One workspace to manage, query, and monitor
+* **Cost efficiency** — Consolidating data may qualify for commitment tier discounts (15-25% savings at 100+ GB/day)
+* **Better visibility** — All platform operational data in one place makes cross-resource correlation straightforward
+* **Resource-context RBAC** — Users with read access to an Azure resource automatically inherit permissions to that resource's logs, without needing workspace-level access
+
+==== When to Consider a Second Workspace
+
+Microsoft recommends adding workspaces only when driven by specific requirements:
+
+* **Security data (Microsoft Sentinel)** — When Sentinel is enabled, all data in the workspace is subject to Sentinel pricing. A dedicated security workspace avoids applying Sentinel costs to operational data. Alternatively, use a combined workspace with table-level RBAC if the commitment tier discount outweighs the pricing impact
+* **Data sovereignty** — Regulatory requirements to keep data in specific Azure regions
+* **Data ownership** — Organisational boundaries (subsidiaries, affiliates) requiring strict data segregation
+* **Split billing** — When cost reporting via Azure Cost Management is insufficient for chargeback requirements
+
+See the <<best-practices,Best Practices>> section for detailed workspace design guidance with Microsoft documentation references.
+
+=== What This Module Deploys
+
+The module comprises two conditionally-enabled module chains:
+
+. **Management Resources** — Log Analytics Workspace (platform logs), Data Collection Rules, User Assigned Managed Identity, and health monitoring alerts
+. **Management Group Hierarchy** (optional) — ALZ management group hierarchy with policy-driven governance
+
+=== Architecture Overview
+
+[source,mermaid]
+----
+flowchart TB
+    subgraph Management["Management Subscription"]
+        direction TB
+
+        subgraph Resources["Management Resource Group"]
+            LAW["Log Analytics Workspace"]
+            DCR["Data Collection Rules"]
+            UAI["User Assigned Identity (AMA)"]
+        end
+
+        subgraph Optional["Management Groups (Optional)"]
+            MG["Management Group Hierarchy"]
+            Policy["Azure Policies"]
+        end
+    end
+
+    LAW --> DCR
+    DCR --> UAI
+----
+
+=== Module Chain
+
+----
+management_resources → management_groups
+----
+
+=== Prerequisites
+
+* An Azure subscription designated as the **management subscription**
+* Terraform ~> 1.12, AzureRM ~> 4.0, AzAPI ~> 2.0
+* For management groups: `Management Group Contributor` and `User Access Administrator` at the target management group scope, and `Owner` at the target subscription scope. These permissions are required to create resources, assign policies, and configure role-based access control (RBAC) during deployment.

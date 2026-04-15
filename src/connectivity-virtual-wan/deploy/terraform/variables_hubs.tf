@@ -108,13 +108,10 @@ variable "hubs" {
 variable "ddos_protection_plan" {
   type = object({
     enabled = optional(bool, false)
+    name    = optional(string)
   })
   default     = {}
-  description = <<-DESCRIPTION
-    DDoS Protection Plan configuration. Disabled by default due to significant cost (~£2,200/month).
-
-    - `enabled` - (Optional) Enable DDoS Protection Plan. Default: `false`.
-  DESCRIPTION
+  description = "DDoS Protection Plan configuration. Disabled by default due to significant cost (~£2,200/month)."
 }
 
 variable "hub_network_address_prefix" {

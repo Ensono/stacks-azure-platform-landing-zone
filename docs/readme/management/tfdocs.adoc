@@ -1,0 +1,673 @@
+<!-- BEGIN_TF_DOCS -->
+== Requirements
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Version
+|[[requirement_terraform]] <<requirement_terraform,terraform>> |~> 1.12
+|[[requirement_alz]] <<requirement_alz,alz>> |0.20.2
+|[[requirement_azapi]] <<requirement_azapi,azapi>> |~> 2.0
+|[[requirement_azurerm]] <<requirement_azurerm,azurerm>> |~> 4.0
+|===
+
+== Providers
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Version
+|[[provider_azapi]] <<provider_azapi,azapi>> |~> 2.0
+|[[provider_azurerm]] <<provider_azurerm,azurerm>> |~> 4.0
+|[[provider_terraform]] <<provider_terraform,terraform>> |n/a
+|===
+
+== Modules
+
+[cols="a,a,a",options="header,autowidth"]
+|===
+|Name |Source |Version
+|[[module_azure_regions]] <<module_azure_regions,azure_regions>> |Azure/avm-utl-regions/azurerm |0.9.3
+|[[module_management_groups]] <<module_management_groups,management_groups>> |Azure/avm-ptn-alz/azurerm |0.18.0
+|[[module_management_resources]] <<module_management_resources,management_resources>> |Azure/avm-ptn-alz-management/azurerm |0.9.0
+|[[module_naming]] <<module_naming,naming>> |Azure/naming/azurerm |0.4.3
+|[[module_resource_groups]] <<module_resource_groups,resource_groups>> |Azure/avm-res-resources-resourcegroup/azurerm |0.2.1
+|===
+
+== Resources
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Type
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.law_data_ingest] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.law_ingestion_latency] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_metric_alert[azurerm_monitor_metric_alert.law_search_availability] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_scheduled_query_rules_alert_v2[azurerm_monitor_scheduled_query_rules_alert_v2.law_query_failures] |resource
+|https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_scheduled_query_rules_alert_v2[azurerm_monitor_scheduled_query_rules_alert_v2.law_query_runtime] |resource
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data[terraform_data.monitoring_alerts_require_action_group] |resource
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data[terraform_data.validate_defender_settings] |resource
+|https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data[terraform_data.validate_subscriptions] |resource
+|https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config[azapi_client_config.current] |data source
+|===
+
+== Inputs
+
+[cols="a,a,a,a,a",options="header,autowidth"]
+|===
+|Name |Description |Type |Default |Required
+|[[input_company]] <<input_company,company>>
+|Company name used in resource naming. The first 3 characters are used as a prefix (e.g., 'ensono' becomes 'ens').
+|`string`
+|n/a
+|yes
+
+|[[input_management_subscription_id]] <<input_management_subscription_id,management_subscription_id>>
+|Subscription ID for management resources (log analytics, DCRs, storage).
+|`string`
+|n/a
+|yes
+
+|[[input_region]] <<input_region,region>>
+|Primary Azure region for management resources (e.g., 'uksouth').
+|`string`
+|n/a
+|yes
+
+|[[input_connectivity_subscription_id]] <<input_connectivity_subscription_id,connectivity_subscription_id>>
+|Subscription ID to place in the 'connectivity' management group.
+
+Required when `management_groups_enabled = true`. Can be omitted when testing with management resources only.
+
+|`string`
+|`null`
+|no
+
+|[[input_enable_avm_telemetry]] <<input_enable_avm_telemetry,enable_avm_telemetry>>
+|Enable telemetry collection for Azure Verified Modules. See https://aka.ms/avm/telemetryinfo.
+|`bool`
+|`false`
+|no
+
+|[[input_identity_subscription_id]] <<input_identity_subscription_id,identity_subscription_id>>
+|(Optional) Subscription ID to place in the 'identity' management group.
+
+When provided, the subscription is placed in the 'identity' management group.
+Can be omitted for cloud-native organisations using only Microsoft Entra ID.
+
+|`string`
+|`null`
+|no
+
+|[[input_management_group_settings]] <<input_management_group_settings,management_group_settings>>
+|The settings for the management groups. This object configures the Azure Landing Zone management group hierarchy, policies, and role assignments.
+
+Properties:
+- `architecture_name` - (Optional) The name of the architecture definition to use. Defaults to "alz_custom".
+- `parent_management_group_id` - (Optional) The ID/name of the parent management group (e.g., tenant ID or management group name). If omitted, defaults to the tenant root group.
+- `location` - (Required) The default Azure region for resources.
+- `policy_default_values` - (Optional) A map of default values for policy parameters.
+- `policy_assignments_to_modify` - (Optional) Map of policy assignments to modify:
+  - `policy_assignments` - Map of policy assignment modifications:
+    - `enforcement_mode` - (Optional) The enforcement mode for the policy assignment.
+    - `identity` - (Optional) The type of managed identity for the policy assignment.
+    - `identity_ids` - (Optional) List of user-assigned identity resource IDs.
+    - `parameters` - (Optional) Map of parameter values for the policy assignment.
+    - `non_compliance_messages` - (Optional) Set of non-compliance messages:
+      - `message` - (Required) The non-compliance message.
+      - `policy_definition_reference_id` - (Optional) The policy definition reference ID.
+    - `resource_selectors` - (Optional) List of resource selectors:
+      - `name` - (Required) The name of the resource selector.
+      - `resource_selector_selectors` - (Optional) List of selector criteria:
+        - `kind` - (Required) The kind of selector.
+        - `in` - (Optional) Set of values to include.
+        - `not_in` - (Optional) Set of values to exclude.
+    - `overrides` - (Optional) List of policy overrides:
+      - `kind` - (Required) The kind of override.
+      - `value` - (Required) The override value.
+      - `override_selectors` - (Optional) List of override selectors:
+        - `kind` - (Required) The kind of selector.
+        - `in` - (Optional) Set of values to include.
+        - `not_in` - (Optional) Set of values to exclude.
+- `management_group_hierarchy_settings` - (Optional) Settings for the management group hierarchy:
+  - `default_management_group_name` - (Optional) The management group where new subscriptions are placed. Defaults to "sandbox" per CAF recommendation.
+  - `require_authorization_for_group_creation` - (Optional) Require authorization for management group creation. Defaults to true.
+  - `update_existing` - (Optional) Update existing management groups. Defaults to false.
+- `partner_id` - (Optional) The partner ID for Azure partner attribution.
+- `retries` - (Optional) Retry configurations for various resource types:
+  - `management_groups`, `role_definitions`, `role_assignments`, `policy_definitions`, `policy_set_definitions`, `policy_assignments`, `policy_role_assignments`, `hierarchy_settings`, `subscription_placement` - Each has the following retry settings:
+    - `error_message_regex` - (Optional) List of regex patterns to match error messages for retry.
+    - `interval_seconds` - (Optional) The initial retry interval in seconds.
+    - `max_interval_seconds` - (Optional) The maximum retry interval in seconds.
+    - `multiplier` - (Optional) The multiplier for exponential backoff.
+    - `randomization_factor` - (Optional) The randomization factor for retry intervals.
+- `subscription_placement` - (Optional) Map of subscription placement configurations:
+  - `subscription_id` - (Required) The subscription ID to place.
+  - `management_group_name` - (Required) The target management group name.
+- `timeouts` - (Optional) Timeout configurations for various resource types:
+  - `management_group`, `role_definition`, `role_assignment`, `policy_definition`, `policy_set_definition`, `policy_assignment`, `policy_role_assignment` - Each has the following timeout settings:
+    - `create` - (Optional) Timeout for create operations.
+    - `delete` - (Optional) Timeout for delete operations.
+    - `update` - (Optional) Timeout for update operations.
+    - `read` - (Optional) Timeout for read operations.
+- `dependencies` - (Optional) Dependency configurations:
+  - `management_groups` - (Optional) Dependencies for management group creation.
+  - `policy_role_assignments` - (Optional) Dependencies for policy role assignments.
+  - `policy_assignments` - (Optional) Dependencies for policy assignments.
+- `override_policy_definition_parameter_assign_permissions_set` - (Optional) Set of policy definition parameters to assign permissions:
+  - `definition_name` - (Required) The policy definition name.
+  - `parameter_name` - (Required) The parameter name.
+- `override_policy_definition_parameter_assign_permissions_unset` - (Optional) Set of policy definition parameters to unset permissions:
+  - `definition_name` - (Required) The policy definition name.
+  - `parameter_name` - (Required) The parameter name.
+- `management_group_role_assignments` - (Optional) Map of management group role assignments:
+  - `management_group_name` - (Required) The target management group name.
+  - `role_definition_id_or_name` - (Required) The role definition ID or name.
+  - `principal_id` - (Required) The principal ID to assign the role to.
+  - `description` - (Optional) Description of the role assignment.
+  - `skip_service_principal_aad_check` - (Optional) Skip service principal AAD check. Defaults to false.
+  - `condition` - (Optional) The condition for the role assignment.
+  - `condition_version` - (Optional) The condition version.
+  - `delegated_managed_identity_resource_id` - (Optional) The delegated managed identity resource ID.
+  - `principal_type` - (Optional) The type of principal.
+- `role_assignment_definition_lookup_enabled` - (Optional) Enable role definition lookup for assignments. Defaults to true.
+- `policy_assignment_non_compliance_message_settings` - (Optional) Settings for policy non-compliance messages:
+  - `fallback_message_enabled` - (Optional) Enable fallback messages.
+  - `fallback_message` - (Optional) The fallback message text.
+  - `fallback_message_unsupported_assignments` - (Optional) List of unsupported assignment names.
+  - `enforcement_mode_placeholder` - (Optional) Placeholder for enforcement mode.
+  - `enforced_replacement` - (Optional) Replacement text for enforced mode.
+  - `not_enforced_replacement` - (Optional) Replacement text for not enforced mode.
+- `role_assignment_name_use_random_uuid` - (Optional) Use random UUID for role assignment names. Defaults to true.
+- `subscription_placement_destroy_behavior` - (Optional) Behavior when destroying subscription placement. Possible values: "parent", "intermediate_root", "custom", "default". Defaults to "default".
+- `subscription_placement_destroy_custom_target_management_group_id` - (Optional) Target management group ID when using "custom" destroy behavior.
+
+Details of the settings can be found in the module documentation at https://registry.terraform.io/modules/Azure/avm-ptn-alz
+
+|
+
+[source]
+----
+object({
+    architecture_name            = optional(string, "alz_custom")
+    parent_management_group_id   = optional(string)
+    location                     = optional(string)
+    policy_default_values        = optional(any)
+    policy_assignments_to_modify = optional(any)
+    management_group_hierarchy_settings = optional(object({
+      default_management_group_name            = optional(string, "sandbox")
+      require_authorization_for_group_creation = optional(bool, true)
+      update_existing                          = optional(bool, false)
+    }))
+    partner_id = optional(string)
+    retries = optional(object({
+      management_groups = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      role_definitions = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      role_assignments = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      policy_definitions = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      policy_set_definitions = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      policy_assignments = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      policy_role_assignments = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      hierarchy_settings = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+      subscription_placement = optional(object({
+        error_message_regex  = optional(list(string))
+        interval_seconds     = optional(number)
+        max_interval_seconds = optional(number)
+        multiplier           = optional(number)
+        randomization_factor = optional(number)
+      }))
+    }), {})
+    subscription_placement = optional(map(object({
+      subscription_id       = string
+      management_group_name = string
+    })))
+    timeouts = optional(object({
+      management_group = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      role_definition = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      role_assignment = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      policy_definition = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      policy_set_definition = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      policy_assignment = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+      policy_role_assignment = optional(object({
+        create = optional(string, "60m")
+        delete = optional(string, "60m")
+        update = optional(string, "60m")
+        read   = optional(string, "60m")
+      }), {})
+    }), {})
+    dependencies = optional(object({
+      management_groups       = optional(any)
+      policy_role_assignments = optional(any)
+      policy_assignments      = optional(any)
+    }))
+    override_policy_definition_parameter_assign_permissions_set = optional(set(object({
+      definition_name = string
+      parameter_name  = string
+    })))
+    override_policy_definition_parameter_assign_permissions_unset = optional(set(object({
+      definition_name = string
+      parameter_name  = string
+    })))
+    management_group_role_assignments = optional(map(object({
+      management_group_name                  = string
+      role_definition_id_or_name             = string
+      principal_id                           = string
+      description                            = optional(string)
+      skip_service_principal_aad_check       = optional(bool, false)
+      condition                              = optional(string)
+      condition_version                      = optional(string)
+      delegated_managed_identity_resource_id = optional(string)
+      principal_type                         = optional(string)
+    })))
+    role_assignment_definition_lookup_enabled = optional(bool, true)
+    policy_assignment_non_compliance_message_settings = optional(object({
+      fallback_message_enabled                 = optional(bool)
+      fallback_message                         = optional(string)
+      fallback_message_unsupported_assignments = optional(list(string))
+      enforcement_mode_placeholder             = optional(string)
+      enforced_replacement                     = optional(string)
+      not_enforced_replacement                 = optional(string)
+    }))
+    role_assignment_name_use_random_uuid                             = optional(bool, true)
+    subscription_placement_destroy_behavior                          = optional(string, "default")
+    subscription_placement_destroy_custom_target_management_group_id = optional(string)
+  })
+----
+
+|`null`
+|no
+
+|[[input_management_groups_enabled]] <<input_management_groups_enabled,management_groups_enabled>>
+|Enable or disable the deployment of management groups.
+
+When set to `true`, the management group hierarchy will be created and configured according to the `management_group_settings` variable.
+When set to `false`, no management groups will be deployed.
+
+|`bool`
+|`false`
+|no
+
+|[[input_management_resource_settings]] <<input_management_resource_settings,management_resource_settings>>
+|Configuration for Azure Landing Zone management resources including Log Analytics and monitoring solutions.
+
+All settings are optional with sensible defaults. Set to `{}` to deploy with defaults.
+
+Properties:
+- `resource_group_name` - (Optional) Override the resource group name. Defaults to naming convention.
+- `log_analytics_workspace_name` - (Optional) Override the Log Analytics workspace name. Defaults to naming convention.
+- `data_collection_rules` - (Optional) Data collection rule configurations:
+  - `change_tracking` - Change tracking DCR. Defaults to enabled.
+  - `vm_insights` - VM insights DCR. Defaults to enabled.
+  - `defender_sql` - Defender for SQL DCR. Defaults to disabled.
+- `log_analytics_solution_plans` - (Optional) Solution plans to deploy to the workspace.
+- `log_analytics_workspace_allow_resource_only_permissions` - (Optional) Allow resource-only permissions. Defaults to true.
+- `log_analytics_workspace_cmk_for_query_forced` - (Optional) Force CMK for queries.
+- `log_analytics_workspace_daily_quota_gb` - (Optional) Daily ingestion quota in GB. Defaults to 10. Set to `-1` for unlimited.
+- `log_analytics_workspace_internet_ingestion_enabled` - (Optional) Enable internet ingestion. Defaults to false.
+- `log_analytics_workspace_internet_query_enabled` - (Optional) Enable internet queries. Defaults to false.
+- `log_analytics_workspace_local_authentication_enabled` - (Optional) Enable local authentication. Defaults to false.
+- `log_analytics_workspace_reservation_capacity_in_gb_per_day` - (Optional) Reservation capacity for CapacityReservation SKU.
+- `log_analytics_workspace_retention_in_days` - (Optional) Data retention period in days.
+- `log_analytics_workspace_sku` - (Optional) Workspace SKU (PerGB2018 or CapacityReservation).
+- `tags` - (Optional) Tags for management resources. Merged with root tags.
+- `timeouts` - (Optional) Timeout configurations for data collection rules.
+- `user_assigned_managed_identities` - (Optional) Managed identity for Azure Monitor Agent. Defaults to enabled.
+
+**Reliability:** Log Analytics provides zone-redundant data storage in supported regions.
+**Cost:** Use CapacityReservation SKU for 15-25% savings on 100+ GB/day workloads.
+
+Details of the settings can be found in the module documentation at https://registry.terraform.io/modules/Azure/avm-ptn-alz-management
+
+|
+
+[source]
+----
+object({
+    resource_group_name          = optional(string)
+    log_analytics_workspace_name = optional(string)
+    data_collection_rules = optional(object({
+      change_tracking = optional(object({
+        enabled  = optional(bool, true)
+        name     = optional(string, "dcr-change-tracking")
+        location = optional(string)
+        tags     = optional(map(string))
+      }), {})
+      vm_insights = optional(object({
+        enabled  = optional(bool, true)
+        name     = optional(string, "dcr-vm-insights")
+        location = optional(string)
+        tags     = optional(map(string))
+      }), {})
+      defender_sql = optional(object({
+        enabled                                                = optional(bool, false)
+        name                                                   = optional(string, "dcr-defender-sql")
+        location                                               = optional(string)
+        tags                                                   = optional(map(string))
+        enable_collection_of_sql_queries_for_security_research = optional(bool, false)
+      }), {})
+    }), {})
+    log_analytics_solution_plans = optional(list(object({
+      product   = string
+      publisher = optional(string)
+    })))
+    log_analytics_workspace_allow_resource_only_permissions    = optional(bool, true)
+    log_analytics_workspace_cmk_for_query_forced               = optional(bool)
+    log_analytics_workspace_daily_quota_gb                     = optional(number, 10)
+    log_analytics_workspace_internet_ingestion_enabled         = optional(bool, false)
+    log_analytics_workspace_internet_query_enabled             = optional(bool, false)
+    log_analytics_workspace_local_authentication_enabled       = optional(bool, false)
+    log_analytics_workspace_reservation_capacity_in_gb_per_day = optional(number)
+    log_analytics_workspace_retention_in_days                  = optional(number)
+    log_analytics_workspace_sku                                = optional(string)
+    tags                                                       = optional(map(string))
+    timeouts = optional(object({
+      data_collection_rule = optional(object({
+        create = optional(string)
+        delete = optional(string)
+        update = optional(string)
+        read   = optional(string)
+      }))
+    }), {})
+    user_assigned_managed_identities = optional(object({
+      ama = optional(object({
+        enabled  = optional(bool, true)
+        name     = optional(string, "uai-ama")
+        location = optional(string)
+        tags     = optional(map(string))
+      }), {})
+    }), {})
+  })
+----
+
+|`{}`
+|no
+
+|[[input_management_resources_enabled]] <<input_management_resources_enabled,management_resources_enabled>>
+|Enable or disable the deployment of management resources.
+
+When set to `true`, management resources such as Log Analytics workspace, Data Collection Rules, and Managed Identities will be deployed according to the `management_resource_settings` variable.
+When set to `false`, no management resources will be deployed.
+
+|`bool`
+|`true`
+|no
+
+|[[input_microsoft_defender_settings]] <<input_microsoft_defender_settings,microsoft_defender_settings>>
+|Microsoft Defender for Cloud configuration. Required when `management_groups_enabled = true`.
+Can be omitted when deploying only management resources.
+
+- `email_security_contact` - (Required) Email address for security alerts.
+- `export_resource_group_name` - (Optional) Resource group name for ASC continuous export. Defaults to "rg-asc-export".
+- `defender_plans` - (Optional) Toggle individual Defender plans. All default to false (Disabled).
+  Set to true to enable via DeployIfNotExists policy.
+- `subfeatures` - (Optional) Toggle sub-features for specific Defender plans. All default to false.
+  These map to boolean parameters in the Deploy-MDFC-Config-H224 policy assignment.
+
+Pricing overview (all plans default to disabled / no cost):
+
+  Plan                              \| Pricing Tier                \| Billing Model
+  --------------------------------- \| --------------------------- \| -----------------------------------
+  ai                                \| Defender for AI Services    \| Per 1K tokens/month
+  app_services                      \| Service Layer               \| Per App Service instance/hour
+  arm                               \| Service Layer               \| Per subscription/month
+  containers                        \| Cloud Workload Protection   \| Per vCore in K8s worker nodes
+  cosmos_dbs                        \| Databases                   \| Per 100 RU/s/month
+  cspm                              \| Defender CSPM (paid)        \| Per billable resource (VMs, Storage, DBs, Serverless)
+  key_vault                         \| Service Layer               \| Per vault/month
+  oss_db                            \| Databases                   \| Per instance/hour (PostgreSQL, MySQL, MariaDB)
+  servers                           \| Cloud Workload Protection   \| Per server/hour (P1 or P2)
+  servers_vulnerability_assessments \| Cloud Workload Protection   \| Included in Servers P2
+  sql                               \| Databases                   \| Per SQL instance/hour
+  sql_on_vm                         \| Databases                   \| Per SQL instance/hour
+  storage                           \| Cloud Workload Protection   \| Per storage account/month + overage
+  tvm_check                         \| Cloud Workload Protection   \| Sub-feature of Servers
+
+Sub-features are included in their parent plan at no additional cost, except
+`storage_on_upload_malware_scanning` which incurs an additional per-GB charge.
+
+Full pricing details: https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/#pricing
+
+Example - enable Defender for Servers with vulnerability assessments:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers                           = true
+      servers_vulnerability_assessments = true
+    }
+  }
+
+Example - enable CSPM with agentless VM scanning:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      cspm = true
+    }
+    subfeatures = {
+      cspm_agentless_vm_scanning = true
+    }
+  }
+
+Example - enable multiple plans:
+
+  microsoft_defender_settings = {
+    email_security_contact = "security@example.com"
+    defender_plans = {
+      servers      = true
+      app_services = true
+      sql          = true
+      key_vault    = true
+      storage      = true
+    }
+    subfeatures = {
+      storage_on_upload_malware_scanning = true
+    }
+  }
+
+|
+
+[source]
+----
+object({
+    email_security_contact     = string
+    export_resource_group_name = optional(string, "rg-asc-export")
+
+    # Defender plans - set to true to enable (deploys via DeployIfNotExists policy)
+    defender_plans = optional(object({
+      ai                                = optional(bool, false)
+      app_services                      = optional(bool, false)
+      arm                               = optional(bool, false)
+      containers                        = optional(bool, false)
+      cosmos_dbs                        = optional(bool, false)
+      cspm                              = optional(bool, false)
+      key_vault                         = optional(bool, false)
+      oss_db                            = optional(bool, false)
+      servers                           = optional(bool, false)
+      servers_vulnerability_assessments = optional(bool, false)
+      sql                               = optional(bool, false)
+      sql_on_vm                         = optional(bool, false)
+      storage                           = optional(bool, false)
+      tvm_check                         = optional(bool, false)
+    }), {})
+
+    # Sub-features for specific Defender plans
+    subfeatures = optional(object({
+      ai_prompt_evidence                                  = optional(bool, false)
+      cspm_agentless_discovery_for_kubernetes             = optional(bool, false)
+      cspm_agentless_vm_scanning                          = optional(bool, false)
+      cspm_container_registries_vulnerability_assessments = optional(bool, false)
+      cspm_entra_permissions_management                   = optional(bool, false)
+      cspm_sensitive_data_discovery                       = optional(bool, false)
+      servers_agentless_vm_scanning                       = optional(bool, false)
+      storage_on_upload_malware_scanning                  = optional(bool, false)
+      storage_sensitive_data_discovery                    = optional(bool, false)
+    }), {})
+  })
+----
+
+|`null`
+|no
+
+|[[input_monitoring_alerts]] <<input_monitoring_alerts,monitoring_alerts>>
+|Health monitoring alerts for management resources. Recommended for production.
+
+- `enabled` - Enable alerts. Auto-enabled when action_group_id is provided.
+- `action_group_id` - Action Group ID for notifications. When set, alerts are auto-enabled.
+- `ingestion_latency_threshold_seconds` - Latency threshold (default: 120s).
+- `data_ingest_threshold_gb` - Daily ingestion guardrail (default: 100 GB).
+- `search_availability_threshold_percent` - Search availability threshold (default: 99%).
+- `query_duration_threshold_ms` - Slow query duration threshold (default: 15000 ms).
+- `enable_query_failure_alerts` - Monitor query failures (default: true).
+- `query_failure_threshold` - Failure count to trigger alert (default: 5).
+
+|
+
+[source]
+----
+object({
+    enabled                               = optional(bool)
+    action_group_id                       = optional(string)
+    ingestion_latency_threshold_seconds   = optional(number, 120)
+    enable_query_failure_alerts           = optional(bool, true)
+    query_failure_threshold               = optional(number, 5)
+    data_ingest_threshold_gb              = optional(number, 100)
+    search_availability_threshold_percent = optional(number, 99)
+    query_duration_threshold_ms           = optional(number, 15000)
+  })
+----
+
+|`{}`
+|no
+
+|[[input_region_geography]] <<input_region_geography,region_geography>>
+|Filter available regions by geography. Common values: 'United Kingdom', 'Europe', 'United States', 'Asia Pacific'. Set to null for all geographies.
+|`string`
+|`null`
+|no
+
+|[[input_region_recommended_filter]] <<input_region_recommended_filter,region_recommended_filter>>
+|Filter by Microsoft-recommended regions. Set to true for recommended only, false for non-recommended only, or null (default) for all regions.
+|`bool`
+|`null`
+|no
+
+|[[input_resource_group_lock_enabled]] <<input_resource_group_lock_enabled,resource_group_lock_enabled>>
+|Enable CanNotDelete lock on all resource groups. Set to false before running terraform destroy.
+|`bool`
+|`true`
+|no
+
+|[[input_security_subscription_id]] <<input_security_subscription_id,security_subscription_id>>
+|(Optional) Subscription ID to place in the 'security' management group. Only used when `management_groups_enabled = true`.
+|`string`
+|`null`
+|no
+
+|[[input_skip_subscription_placement]] <<input_skip_subscription_placement,skip_subscription_placement>>
+|Skip platform subscription validation and placement.
+
+When `true`:
+- Skips connectivity_subscription_id validation
+- Only places management_subscription_id into the management group
+- Allows testing the full ALZ deployment with a single subscription
+
+Useful for development/testing when you only have a management subscription.
+Not recommended for production deployments.
+
+|`bool`
+|`false`
+|no
+
+|[[input_tags]] <<input_tags,tags>>
+|(Optional) Tags applied to all resources.
+|`map(string)`
+|`{}`
+|no
+
+|===
+
+== Outputs
+
+[cols="a,a",options="header,autowidth"]
+|===
+|Name |Description
+|[[output_log_analytics_workspace_guid]] <<output_log_analytics_workspace_guid,log_analytics_workspace_guid>> |The workspace GUID of the log analytics workspace.
+|[[output_log_analytics_workspace_id]] <<output_log_analytics_workspace_id,log_analytics_workspace_id>> |The resource ID of the log analytics workspace.
+|===
+<!-- END_TF_DOCS -->

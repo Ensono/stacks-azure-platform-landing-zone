@@ -20,11 +20,28 @@ This repository maintains **two separate documentation sets**:
 
 === Documentation Workflow
 
+The module documentation follows two paths:
+
+==== Module README (API reference)
+
+The `README.md` in each module root is maintained with a hand-written usage guide and auto-generated API reference. `terraform-docs` injects content between `<!-- BEGIN_TF_DOCS -->` and `<!-- END_TF_DOCS -->` markers.
+
 [source]
 ----
-1. Edit AsciiDoc source files
-   ├── docs/repository/*.adoc (repository guide)
-   └── docs/readme/<module>/index.adoc (module guide)
+1. Edit README.md usage sections directly (above the markers)
+2. terraform-docs injects API docs from Terraform source
+   └── src/<module>/README.md (between markers)
+3. Run: eirctl docs (from module root)
+----
+
+==== Build pipeline (distributable package)
+
+The `eirctl build` pipeline converts the AsciiDoc sources into a distributable zip:
+
+[source]
+----
+1. AsciiDoc source files
+   └── docs/readme/<module>/index.adoc (includes tfdocs.adoc)
 
 2. terraform-docs generates API docs
    └── docs/readme/<module>/tfdocs.adoc
@@ -54,15 +71,15 @@ eirctl build
 
 API documentation is **auto-generated** from Terraform code using `terraform-docs`:
 
-- Configuration: `.terraform-docs.yml`
-- Output: `docs/readme/<module>/tfdocs.adoc`
-- Format: AsciiDoc tables
+- Configuration: `src/<module>/.terraform-docs.yml`
+- Output: Injected into `src/<module>/README.md` (between markers)
+- Format: Markdown tables
 - Includes: Requirements, Providers, Modules, Resources, Inputs, Outputs
 
 To update API docs:
 
 1. Modify Terraform files in `src/<module>/deploy/terraform/`
-2. Run `eirctl run terraform:docs:asciidoc`
+2. Run `eirctl documentation` from the module root (e.g., `src/management/`)
 
 ==== Repository Documentation
 

@@ -1,0 +1,29 @@
+== Resource Naming
+
+Resources follow https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming[Cloud Adoption Framework (CAF)] naming conventions using the https://registry.terraform.io/modules/Azure/naming/azurerm/latest[Azure Naming] module. Names can be overridden per hub using `name_overrides`.
+
+=== Generated Names
+
+With `company = "ensono"`, region `uksouth` (geo_code `uks`), and workspace `prd`:
+
+|===
+| Resource | Generated Name | Name Override Key
+
+| Resource Group | `rg-ens-uks-prd-hub-001` | `resource_group`
+| Virtual WAN | `vwan-ens-uks-prd-hub-001` | -
+| Virtual Hub | `vhub-ens-uks-prd-hub-001` | `virtual_hub`
+| Sidecar VNet | `vnet-ens-uks-prd-hub-001` | `sidecar_virtual_network`
+| Firewall | `afw-ens-uks-prd-hub-001` | `firewall`
+| Firewall Policy | `afwp-ens-uks-prd-hub-001` | `firewall_policy`
+| Bastion Host | `bas-ens-uks-prd-hub-bas-001` | `bastion`
+| VPN Gateway | `vwan-ens-uks-prd-hub-vpn-001` | `vpn_gateway`
+| ExpressRoute Gateway | `vwan-ens-uks-prd-hub-er-001` | `expressroute_gateway`
+| DNS Resolver | `dnspr-ens-uks-prd-hub-dns-001` | `private_dns_resolver`
+| Flow Logs Storage | `st<unique>ensukshubfl001` | -
+|===
+
+=== Naming Pattern
+
+Names follow the pattern: `{caf_prefix}-{company_3}-{geo_code}-{workspace}-{component}-{instance}`
+
+The module uses `substr(var.company, 0, 3)` to limit the company prefix length and the region's `geo_code` (e.g., `uks` for UK South), ensuring resource names stay within Azure limits.

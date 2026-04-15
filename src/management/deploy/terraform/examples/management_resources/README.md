@@ -1,4 +1,4 @@
-# Management Resources Only
+# Management Resources
 
 Deploys management resources without management groups or policies.
 
@@ -18,19 +18,21 @@ Deploys management resources without management groups or policies.
 ## Usage
 
 ```bash
-cp management.tfvars ../../terraform.tfvars
-# Edit terraform.tfvars with your values
+cp management.tfvars ../../workspace_variables/prd_uksouth_terraform.tfvars
+# Edit the tfvars file with your settings
 eirctl infrastructure:plan
 eirctl infrastructure:apply
 ```
 
-## Required Variables
+## Required Pipeline Variables (`TF_VAR_`)
+
+These values are injected as environment variables at pipeline runtime, not stored in tfvars files:
 
 | Variable | Description |
 | -------- | ----------- |
-| `company_name` | Company prefix for resource naming (e.g., "ensono") |
-| `location` | Azure region (e.g., "uksouth") |
-| `management_subscription_id` | Subscription ID to deploy resources |
+| `TF_VAR_company` | Company prefix for resource naming (e.g., "ensono") |
+| `TF_VAR_region` | Azure region (e.g., "uksouth") |
+| `TF_VAR_management_subscription_id` | Subscription ID to deploy resources |
 
 ## Optional Variables
 
@@ -38,6 +40,7 @@ All other variables have sensible defaults. See [variables documentation](../../
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
+| `management_resource_settings.log_analytics_workspace_daily_quota_gb` | `10` | Daily ingestion cap in GB (`-1` for unlimited) |
 | `management_resource_settings.log_analytics_workspace_retention_in_days` | `30` | Log retention period |
 | `management_resource_settings.log_analytics_workspace_sku` | `"PerGB2018"` | Pricing tier |
 | `resource_group_lock_enabled` | `true` | Enable CanNotDelete locks |
@@ -48,5 +51,4 @@ All other variables have sensible defaults. See [variables documentation](../../
 These outputs are consumed by the connectivity module via remote state:
 
 - `log_analytics_workspace_id`
-- `log_analytics_workspace_name`
 - `log_analytics_workspace_guid`

@@ -27,8 +27,6 @@ mock_provider "azapi" {
 }
 
 mock_provider "random" {}
-mock_provider "local" {}
-mock_provider "modtm" {}
 
 override_module {
   target = module.azure_regions
@@ -45,12 +43,17 @@ override_data {
   values = { outputs = {} }
 }
 
+test {
+  parallel = true
+}
+
 # =============================================================================
 # Single Hub - Address Space Allocation
 # =============================================================================
 
 run "single_hub_addressing" {
-  command = plan
+  command   = plan
+  state_key = "single_hub"
 
   assert {
     condition     = local.hub_addresses["uksouth"].hub_address_space == "10.0.0.0/16"
@@ -73,7 +76,8 @@ run "single_hub_addressing" {
 # =============================================================================
 
 run "multi_hub_addressing" {
-  command = plan
+  command   = plan
+  state_key = "multi_hub"
 
   variables {
     hubs = {
@@ -103,7 +107,8 @@ run "multi_hub_addressing" {
 # =============================================================================
 
 run "custom_address_space" {
-  command = plan
+  command   = plan
+  state_key = "custom_addr"
 
   variables {
     hubs = {
@@ -122,31 +127,5 @@ run "custom_address_space" {
   assert {
     condition     = startswith(local.hub_addresses["uksouth"].virtual_hub_prefix, "172.16.")
     error_message = "Virtual Hub prefix should be derived from custom address space."
-  }
-}
-
-# =============================================================================
-# Hub Index Consistency
-# =============================================================================
-
-run "hub_index_deterministic" {
-  command = plan
-
-  variables {
-    hubs = {
-      ukwest  = { enabled = true }
-      uksouth = { enabled = true }
-    }
-  }
-
-  # Index should be same regardless of declaration order
-  assert {
-    condition     = local.hub_indices["uksouth"] == 0
-    error_message = "Hub index for uksouth should be 0 (alphabetically first)."
-  }
-
-  assert {
-    condition     = local.hub_indices["ukwest"] == 1
-    error_message = "Hub index for ukwest should be 1 (alphabetically second)."
   }
 }

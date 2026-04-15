@@ -1,0 +1,188 @@
+== Configuration Examples
+
+Each region is deployed via its own workspace with a tfvars file under `workspace_variables/` (e.g., `prd_uksouth_terraform.tfvars`, `prd_ukwest_terraform.tfvars`). The `company` and `connectivity_subscription_id` variables are injected as `TF_VAR_` environment variables by the pipeline.
+
+The examples below use `uksouth` and `ukwest` as sample regions — substitute your own.
+
+=== Multi-Region Deployment
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = {}
+}
+----
+
+IP addresses are calculated automatically (sorted alphabetically):
+
+|===
+| Region | Hub Address Space | Virtual Hub Prefix
+
+| uksouth | `10.0.0.0/16` | `10.0.0.0/23`
+| ukwest | `10.1.0.0/16` | `10.1.0.0/23`
+|===
+
+=== Cost Optimisation for Non-Production
+
+Use Firewall Basic SKU for dev/test environments:
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Basic"  # ~£230/month vs Standard ~£720/month
+    }
+  }
+}
+----
+
+|===
+| Firewall SKU | Monthly Cost | Use Case
+
+| Basic | ~£230 | Dev/Test, low throughput
+| Standard | ~£720 | Production, threat intelligence
+| Premium | ~£1,010 | TLS inspection, IDPS signatures
+|===
+
+WARNING: Firewall Basic SKU has reduced throughput (250 Mbps) and fewer features. Not recommended for production.
+
+=== Enable Optional Features
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      bastion              = true
+      vpn_gateway          = true
+      expressroute_gateway = true
+      private_dns_resolver = true
+    }
+  }
+}
+----
+
+=== Custom IP Addressing
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    address_space = "172.16.0.0/16"
+    sidecar_subnets = {
+      bastion_address_prefix              = "172.16.4.0/26"
+      gateway_address_prefix              = "172.16.4.64/27"
+      private_dns_resolver_address_prefix = "172.16.4.96/28"
+    }
+  }
+}
+----
+
+=== Custom Resource Names
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    name_overrides = {
+      resource_group          = "rg-vwan-hub-prod"
+      virtual_hub             = "vhub-prod-uks"
+      sidecar_virtual_network = "vnet-sidecar-prod"
+      firewall                = "fw-hub-prod"
+    }
+  }
+}
+----
+
+=== DDoS Protection Plan
+
+DDoS Protection Plan is **disabled by default** due to significant cost (~£2,330/month flat fee).
+
+[source,hcl]
+----
+ddos_protection_plan = {
+  enabled = true
+}
+----
+
+=== Disable a Hub Temporarily
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {}
+  ukwest  = { enabled = false }
+}
+----
+
+=== Production Configuration
+
+[source,hcl]
+----
+hubs = {
+  uksouth = {
+    features = {
+      firewall_sku = "Standard"
+      bastion      = true
+      vpn_gateway  = true
+    }
+  }
+}
+
+management_remote_state = {
+  enabled              = true
+  storage_account_name = "<storage-account-name>"
+}
+----
+
+=== Cost Estimation
+
+Estimated monthly costs per hub (UK South, April 2026):
+
+|===
+| Resource | Default | Monthly Cost (GBP) | Notes
+
+| Virtual Hub | ✅ | ~£145 | Base hub cost (~£0.20/hr)
+| Azure Firewall Standard | ✅ | ~£720 | Secured hub (~£0.99/hr)
+| Azure Firewall Basic | ❌ | ~£230 | Dev/test alternative (~£0.31/hr)
+| VPN Gateway | ❌ | ~£210 | 1 scale unit (~£0.29/hr)
+| ExpressRoute Gateway | ❌ | ~£240 | 1 scale unit (~£0.33/hr)
+| Azure Bastion Standard | ❌ | ~£170 | 2 scale units (~£0.23/hr)
+| Azure Bastion Basic | ❌ | ~£110 | Single instance (~£0.15/hr)
+| Private DNS Resolver | ❌ | ~£145 | Inbound endpoint (~£142/month)
+| DDoS Protection Plan | ❌ | ~£2,330 | Shared across subscription
+| Log Analytics | - | Variable | ~£2/GB/month ingestion
+| **Minimum (Hub + Firewall)** | | **~£865** |
+| **Full Production** | | **~£1,185** | Hub + Firewall + VPN + Bastion Basic
+|===
+
+TIP: Virtual WAN costs more than hub-spoke due to the managed hub infrastructure, but provides simplified routing and better scalability for large deployments.
+
+=== Comparison: Virtual WAN vs Hub-Spoke
+
+|===
+| Aspect | Virtual WAN | Hub-Spoke
+
+| Management | Fully managed hub | Self-managed VNet
+| Routing | Automatic any-to-any | Manual route tables
+| Cost | Higher base cost | Lower base cost
+| Scalability | Better for large networks | Good for small-medium
+| Hybrid | Built-in VPN/ER integration | Manual gateway setup
+| Complexity | Lower operational | Higher operational
+|===
+
+**Choose Virtual WAN when:**
+
+* You have 50+ spoke VNets
+* You need global transit routing
+* You want simplified VPN/ExpressRoute management
+* Operational simplicity is more important than cost
+
+**Choose Hub-Spoke when:**
+
+* You have fewer spoke VNets
+* Cost optimisation is critical
+* You need granular routing control
+* You have existing hub-spoke infrastructure

@@ -6,7 +6,7 @@ module "management_resources" {
   count      = var.management_resources_enabled ? 1 : 0
 
   # Required attributes
-  location                     = var.location
+  location                     = var.region
   log_analytics_workspace_name = local.resource_names.log_analytics_workspace
   resource_group_name          = local.resource_names.resource_group
 

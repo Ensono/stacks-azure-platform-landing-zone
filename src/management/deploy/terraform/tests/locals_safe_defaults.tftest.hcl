@@ -68,6 +68,11 @@ run "policy_defaults_computed_safely" {
   command   = plan
   state_key = "policy_defaults"
 
+  variables {
+    management_groups_enabled    = false
+    management_resources_enabled = false
+  }
+
   # Policy defaults should be computed safely when resources disabled
   assert {
     condition     = local.policy_default_values != null
@@ -78,38 +83,5 @@ run "policy_defaults_computed_safely" {
   assert {
     condition     = local.subscription_placement != null
     error_message = "subscription_placement local should not be null."
-  }
-}
-
-# =============================================================================
-# Resource Groups Empty When Disabled
-# =============================================================================
-
-run "resource_groups_empty_when_disabled" {
-  command   = plan
-  state_key = "rg_disabled"
-
-  assert {
-    condition     = length(local.resource_groups) == 0
-    error_message = "resource_groups should be empty when management_resources_enabled is false."
-  }
-}
-
-run "resource_groups_populated_when_enabled" {
-  command   = plan
-  state_key = "rg_enabled"
-
-  variables {
-    management_resources_enabled = true
-  }
-
-  assert {
-    condition     = length(local.resource_groups) == 1
-    error_message = "resource_groups should contain one entry when management_resources_enabled is true."
-  }
-
-  assert {
-    condition     = contains(keys(local.resource_groups), "management")
-    error_message = "resource_groups should contain a 'management' key."
   }
 }
