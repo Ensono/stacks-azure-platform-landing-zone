@@ -1,0 +1,14 @@
+# Terraform
+tf_state_resource_group_name: 'rg-cus-ide-prd-tf-state'
+tf_state_storage_account_name: 'stcusideprdtfstateaee'
+
+# Terraform inputs
+# these will also be mapped to environment variables in uppercase with 'TF_VAR_' removed. For example: 'AZURE_LOCATION'
+TF_VAR_azure_geography: 'United States'
+TF_VAR_azure_location: 'centralus'
+TF_VAR_environment: 'prd'
+
+# ADR #0113: Identity VNet DNS and ADDS forwarders must use connectivity DNS proxy path
+# Replace with the Central US connectivity firewall/DNS proxy private IP
+TF_VAR_identity_vnet_dns_servers: '["REPLACE_WITH_CENTRALUS_CONNECTIVITY_DNS_PROXY_IP"]'
+TF_VAR_adds_dns_forwarders: '["REPLACE_WITH_CENTRALUS_CONNECTIVITY_DNS_PROXY_IP"]'

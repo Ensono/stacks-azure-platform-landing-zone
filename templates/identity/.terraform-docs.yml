@@ -1,0 +1,26 @@
+---
+# Template file - DO NOT EDIT
+formatter: "markdown"
+
+settings:
+  anchor: false
+  lockfile: false
+
+output:
+  file: "README.md"
+
+sections:
+  hide: [requirements]
+
+content: |-
+  {{ .Providers }}
+
+  {{ .Modules }}
+
+  {{ .Resources }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+...
